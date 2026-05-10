@@ -8,7 +8,9 @@ import bookingsRouter from './routes/bookings.js';
 import consultationsRouter from './routes/consultations.js';
 import contactRouter from './routes/contact.js';
 
-dotenv.config();
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
+}
 
 const app: Express = express();
 const prisma = new PrismaClient();
