@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import ShopCarousel from './components/ShopCarousel';
+import ScrollGradientFade from './components/ScrollGradientFade';
 
 export default function Home() {
   return (
@@ -10,8 +11,8 @@ export default function Home() {
         {/* Carousel - extends from very top of page behind nav, fills entire area, fades at bottom into charcoal */}
         <div className="fixed top-0 left-0 right-0 h-[100dvh] -z-5 w-full">
           <ShopCarousel />
-          {/* Gradient fade overlay at bottom - blends carousel into charcoal above buttons */}
-          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-[#2a2a2a] pointer-events-none z-10"></div>
+          {/* Scroll-responsive gradient fade overlay - fades away as user scrolls */}
+          <ScrollGradientFade />
         </div>
 
         {/* Logo Section - Positioned in upper area with breathing room before buttons */}
