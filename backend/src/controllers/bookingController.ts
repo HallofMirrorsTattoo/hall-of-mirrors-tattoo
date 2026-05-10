@@ -75,13 +75,21 @@ export async function createBooking(req: Request, res: Response) {
     }
 
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('❌ Booking error:', errorMessage);
+    const errorCode = (error as any)?.code;
+    const errorMeta = (error as any)?.meta;
+
+    console.error('❌ Booking creation failed');
+    console.error('Error message:', errorMessage);
+    console.error('Error code:', errorCode);
+    console.error('Error meta:', errorMeta);
     console.error('Full error:', error);
 
     res.status(500).json({
       success: false,
       error: 'Failed to create booking',
-      details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
+      message: errorMessage,
+      code: errorCode,
+      meta: errorMeta,
     });
   }
 }
