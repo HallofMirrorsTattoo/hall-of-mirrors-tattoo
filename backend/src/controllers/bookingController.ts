@@ -122,10 +122,15 @@ export async function createBooking(req: Request, res: Response) {
     };
 
     // Send to studio and assigned artist
+    console.log('📧 Calling sendNewBookingNotification...');
     await sendNewBookingNotification(bookingData);
+    console.log('✅ sendNewBookingNotification complete');
 
     // Send confirmation to client
+    console.log('📧 Calling sendBookingConfirmationToClient...');
+    console.log('📧 bookingData.user.email:', bookingData.user?.email);
     await sendBookingConfirmationToClient(bookingData);
+    console.log('✅ sendBookingConfirmationToClient complete');
 
     res.status(201).json({
       success: true,
