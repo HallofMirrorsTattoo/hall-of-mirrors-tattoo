@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { PrismaClient, Decimal } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import { Decimal } from 'decimal.js';
 import { z } from 'zod';
 
 const prisma = new PrismaClient();
