@@ -1,240 +1,266 @@
 'use client';
 
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import Link from 'next/link';
 
-export default function Booking() {
-  const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    date: '',
-    time: '',
-    tattooDescription: '',
-    placement: '',
-    size: 'medium',
-    consent: false,
+const BookingSchema = z.object({
+  clientName: z.string().min(2, 'Name must be at least 2 characters'),
+  clientEmail: z.string().email('Invalid email address'),
+  clientPhone: z.string().min(10, 'Phone number must be at least 10 digits'),
+  preferredDate: z.string().min(1, 'Please select a date'),
+  tattooDesignDescription: z.string().min(10, 'Please describe your design in at least 10 characters'),
+  estimatedSize: z.enum(['small', 'medium', 'large', 'xlarge']),
+  estimatedPlacement: z.string().min(2, 'Please specify placement'),
+  referralSource: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+type BookingFormData = z.infer<typeof BookingSchema>;
+
+export default function BookingPage() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<BookingFormData>({
+    resolver: zodResolver(BookingSchema),
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
+  const onSubmit = async (data: BookingFormData) => {
+    setIsSubmitting(true);
+    setSubmitStatus('idle');
+    setErrorMessage('');
 
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
-  };
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/bookings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...data,
+          preferredDate: new Date(data.preferredDate).toISOString(),
+        }),
+      });
 
-  const handleNext = () => {
-    if (step < 4) setStep(step + 1);
-  };
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to submit booking');
+      }
 
-  const handlePrev = () => {
-    if (step > 1) setStep(step - 1);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Booking submitted:', formData);
-    alert('Booking submitted! You will receive a confirmation email shortly.');
+      setSubmitStatus('success');
+      reset();
+      setTimeout(() => setSubmitStatus('idle'), 5000);
+    } catch (error) {
+      setSubmitStatus('error');
+      setErrorMessage(error instanceof Error ? error.message : 'Something went wrong');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-16">
-      <h1 className="text-5xl font-serif text-accent-gold mb-2">Book Your Appointment</h1>
-      <p className="text-white/70 mb-12">Step {step} of 4</p>
-
-      <form onSubmit={handleSubmit}>
-        {/* Step 1: Personal Info */}
-        {step === 1 && (
-          <div className="space-y-6">
-            <div>
-              <label htmlFor="name">Full Name *</label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                required
-                value={formData.name}
-                onChange={handleInputChange}
-                placeholder="Your name"
-              />
-            </div>
-            <div>
-              <label htmlFor="email">Email *</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                required
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="your@email.com"
-              />
-            </div>
-            <div>
-              <label htmlFor="phone">Phone *</label>
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                required
-                value={formData.phone}
-                onChange={handleInputChange}
-                placeholder="+44 (0) 123 456 7890"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: Date & Time */}
-        {step === 2 && (
-          <div className="space-y-6">
-            <div>
-              <label htmlFor="date">Preferred Date *</label>
-              <input
-                type="date"
-                id="date"
-                name="date"
-                required
-                value={formData.date}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="time">Preferred Time *</label>
-              <select
-                id="time"
-                name="time"
-                required
-                value={formData.time}
-                onChange={handleInputChange}
-              >
-                <option value="">Select a time</option>
-                <option value="09:00">09:00</option>
-                <option value="10:00">10:00</option>
-                <option value="11:00">11:00</option>
-                <option value="12:00">12:00</option>
-                <option value="14:00">14:00</option>
-                <option value="15:00">15:00</option>
-                <option value="16:00">16:00</option>
-                <option value="17:00">17:00</option>
-              </select>
-            </div>
-            <p className="text-white/70 text-sm">Final availability confirmed after submission</p>
-          </div>
-        )}
-
-        {/* Step 3: Tattoo Details */}
-        {step === 3 && (
-          <div className="space-y-6">
-            <div>
-              <label htmlFor="tattooDescription">Tattoo Description *</label>
-              <textarea
-                id="tattooDescription"
-                name="tattooDescription"
-                required
-                rows={4}
-                value={formData.tattooDescription}
-                onChange={handleInputChange}
-                placeholder="Describe your tattoo idea, style, and any reference images you have"
-              />
-            </div>
-            <div>
-              <label htmlFor="placement">Placement *</label>
-              <input
-                type="text"
-                id="placement"
-                name="placement"
-                required
-                value={formData.placement}
-                onChange={handleInputChange}
-                placeholder="e.g., Arm, Chest, Leg, Back"
-              />
-            </div>
-            <div>
-              <label htmlFor="size">Estimated Size *</label>
-              <select
-                id="size"
-                name="size"
-                required
-                value={formData.size}
-                onChange={handleInputChange}
-              >
-                <option value="small">Small (1-3")</option>
-                <option value="medium">Medium (3-6")</option>
-                <option value="large">Large (6"+)</option>
-              </select>
-            </div>
-          </div>
-        )}
-
-        {/* Step 4: Consent */}
-        {step === 4 && (
-          <div className="space-y-6">
-            <div className="glassmorphism p-6">
-              <h3 className="text-lg font-semibold text-accent-gold mb-4">Consent Form</h3>
-              <div className="text-white/80 text-sm space-y-4 mb-6 max-h-64 overflow-y-auto">
-                <p><strong>Age Confirmation:</strong> I confirm I am 18 years or older.</p>
-                <p><strong>Health:</strong> I have disclosed all relevant medical information accurately.</p>
-                <p><strong>Risks:</strong> I understand the risks associated with tattooing and accept them.</p>
-                <p><strong>Sobriety:</strong> I confirm I have not consumed alcohol or drugs in the last 24 hours.</p>
-                <p><strong>Suitability:</strong> I am in good health and suitable for tattooing.</p>
-                <p><strong>Voluntary:</strong> I am entering into this agreement voluntarily.</p>
-                <p><strong>Aftercare:</strong> I accept responsibility for proper aftercare.</p>
-              </div>
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="consent"
-                  checked={formData.consent}
-                  onChange={handleInputChange}
-                  className="mt-1"
-                />
-                <span className="text-white/80 text-sm">I agree to the consent form and studio policies</span>
-              </label>
-              {!formData.consent && (
-                <p className="text-rust text-sm mt-2">You must accept the consent form to proceed</p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Navigation */}
-        <div className="mt-12 flex gap-4 justify-between">
-          <button
-            type="button"
-            onClick={handlePrev}
-            disabled={step === 1}
-            className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Back
-          </button>
-          {step < 4 ? (
-            <button
-              type="button"
-              onClick={handleNext}
-              className="btn-primary"
-            >
-              Next
-            </button>
-          ) : (
-            <button
-              type="submit"
-              disabled={!formData.consent}
-              className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Submit Booking
-            </button>
-          )}
+    <div>
+      {/* Hero Section */}
+      <section className="min-h-[60dvh] px-4 py-20 flex items-center justify-center relative overflow-hidden pattern-gold-accents bg-primary-light">
+        <div className="max-w-4xl mx-auto w-full text-center space-y-6 relative z-10">
+          <h1 className="text-4xl md:text-5xl font-serif font-bold text-primary-dark">
+            Book Your Appointment
+          </h1>
+          <p className="text-lg text-primary-dark/75 max-w-2xl mx-auto">
+            Limited availability ensures personalized attention. Complete this form and we'll confirm your booking within 24 hours.
+          </p>
         </div>
-      </form>
+      </section>
 
-      <div className="mt-12 text-center text-white/70 text-sm">
-        <p>Need help? <Link href="/consultation" className="text-accent-gold hover:text-white">Request a free consultation</Link></p>
-      </div>
+      {/* Form Section */}
+      <section className="px-4 py-20 bg-primary-light pattern-gold-accents">
+        <div className="max-w-2xl mx-auto">
+          <div className="card-premium">
+            <div className="card-premium-inner">
+              {submitStatus === 'success' && (
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-green-700 font-medium">✓ Booking submitted successfully! We'll be in touch shortly.</p>
+                </div>
+              )}
+
+              {submitStatus === 'error' && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-700 font-medium">✗ {errorMessage}</p>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="clientName" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                      Full Name
+                    </label>
+                    <input
+                      {...register('clientName')}
+                      type="text"
+                      id="clientName"
+                      placeholder="Your name"
+                      className={`w-full ${errors.clientName ? 'border-red-500' : ''}`}
+                    />
+                    {errors.clientName && (
+                      <p className="text-red-600 text-sm mt-1">{errors.clientName.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="clientEmail" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                      Email
+                    </label>
+                    <input
+                      {...register('clientEmail')}
+                      type="email"
+                      id="clientEmail"
+                      placeholder="your@email.com"
+                      className={`w-full ${errors.clientEmail ? 'border-red-500' : ''}`}
+                    />
+                    {errors.clientEmail && (
+                      <p className="text-red-600 text-sm mt-1">{errors.clientEmail.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="clientPhone" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                      Phone Number
+                    </label>
+                    <input
+                      {...register('clientPhone')}
+                      type="tel"
+                      id="clientPhone"
+                      placeholder="+44 (0) 151 2345 6789"
+                      className={`w-full ${errors.clientPhone ? 'border-red-500' : ''}`}
+                    />
+                    {errors.clientPhone && (
+                      <p className="text-red-600 text-sm mt-1">{errors.clientPhone.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="preferredDate" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                      Preferred Date
+                    </label>
+                    <input
+                      {...register('preferredDate')}
+                      type="datetime-local"
+                      id="preferredDate"
+                      className={`w-full ${errors.preferredDate ? 'border-red-500' : ''}`}
+                    />
+                    {errors.preferredDate && (
+                      <p className="text-red-600 text-sm mt-1">{errors.preferredDate.message}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="tattooDesignDescription" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                    Tattoo Design Description
+                  </label>
+                  <textarea
+                    {...register('tattooDesignDescription')}
+                    id="tattooDesignDescription"
+                    placeholder="Describe your tattoo design idea, inspiration, and any specific elements you want included..."
+                    rows={5}
+                    className={`w-full ${errors.tattooDesignDescription ? 'border-red-500' : ''}`}
+                  />
+                  {errors.tattooDesignDescription && (
+                    <p className="text-red-600 text-sm mt-1">{errors.tattooDesignDescription.message}</p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="estimatedSize" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                      Estimated Size
+                    </label>
+                    <select
+                      {...register('estimatedSize')}
+                      id="estimatedSize"
+                      className={`w-full ${errors.estimatedSize ? 'border-red-500' : ''}`}
+                    >
+                      <option value="">Select size</option>
+                      <option value="small">Small (2-3 inches)</option>
+                      <option value="medium">Medium (3-6 inches)</option>
+                      <option value="large">Large (6-12 inches)</option>
+                      <option value="xlarge">Extra Large (12+ inches)</option>
+                    </select>
+                    {errors.estimatedSize && (
+                      <p className="text-red-600 text-sm mt-1">{errors.estimatedSize.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="estimatedPlacement" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                      Body Placement
+                    </label>
+                    <input
+                      {...register('estimatedPlacement')}
+                      type="text"
+                      id="estimatedPlacement"
+                      placeholder="e.g., Upper arm, chest, leg..."
+                      className={`w-full ${errors.estimatedPlacement ? 'border-red-500' : ''}`}
+                    />
+                    {errors.estimatedPlacement && (
+                      <p className="text-red-600 text-sm mt-1">{errors.estimatedPlacement.message}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="referralSource" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                    How did you find us? (Optional)
+                  </label>
+                  <input
+                    {...register('referralSource')}
+                    type="text"
+                    id="referralSource"
+                    placeholder="Instagram, Google, Referral, etc."
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="notes" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                    Additional Notes (Optional)
+                  </label>
+                  <textarea
+                    {...register('notes')}
+                    id="notes"
+                    placeholder="Any additional information we should know about..."
+                    rows={3}
+                    className="w-full"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="btn-primary group w-full justify-center"
+                >
+                  <span>{isSubmitting ? 'Submitting...' : 'Request Booking'}</span>
+                  <div className="btn-primary-icon">↗</div>
+                </button>
+
+                <p className="text-center text-sm text-primary-dark/60">
+                  Have questions? <Link href="/consultation" className="text-accent-gold hover:text-primary-dark font-medium">
+                    Schedule a free consultation
+                  </Link> first.
+                </p>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

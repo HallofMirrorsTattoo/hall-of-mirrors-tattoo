@@ -4,6 +4,9 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
+import bookingsRouter from './routes/bookings';
+import consultationsRouter from './routes/consultations';
+import contactRouter from './routes/contact';
 
 dotenv.config();
 
@@ -32,6 +35,11 @@ app.get('/api/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Routes
+app.use('/api/bookings', bookingsRouter);
+app.use('/api/consultations', consultationsRouter);
+app.use('/api/contact', contactRouter);
+
 // Error handler middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error(err);
@@ -45,10 +53,12 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 app.listen(PORT, () => {
   console.log(`🎨 Hall of Mirrors API running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`📊 Database: ${process.env.DATABASE_URL?.split('@')[1]}`);
 });
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
+  console.log('\n🛑 Shutting down gracefully...');
   await prisma.$disconnect();
   process.exit(0);
 });

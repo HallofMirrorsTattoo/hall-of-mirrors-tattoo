@@ -1,73 +1,229 @@
 'use client';
 
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import Link from 'next/link';
 
-export default function Consultation() {
-  const [submitted, setSubmitted] = useState(false);
+const ConsultationSchema = z.object({
+  clientName: z.string().min(2, 'Name must be at least 2 characters'),
+  clientEmail: z.string().email('Invalid email address'),
+  clientPhone: z.string().min(10, 'Phone number must be at least 10 digits'),
+  preferredDate: z.string().optional(),
+  consultationType: z.enum(['initial', 'design_review', 'follow_up']),
+  message: z.string().min(10, 'Please provide more details'),
+  interestedIn: z.string().optional(),
+});
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 5000);
+type ConsultationFormData = z.infer<typeof ConsultationSchema>;
+
+export default function ConsultationPage() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<ConsultationFormData>({
+    resolver: zodResolver(ConsultationSchema),
+  });
+
+  const onSubmit = async (data: ConsultationFormData) => {
+    setIsSubmitting(true);
+    setSubmitStatus('idle');
+    setErrorMessage('');
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/consultations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...data,
+          preferredDate: data.preferredDate ? new Date(data.preferredDate).toISOString() : undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to submit consultation request');
+      }
+
+      setSubmitStatus('success');
+      reset();
+      setTimeout(() => setSubmitStatus('idle'), 5000);
+    } catch (error) {
+      setSubmitStatus('error');
+      setErrorMessage(error instanceof Error ? error.message : 'Something went wrong');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  if (submitted) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-16 text-center">
-        <div className="glassmorphism p-12 text-center">
-          <h2 className="text-3xl font-serif text-accent-gold mb-4">Consultation Request Received</h2>
-          <p className="text-white/80">
-            Thank you! Robyn will contact you within 48 hours to discuss your tattoo idea.
+  return (
+    <div>
+      {/* Hero Section */}
+      <section className="min-h-[60dvh] px-4 py-20 flex items-center justify-center relative overflow-hidden pattern-gold-accents bg-primary-light">
+        <div className="max-w-4xl mx-auto w-full text-center space-y-6 relative z-10">
+          <h1 className="text-4xl md:text-5xl font-serif font-bold text-primary-dark">
+            Free Consultation
+          </h1>
+          <p className="text-lg text-primary-dark/75 max-w-2xl mx-auto">
+            Let's discuss your tattoo vision. Book a free consultation with Robyn to explore ideas and understand your perfect design.
           </p>
         </div>
-      </div>
-    );
-  }
+      </section>
 
-  return (
-    <div className="max-w-3xl mx-auto px-4 py-16">
-      <h1 className="text-5xl font-serif text-accent-gold mb-4">Free Consultation</h1>
-      <p className="text-white/70 mb-12">
-        Not ready to book yet? Request a free consultation to discuss your tattoo idea with Robyn.
-      </p>
+      {/* Form Section */}
+      <section className="px-4 py-20 bg-primary-light pattern-gold-accents">
+        <div className="max-w-2xl mx-auto">
+          <div className="card-premium">
+            <div className="card-premium-inner">
+              {submitStatus === 'success' && (
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-green-700 font-medium">✓ Consultation request sent! We'll be in touch within 24 hours.</p>
+                </div>
+              )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label htmlFor="name">Full Name *</label>
-          <input type="text" id="name" name="name" required placeholder="Your name" />
+              {submitStatus === 'error' && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-700 font-medium">✗ {errorMessage}</p>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="clientName" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                      Full Name
+                    </label>
+                    <input
+                      {...register('clientName')}
+                      type="text"
+                      id="clientName"
+                      placeholder="Your name"
+                      className={`w-full ${errors.clientName ? 'border-red-500' : ''}`}
+                    />
+                    {errors.clientName && (
+                      <p className="text-red-600 text-sm mt-1">{errors.clientName.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="clientEmail" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                      Email
+                    </label>
+                    <input
+                      {...register('clientEmail')}
+                      type="email"
+                      id="clientEmail"
+                      placeholder="your@email.com"
+                      className={`w-full ${errors.clientEmail ? 'border-red-500' : ''}`}
+                    />
+                    {errors.clientEmail && (
+                      <p className="text-red-600 text-sm mt-1">{errors.clientEmail.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="clientPhone" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                      Phone Number
+                    </label>
+                    <input
+                      {...register('clientPhone')}
+                      type="tel"
+                      id="clientPhone"
+                      placeholder="+44 (0) 151 2345 6789"
+                      className={`w-full ${errors.clientPhone ? 'border-red-500' : ''}`}
+                    />
+                    {errors.clientPhone && (
+                      <p className="text-red-600 text-sm mt-1">{errors.clientPhone.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="consultationType" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                      Consultation Type
+                    </label>
+                    <select
+                      {...register('consultationType')}
+                      id="consultationType"
+                      className={`w-full ${errors.consultationType ? 'border-red-500' : ''}`}
+                    >
+                      <option value="">Select type</option>
+                      <option value="initial">Initial Consultation</option>
+                      <option value="design_review">Design Review</option>
+                      <option value="follow_up">Follow-up Consultation</option>
+                    </select>
+                    {errors.consultationType && (
+                      <p className="text-red-600 text-sm mt-1">{errors.consultationType.message}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="preferredDate" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                    Preferred Date (Optional)
+                  </label>
+                  <input
+                    {...register('preferredDate')}
+                    type="datetime-local"
+                    id="preferredDate"
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="interestedIn" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                    What are you interested in? (Optional)
+                  </label>
+                  <input
+                    {...register('interestedIn')}
+                    type="text"
+                    id="interestedIn"
+                    placeholder="e.g., Neo-traditional design, color work, custom piece..."
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="message" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                    Tell us more
+                  </label>
+                  <textarea
+                    {...register('message')}
+                    id="message"
+                    placeholder="Share your ideas, inspirations, and any questions you have. The more detail you provide, the better our consultation will be."
+                    rows={5}
+                    className={`w-full ${errors.message ? 'border-red-500' : ''}`}
+                  />
+                  {errors.message && (
+                    <p className="text-red-600 text-sm mt-1">{errors.message.message}</p>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="btn-primary group w-full justify-center"
+                >
+                  <span>{isSubmitting ? 'Submitting...' : 'Request Consultation'}</span>
+                  <div className="btn-primary-icon">↗</div>
+                </button>
+
+                <p className="text-center text-sm text-primary-dark/60">
+                  Ready to book? <Link href="/booking" className="text-accent-gold hover:text-primary-dark font-medium">
+                    Schedule an appointment
+                  </Link> directly.
+                </p>
+              </form>
+            </div>
+          </div>
         </div>
-        <div>
-          <label htmlFor="email">Email *</label>
-          <input type="email" id="email" name="email" required placeholder="your@email.com" />
-        </div>
-        <div>
-          <label htmlFor="phone">Phone *</label>
-          <input type="tel" id="phone" name="phone" required placeholder="+44 (0) 123 456 7890" />
-        </div>
-        <div>
-          <label htmlFor="tattoo_idea">Tattoo Idea *</label>
-          <textarea
-            id="tattoo_idea"
-            name="tattoo_idea"
-            rows={5}
-            required
-            placeholder="Describe your tattoo idea, style preferences, and any reference images"
-          />
-        </div>
-        <div>
-          <label htmlFor="timeframe">Preferred Timeframe *</label>
-          <select id="timeframe" name="timeframe" required>
-            <option value="">Select timeframe</option>
-            <option value="asap">ASAP</option>
-            <option value="1month">Within 1 month</option>
-            <option value="2months">Within 2 months</option>
-            <option value="flexible">Flexible</option>
-          </select>
-        </div>
-        <button type="submit" className="btn-primary w-full">
-          Request Consultation
-        </button>
-      </form>
+      </section>
     </div>
   );
 }
