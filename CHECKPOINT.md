@@ -1,7 +1,7 @@
 # Hall of Mirrors Tattoo - Development Checkpoint
 
-**Last Updated:** May 10, 2026 (Phase 3 Complete)
-**Status:** Phase 1 (Booking + Artist Auth) + Phase 2 (Client Auth + Dashboard) + Phase 3 (Dark Theme & Carousel) COMPLETE ✅
+**Last Updated:** May 10, 2026 (Phase 3 Complete + Viewport Optimization)
+**Status:** Phase 1 (Booking + Artist Auth) + Phase 2 (Client Auth + Dashboard) + Phase 3 (Dark Theme & Carousel + Charcoal Background) COMPLETE ✅
 
 ---
 
@@ -95,16 +95,18 @@
 - ✅ Authentication protection redirects unauthorized users to login
 
 ### PHASE 3: Design System Overhaul (Dark Theme & Shop Carousel)
-- ✅ Dark theme redesign: Deep navy background, cream text, gold accents
-- ✅ Removed glass morphism: Sharp-edged cards with gold borders, clean design
+- ✅ Dark theme redesign: Charcoal background (#2a2a2a), cream text, gold accents
+- ✅ Removed glass morphism from cards: Sharp-edged cards with gold borders, clean design
+- ✅ Restored glass morphism on navigation: Cream pill with navy text, rounded-full for synergy
 - ✅ Button redesign: Gold background with navy text (primary), cream outline (secondary)
-- ✅ Header redesign: Cream pill with navy text, no glass effect, rounded-full
 - ✅ Shop carousel component: 5 photos, click navigation, peek preview of adjacent photos
-- ✅ Carousel features: Gold nav arrows, dot indicators, smooth 0.3s transitions
+- ✅ Carousel features: Gold nav arrows, smooth 0.5s transitions, removed dot indicators (conflicted with logo)
+- ✅ Carousel height: Optimized to h-48 mobile / h-72 desktop for viewport fit
 - ✅ Hero section: White logo stacked, carousel behind with dark overlay for readability
-- ✅ Mobile responsive: Tested and verified on 375px viewport
+- ✅ Viewport optimization: Navigation + carousel + logo + buttons fit in 100dvh without scrolling
+- ✅ Mobile responsive: Tested and verified on 375px viewport and desktop
 - ✅ Form elements: Dark backgrounds with light borders, cream text
-- ✅ Typography: Cream color headings and body text, sizes maintained
+- ✅ Typography: Cream color headings and body text, Elms Sans font, sizes maintained
 - ✅ Overall aesthetic: Simple, welcoming, professional, luxurious as requested
 
 ### PHASE 2: Client Authentication & Dashboard
@@ -319,33 +321,36 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3006
 ✅ Vercel build error fixed (unused router import)
 ✅ Code pushed to main
 
-### Phase 3 (Just Completed)
-✅ Dark theme redesign: Deep navy bg + cream text + gold accents
-✅ Removed glass morphism effects: Sharp cards with borders
+### Phase 3 (Completed - Updated)
+✅ Dark theme redesign: Charcoal background (#2a2a2a) + cream text + gold accents
+✅ Removed glass morphism from cards: Sharp cards with gold borders
+✅ Restored glass morphism on header: Cream pill shape with navy text for synergy
 ✅ Button redesign: Gold bg + navy text (reversed from light theme)
-✅ Header redesign: Cream pill shape, no glass, navy text
 ✅ Shop carousel component: 5 Robyn photos, click nav, peek preview
-✅ Carousel: Gold nav arrows, dot indicators, 0.3s smooth transitions
+✅ Carousel optimization: Gold nav arrows, 0.5s smooth transitions, removed conflicting indicators
+✅ Carousel height adjusted: h-48 mobile / h-72 desktop for viewport fit
 ✅ Hero section: White logo + text stacked, carousel background
-✅ Mobile responsive: Tested and verified on mobile (375px)
+✅ Viewport optimization: Navigation + carousel + logo + buttons fit in 100dvh without scrolling
+✅ Mobile responsive: Tested and verified on mobile (375px) and desktop
 ✅ Form styling: Dark backgrounds, light borders, cream text
 ✅ All color and typography updates for dark theme
-✅ Lustre-react dependency added for carousel icons
-✅ Code pushed to main, Vercel rebuilding
+✅ Lucide-react dependency added for carousel icons
+✅ Code pushed to main (commit a563959), Vercel deployed
 
 ---
 
 ## IMMEDIATE NEXT STEPS (Phase 4)
 
-1. ✅ Phase 3 complete and pushed to main
-2. Monitor Vercel rebuild (should complete in 2-3 minutes)
-3. Test Phase 3 design on production once deployed:
-   - Dark theme displays correctly
-   - Carousel works with photos
-   - Navigation pills and buttons styled correctly
-   - Mobile responsive
-   - Colors and contrast readable
-4. Get Robyn's feedback on design refinements (if any tweaks needed)
+1. ✅ Phase 3 complete with charcoal background and pushed to main (commit a563959)
+2. ✅ Vercel deployed with optimized hero section (nav + carousel + logo + buttons fit in 100vh)
+3. ✅ Tested Phase 3 design on production:
+   - ✅ Charcoal background displays correctly
+   - ✅ Carousel works with photos and gold nav arrows
+   - ✅ Navigation pills styled with glass morphism
+   - ✅ Buttons visible and styled correctly (no scrolling needed)
+   - ✅ Mobile responsive (tested on 375px)
+   - ✅ Colors and contrast readable
+4. Next: Get Robyn's final feedback on charcoal background and optimized layout
 5. Implement Phase 4 features:
    - Email notifications (booking confirmations, consultation responses, signup confirmations)
    - Password reset flow
