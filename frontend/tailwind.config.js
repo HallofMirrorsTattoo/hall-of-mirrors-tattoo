@@ -42,9 +42,6 @@ module.exports = {
       animation: {
         'fade-up': 'fadeUp 0.8s ease-out forwards',
         'float': 'float 6s ease-in-out infinite',
-        'float-smooth': 'floatSmooth 8s ease-in-out infinite',
-        'spin-slow': 'spinSlow 20s linear infinite',
-        'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
       },
       keyframes: {
         fadeUp: {
@@ -54,21 +51,6 @@ module.exports = {
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%': { transform: 'translateY(-8px)' },
-        },
-        floatSmooth: {
-          '0%': { transform: 'translateY(0px) translateX(0px)' },
-          '25%': { transform: 'translateY(-12px) translateX(2px)' },
-          '50%': { transform: 'translateY(-8px) translateX(0px)' },
-          '75%': { transform: 'translateY(-14px) translateX(-2px)' },
-          '100%': { transform: 'translateY(0px) translateX(0px)' },
-        },
-        spinSlow: {
-          '0%': { transform: 'rotate(0deg)' },
-          '100%': { transform: 'rotate(360deg)' },
-        },
-        pulse-glow: {
-          '0%, 100%': { opacity: '1' },
-          '50%': { opacity: '0.7' },
         },
       },
       boxShadow: {
