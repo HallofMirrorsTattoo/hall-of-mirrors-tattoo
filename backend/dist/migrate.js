@@ -1,19 +1,40 @@
-import { execSync } from 'child_process';
+import { spawn } from 'child_process';
 export async function runMigrations() {
-    try {
+    return new Promise((resolve) => {
         console.log('🔄 Running Prisma migrations...');
-        const result = execSync('npx prisma migrate deploy', {
+        const timeout = setTimeout(() => {
+            console.warn('⚠️  Migration timeout (exceeded 30s)');
+            if (proc.pid) {
+                process.kill(proc.pid);
+            }
+            resolve(false);
+        }, 30000); // 30 second timeout
+        const proc = spawn('npx', ['prisma', 'migrate', 'deploy'], {
             stdio: 'pipe',
-            timeout: 60000, // 60 second timeout
         });
-        console.log('✅ Migrations completed successfully');
-        return true;
-    }
-    catch (error) {
-        console.warn('⚠️  Migration warning (continuing anyway):', error.message);
-        // Don't crash the server if migrations fail
-        // The database might already be up to date
-        return false;
-    }
+        let output = '';
+        proc.stdout?.on('data', (data) => {
+            output += data.toString();
+        });
+        proc.stderr?.on('data', (data) => {
+            output += data.toString();
+        });
+        proc.on('close', (code) => {
+            clearTimeout(timeout);
+            if (code === 0) {
+                console.log('✅ Migrations completed successfully');
+                resolve(true);
+            }
+            else {
+                console.warn('⚠️  Migration exited with code', code);
+                resolve(false);
+            }
+        });
+        proc.on('error', (error) => {
+            clearTimeout(timeout);
+            console.warn('⚠️  Migration error:', error.message);
+            resolve(false);
+        });
+    });
 }
 //# sourceMappingURL=migrate.js.map

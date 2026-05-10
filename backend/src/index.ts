@@ -61,29 +61,30 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-// Start server
-async function start() {
+// Start server immediately
+app.listen(PORT, () => {
+  console.log(`🎨 Hall of Mirrors API running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+});
+
+// Initialize database and run migrations in background (don't block startup)
+(async () => {
   try {
-    // Run migrations first
-    console.log('🔄 Starting initialization...');
+    console.log('🔄 Running migrations in background...');
     await runMigrations();
-
-    // Then initialize the database (create default studio)
-    await initializeDatabase();
-
-    // Finally start the Express server
-    app.listen(PORT, () => {
-      console.log(`🎨 Hall of Mirrors API running on port ${PORT}`);
-      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`📊 Database: ${process.env.DATABASE_URL?.split('@')[1]}`);
-    });
+    console.log('✅ Migrations complete');
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
-    process.exit(1);
+    console.error('Migration error (non-blocking):', error);
   }
-}
 
-start();
+  try {
+    console.log('🔄 Initializing database...');
+    await initializeDatabase();
+    console.log('✅ Database initialized');
+  } catch (error) {
+    console.error('Init error (non-blocking):', error);
+  }
+})();
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
