@@ -11,33 +11,17 @@ export default function ShopCarousel() {
 
   // Load photos from public folder
   useEffect(() => {
-    const loadPhotos = async () => {
-      try {
-        // Since we can't directly list files, we'll try a sequence of common filenames
-        const photoNames = ['shop-1.jpg', 'shop-2.jpg', 'shop-3.jpg', 'shop-4.jpg', 'shop-5.jpg', 'shop-6.jpg'];
-        const loadedPhotos: string[] = [];
+    // Hardcode the shop carousel photos that exist in the folder
+    const photoNames = [
+      '/assets/shop-carousel/IMG_1327.jpg',
+      '/assets/shop-carousel/IMG_1328.jpg',
+      '/assets/shop-carousel/IMG_1329.jpg',
+      '/assets/shop-carousel/IMG_1330.jpg',
+      '/assets/shop-carousel/IMG_1331.jpg',
+    ];
 
-        for (const name of photoNames) {
-          try {
-            const response = await fetch(`/assets/shop-carousel/${name}`);
-            if (response.ok) {
-              loadedPhotos.push(`/assets/shop-carousel/${name}`);
-            }
-          } catch {
-            // File doesn't exist, skip
-          }
-        }
-
-        setPhotos(loadedPhotos.length > 0 ? loadedPhotos : ['/assets/shop-carousel/shop-1.jpg']);
-      } catch (error) {
-        console.error('Error loading carousel photos:', error);
-        setPhotos(['/assets/shop-carousel/shop-1.jpg']);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadPhotos();
+    setPhotos(photoNames);
+    setLoading(false);
   }, []);
 
   const goToPrevious = () => {
