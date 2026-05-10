@@ -138,6 +138,8 @@ export async function sendNewBookingNotification(booking: BookingData) {
 
 export async function sendBookingConfirmationToClient(booking: BookingData) {
   try {
+    console.log('📧 Attempting to send client confirmation email...');
+
     if (!SENDGRID_API_KEY) {
       console.warn('⚠️ SendGrid API key not configured, skipping email');
       return;
@@ -148,6 +150,8 @@ export async function sendBookingConfirmationToClient(booking: BookingData) {
       : booking.guest_name || 'Client';
 
     const clientEmail = booking.user?.email || booking.guest_email;
+
+    console.log(`📧 Client email target: ${clientEmail}`);
 
     if (!clientEmail) {
       console.warn('⚠️ No client email provided, skipping confirmation');
