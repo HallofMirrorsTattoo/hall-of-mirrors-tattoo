@@ -6,6 +6,8 @@ import { PrismaClient } from '@prisma/client';
 import bookingsRouter from './routes/bookings.js';
 import consultationsRouter from './routes/consultations.js';
 import contactRouter from './routes/contact.js';
+import authRouter from './routes/auth.js';
+import artistsRouter from './routes/artists.js';
 import { setupDatabase } from './setupDb.js';
 
 const app: Express = express();
@@ -47,9 +49,12 @@ app.get('/api/health', (req: Request, res: Response) => {
 });
 
 // Routes
+app.use('/api/auth', authRouter);
+app.use('/api/artist', artistsRouter);
 app.use('/api/bookings', bookingsRouter);
 app.use('/api/consultations', consultationsRouter);
 app.use('/api/contact', contactRouter);
+app.use('/api/artists', artistsRouter);
 
 // Error handler middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { Decimal } from 'decimal.js';
 import { z } from 'zod';
+import { sendNewBookingNotification, sendBookingStatusUpdate } from '../services/emailService.js';
 
 const prisma = new PrismaClient();
 
@@ -15,6 +16,7 @@ const CreateBookingSchema = z.object({
   estimatedPlacement: z.string().min(2, 'Please specify placement'),
   referralSource: z.string().optional(),
   notes: z.string().optional(),
+  artistId: z.string().optional(),
 });
 
 type BookingFormData = z.infer<typeof CreateBookingSchema>;
@@ -41,10 +43,19 @@ export async function createBooking(req: Request, res: Response) {
       });
     }
 
+    // Get artist if specified
+    let artist = null;
+    if (validatedData.artistId) {
+      artist = await prisma.artist.findUnique({
+        where: { id: validatedData.artistId },
+      });
+    }
+
     const booking = await prisma.booking.create({
       data: {
         studio_id: 'default-studio',
         user_id: user.id,
+        artist_id: validatedData.artistId || null,
         appointment_date_time: new Date(validatedData.preferredDate),
         appointment_status: 'pending_consent',
         tattoo_description: validatedData.tattooDesignDescription,
@@ -57,7 +68,29 @@ export async function createBooking(req: Request, res: Response) {
       },
       include: {
         user: true,
+        artist: true,
       },
+    });
+
+    // Send email notifications
+    await sendNewBookingNotification({
+      id: booking.id,
+      booking_reference: booking.booking_reference,
+      appointment_date_time: booking.appointment_date_time,
+      tattoo_description: booking.tattoo_description || '',
+      placement: booking.placement || '',
+      estimated_size: booking.estimated_size || '',
+      user: {
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        phone: user.phone || '',
+      },
+      artist: artist ? {
+        id: artist.id,
+        full_name: artist.full_name,
+        email: artist.email,
+      } : undefined,
     });
 
     res.status(201).json({
@@ -191,6 +224,168 @@ export async function cancelBooking(req: Request, res: Response) {
     res.status(500).json({
       success: false,
       error: 'Failed to cancel booking',
+    });
+  }
+}
+
+// Artist-specific endpoints
+export async function getArtistBookings(req: Request, res: Response) {
+  try {
+    if (!req.artist) {
+      return res.status(401).json({
+        success: false,
+        error: 'Not authenticated',
+      });
+    }
+
+    const bookings = await prisma.booking.findMany({
+      where: {
+        artist_id: req.artist.id,
+        appointment_status: {
+          not: 'cancelled',
+        },
+      },
+      include: {
+        user: true,
+        artist: true,
+      },
+      orderBy: {
+        appointment_date_time: 'asc',
+      },
+    });
+
+    res.json({
+      success: true,
+      bookings,
+    });
+  } catch (error) {
+    console.error('Get artist bookings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch bookings',
+    });
+  }
+}
+
+export async function getArtistBookingById(req: Request, res: Response) {
+  try {
+    if (!req.artist) {
+      return res.status(401).json({
+        success: false,
+        error: 'Not authenticated',
+      });
+    }
+
+    const { id } = req.params;
+
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      include: {
+        user: true,
+        artist: true,
+      },
+    });
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        error: 'Booking not found',
+      });
+    }
+
+    // Check if this booking belongs to the artist
+    if (booking.artist_id !== req.artist.id) {
+      return res.status(403).json({
+        success: false,
+        error: 'You do not have access to this booking',
+      });
+    }
+
+    res.json({
+      success: true,
+      booking,
+    });
+  } catch (error) {
+    console.error('Get booking error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch booking',
+    });
+  }
+}
+
+export async function updateBookingStatusByArtist(req: Request, res: Response) {
+  try {
+    if (!req.artist) {
+      return res.status(401).json({
+        success: false,
+        error: 'Not authenticated',
+      });
+    }
+
+    const { id } = req.params;
+    const { status, notes } = req.body;
+
+    // Validate status
+    const validStatuses = ['pending_consent', 'confirmed', 'completed', 'cancelled'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid status',
+      });
+    }
+
+    const booking = await prisma.booking.findUnique({
+      where: { id },
+      include: { user: true, artist: true },
+    });
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        error: 'Booking not found',
+      });
+    }
+
+    // Check if this booking belongs to the artist
+    if (booking.artist_id !== req.artist.id) {
+      return res.status(403).json({
+        success: false,
+        error: 'You do not have access to this booking',
+      });
+    }
+
+    const updatedBooking = await prisma.booking.update({
+      where: { id },
+      data: {
+        appointment_status: status,
+        artist_notes: notes || booking.artist_notes,
+      },
+      include: { user: true, artist: true },
+    });
+
+    // Send email notification to client
+    if (booking.user) {
+      await sendBookingStatusUpdate(
+        booking.user.email,
+        `${booking.user.first_name} ${booking.user.last_name}`,
+        booking.booking_reference,
+        status,
+        req.artist.full_name,
+        notes
+      );
+    }
+
+    res.json({
+      success: true,
+      message: 'Booking status updated',
+      booking: updatedBooking,
+    });
+  } catch (error) {
+    console.error('Update booking status error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update booking',
     });
   }
 }

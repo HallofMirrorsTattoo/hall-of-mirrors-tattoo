@@ -4,4 +4,7 @@ export declare function getBookings(req: Request, res: Response): Promise<void>;
 export declare function getBookingById(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 export declare function updateBooking(req: Request, res: Response): Promise<void>;
 export declare function cancelBooking(req: Request, res: Response): Promise<void>;
+export declare function getArtistBookings(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+export declare function getArtistBookingById(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+export declare function updateBookingStatusByArtist(req: Request, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 //# sourceMappingURL=bookingController.d.ts.map
