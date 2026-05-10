@@ -8,15 +8,15 @@ export default function Home() {
       {/* Hero Section - Large carousel with centered logo and bottom buttons */}
       <section className="h-[100dvh] px-4 relative overflow-hidden bg-[#2a2a2a]">
         {/* Large Carousel Background - fills most of page (hidden, charcoal background only) */}
-        <div className="absolute inset-0 top-6 bottom-28 -z-5 w-full hidden">
+        <div className="absolute inset-0 top-4 bottom-24 -z-5 w-full hidden">
           <ShopCarousel />
         </div>
 
         {/* Charcoal background overlay - completely opaque */}
-        <div className="absolute inset-0 top-6 bottom-28 bg-[#2a2a2a] -z-4"></div>
+        <div className="absolute inset-0 top-4 bottom-24 bg-[#2a2a2a] -z-4"></div>
 
         {/* Logo Section - Centered within carousel area only */}
-        <div className="absolute inset-0 top-6 bottom-28 left-0 right-0 flex items-center justify-center z-10">
+        <div className="absolute inset-0 top-4 bottom-24 left-0 right-0 flex items-center justify-center z-10">
           <div className="w-full flex flex-col items-center space-y-4 animate-fadeUp" style={{ animationDelay: '0ms' }}>
             {/* Main Logo - White version */}
             <Image
