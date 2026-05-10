@@ -52,23 +52,23 @@ h3 {
   @apply inline-block rounded-full bg-primary-dark/5 border border-primary-dark/10 px-3 py-1 text-[11px] uppercase tracking-[0.15em] font-medium text-primary-dark/60 mb-4;
 }
 
-/* Sharp-edged card for dark theme - high contrast */
+/* Glass morphism cards */
 .card-premium {
-  @apply p-0 bg-primary-dark border-2 border-accent-gold rounded-none;
+  @apply p-0 bg-primary-light/40 backdrop-blur-md border-2 border-primary-light/30 rounded-2xl;
 }
 
 .card-premium-inner {
-  @apply rounded-none bg-primary-dark border-none p-6 text-primary-light;
+  @apply rounded-2xl bg-transparent border-none p-6 text-primary-light;
 }
 
-/* Glass morphism effect on navigation */
+/* Glass morphism effect - cream with high transparency */
 .glassmorphism {
-  @apply bg-primary-light/80 backdrop-blur-xl border-2 border-primary-light/50 rounded-full shadow-soft;
+  @apply bg-primary-light/40 backdrop-blur-xl border-2 border-primary-light/30 rounded-full shadow-soft;
 }
 
-/* Premium button styles - gold background with navy text */
+/* Premium button styles - gold with transparency and glass effect */
 .btn-primary {
-  @apply relative inline-flex items-center gap-2 bg-accent-gold text-primary-dark font-semibold py-3 px-8 rounded-full hover:text-primary-light transition-all duration-500 active:scale-[0.98] shadow-soft;
+  @apply relative inline-flex items-center gap-2 bg-accent-gold/60 backdrop-blur-md border border-accent-gold/40 text-primary-dark font-semibold py-3 px-8 rounded-full hover:bg-accent-gold/80 transition-all duration-500 active:scale-[0.98] shadow-soft;
   transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
@@ -82,9 +82,9 @@ h3 {
   transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* Secondary button - navy border on dark background */
+/* Secondary button - cream glass morphism with high transparency */
 .btn-secondary {
-  @apply border-2 border-primary-light text-primary-light font-semibold py-3 px-8 rounded-full hover:bg-primary-light/10 transition-all duration-500 active:scale-[0.98];
+  @apply bg-primary-light/40 backdrop-blur-md border-2 border-primary-light/30 text-primary-light font-semibold py-3 px-8 rounded-full hover:bg-primary-light/60 transition-all duration-500 active:scale-[0.98] shadow-soft;
   transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
@@ -93,9 +93,9 @@ a {
   @apply text-accent-gold hover:text-primary-dark transition-colors duration-300;
 }
 
-/* Form elements - dark background */
+/* Form elements - glass morphism */
 input, textarea, select {
-  @apply bg-primary-dark border-2 border-primary-light rounded-xl px-4 py-3 text-primary-light placeholder-primary-light/40 focus:outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30 transition-all duration-300 shadow-soft;
+  @apply bg-primary-light/40 backdrop-blur-md border-2 border-primary-light/30 rounded-xl px-4 py-3 text-primary-light placeholder-primary-light/40 focus:outline-none focus:border-primary-light/60 focus:ring-1 focus:ring-primary-light/20 transition-all duration-300 shadow-soft;
   transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
@@ -116,7 +116,7 @@ label {
 
 /* Premium spacing */
 section {
-  @apply py-28 md:py-40;
+  @apply py-28 md:py-40 bg-primary-dark;
 }
 
 /* Typography contrast - for dark background */

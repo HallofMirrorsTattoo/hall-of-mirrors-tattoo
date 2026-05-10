@@ -21,7 +21,7 @@ export default function ClientDashboardPage() {
 
   return (
     <ClientProtectedRoute>
-      <div className="min-h-screen bg-primary-light pt-32 pb-20">
+      <div className="min-h-screen bg-primary-dark pt-32 pb-20">
         <div className="max-w-6xl mx-auto px-4">
           {/* Header */}
           <div className="flex justify-between items-center mb-12">

@@ -29,7 +29,7 @@ export default function ArtistLogin() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-primary-light">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-primary-dark">
         <div className="text-center">
           <p className="text-primary-dark">Loading...</p>
         </div>

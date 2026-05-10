@@ -66,19 +66,19 @@ export default function ConsultationPage() {
   return (
     <div>
       {/* Hero Section */}
-      <section className="min-h-[60dvh] px-4 py-20 flex items-center justify-center relative overflow-hidden pattern-gold-accents bg-primary-light">
+      <section className="min-h-[60dvh] px-4 py-20 flex items-center justify-center relative overflow-hidden pattern-gold-accents bg-primary-dark">
         <div className="max-w-4xl mx-auto w-full text-center space-y-6 relative z-10">
-          <h1 className="text-4xl md:text-5xl font-serif font-bold text-primary-dark">
+          <h1 className="text-4xl md:text-5xl font-serif font-bold text-primary-light">
             Free Consultation
           </h1>
-          <p className="text-lg text-primary-dark/75 max-w-2xl mx-auto">
+          <p className="text-lg text-primary-light/75 max-w-2xl mx-auto">
             Let's discuss your tattoo vision. Book a free consultation with Robyn to explore ideas and understand your perfect design.
           </p>
         </div>
       </section>
 
       {/* Form Section */}
-      <section className="px-4 py-20 bg-primary-light pattern-gold-accents">
+      <section className="px-4 py-20 bg-primary-dark pattern-gold-accents">
         <div className="max-w-2xl mx-auto">
           <div className="card-premium">
             <div className="card-premium-inner">
@@ -97,7 +97,7 @@ export default function ConsultationPage() {
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="clientName" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                    <label htmlFor="clientName" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
                       Full Name
                     </label>
                     <input
@@ -113,7 +113,7 @@ export default function ConsultationPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="clientEmail" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                    <label htmlFor="clientEmail" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
                       Email
                     </label>
                     <input
@@ -129,7 +129,7 @@ export default function ConsultationPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="clientPhone" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                    <label htmlFor="clientPhone" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
                       Phone Number
                     </label>
                     <input
@@ -145,7 +145,7 @@ export default function ConsultationPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="consultationType" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                    <label htmlFor="consultationType" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
                       Consultation Type
                     </label>
                     <select
@@ -165,7 +165,7 @@ export default function ConsultationPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="preferredDate" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                  <label htmlFor="preferredDate" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
                     Preferred Date (Optional)
                   </label>
                   <input
@@ -177,7 +177,7 @@ export default function ConsultationPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="interestedIn" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                  <label htmlFor="interestedIn" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
                     What are you interested in? (Optional)
                   </label>
                   <input
@@ -190,7 +190,7 @@ export default function ConsultationPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="message" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                  <label htmlFor="message" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
                     Tell us more
                   </label>
                   <textarea
@@ -214,8 +214,8 @@ export default function ConsultationPage() {
                   <div className="btn-primary-icon">↗</div>
                 </button>
 
-                <p className="text-center text-sm text-primary-dark/60">
-                  Ready to book? <Link href="/booking" className="text-accent-gold hover:text-primary-dark font-medium">
+                <p className="text-center text-sm text-primary-light/60">
+                  Ready to book? <Link href="/booking" className="text-accent-gold hover:text-primary-light font-medium">
                     Schedule an appointment
                   </Link> directly.
                 </p>

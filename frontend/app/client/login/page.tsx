@@ -27,7 +27,7 @@ export default function ClientLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-primary-light pt-40 pb-20">
+    <div className="min-h-screen bg-primary-dark pt-40 pb-20">
       <div className="max-w-md mx-auto px-4">
         <div className="card-premium">
           <div className="card-premium-inner">

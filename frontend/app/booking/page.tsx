@@ -102,19 +102,19 @@ export default function BookingPage() {
   return (
     <div>
       {/* Hero Section */}
-      <section className="min-h-[60dvh] px-4 py-20 flex items-center justify-center relative overflow-hidden pattern-gold-accents bg-primary-light">
+      <section className="min-h-[60dvh] px-4 py-20 flex items-center justify-center relative overflow-hidden pattern-gold-accents bg-primary-dark">
         <div className="max-w-4xl mx-auto w-full text-center space-y-6 relative z-10">
-          <h1 className="text-4xl md:text-5xl font-serif font-bold text-primary-dark">
+          <h1 className="text-4xl md:text-5xl font-serif font-bold text-primary-light">
             Book Your Appointment
           </h1>
-          <p className="text-lg text-primary-dark/75 max-w-2xl mx-auto">
+          <p className="text-lg text-primary-light/75 max-w-2xl mx-auto">
             Limited availability ensures personalized attention. Complete this form and we'll confirm your booking within 24 hours.
           </p>
         </div>
       </section>
 
       {/* Form Section */}
-      <section className="px-4 py-20 bg-primary-light pattern-gold-accents">
+      <section className="px-4 py-20 bg-primary-dark pattern-gold-accents">
         <div className="max-w-2xl mx-auto">
           <div className="card-premium">
             <div className="card-premium-inner">
@@ -133,7 +133,7 @@ export default function BookingPage() {
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="clientName" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                    <label htmlFor="clientName" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
                       Full Name
                     </label>
                     <input
@@ -149,7 +149,7 @@ export default function BookingPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="clientEmail" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                    <label htmlFor="clientEmail" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
                       Email
                     </label>
                     <input
@@ -165,7 +165,7 @@ export default function BookingPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="clientPhone" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                    <label htmlFor="clientPhone" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
                       Phone Number
                     </label>
                     <input
@@ -181,7 +181,7 @@ export default function BookingPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="preferredDate" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                    <label htmlFor="preferredDate" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
                       Preferred Date
                     </label>
                     <input
@@ -197,7 +197,7 @@ export default function BookingPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="tattooDesignDescription" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                  <label htmlFor="tattooDesignDescription" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
                     Tattoo Design Description
                   </label>
                   <textarea
@@ -214,7 +214,7 @@ export default function BookingPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="estimatedSize" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                    <label htmlFor="estimatedSize" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
                       Estimated Size
                     </label>
                     <select
@@ -234,7 +234,7 @@ export default function BookingPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="estimatedPlacement" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                    <label htmlFor="estimatedPlacement" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
                       Body Placement
                     </label>
                     <input
@@ -251,7 +251,7 @@ export default function BookingPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="artistId" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                  <label htmlFor="artistId" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
                     Preferred Artist (Optional)
                   </label>
                   <select
@@ -274,7 +274,7 @@ export default function BookingPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="referralSource" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                  <label htmlFor="referralSource" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
                     How did you find us? (Optional)
                   </label>
                   <input
@@ -287,7 +287,7 @@ export default function BookingPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="notes" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                  <label htmlFor="notes" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
                     Additional Notes (Optional)
                   </label>
                   <textarea
@@ -308,8 +308,8 @@ export default function BookingPage() {
                   <div className="btn-primary-icon">↗</div>
                 </button>
 
-                <p className="text-center text-sm text-primary-dark/60">
-                  Have questions? <Link href="/consultation" className="text-accent-gold hover:text-primary-dark font-medium">
+                <p className="text-center text-sm text-primary-light/60">
+                  Have questions? <Link href="/consultation" className="text-accent-gold hover:text-primary-light font-medium">
                     Schedule a free consultation
                   </Link> first.
                 </p>
