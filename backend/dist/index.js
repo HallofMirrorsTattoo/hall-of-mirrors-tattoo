@@ -7,6 +7,7 @@ import bookingsRouter from './routes/bookings.js';
 import consultationsRouter from './routes/consultations.js';
 import contactRouter from './routes/contact.js';
 import { initializeDatabase } from './init.js';
+import { runMigrations } from './migrate.js';
 const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 5000;
@@ -52,18 +53,26 @@ app.use((err, req, res, next) => {
     });
 });
 // Start server
-app.listen(PORT, async () => {
+async function start() {
     try {
+        // Run migrations first
+        console.log('🔄 Starting initialization...');
+        await runMigrations();
+        // Then initialize the database (create default studio)
         await initializeDatabase();
-        console.log(`🎨 Hall of Mirrors API running on port ${PORT}`);
-        console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-        console.log(`📊 Database: ${process.env.DATABASE_URL?.split('@')[1]}`);
+        // Finally start the Express server
+        app.listen(PORT, () => {
+            console.log(`🎨 Hall of Mirrors API running on port ${PORT}`);
+            console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+            console.log(`📊 Database: ${process.env.DATABASE_URL?.split('@')[1]}`);
+        });
     }
     catch (error) {
-        console.error('Failed to initialize database:', error);
+        console.error('❌ Failed to start server:', error);
         process.exit(1);
     }
-});
+}
+start();
 // Graceful shutdown
 process.on('SIGINT', async () => {
     console.log('\n🛑 Shutting down gracefully...');
