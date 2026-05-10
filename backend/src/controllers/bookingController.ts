@@ -16,11 +16,14 @@ const CreateBookingSchema = z.object({
   notes: z.string().optional(),
 });
 
+type BookingFormData = z.infer<typeof CreateBookingSchema>;
+
 export async function createBooking(req: Request, res: Response) {
   try {
     const validatedData = CreateBookingSchema.parse(req.body);
+    const [firstName, ...lastNameParts] = validatedData.clientName.split(' ');
+    const lastName = lastNameParts.join(' ') || 'Guest';
 
-    // Check if user exists, create if not
     let user = await prisma.user.findUnique({
       where: { email: validatedData.clientEmail },
     });
@@ -29,23 +32,27 @@ export async function createBooking(req: Request, res: Response) {
       user = await prisma.user.create({
         data: {
           email: validatedData.clientEmail,
-          name: validatedData.clientName,
+          first_name: firstName,
+          last_name: lastName,
           phone: validatedData.clientPhone,
+          password_hash: '',
         },
       });
     }
 
-    // Create the booking
     const booking = await prisma.booking.create({
       data: {
-        userId: user.id,
-        preferredDate: new Date(validatedData.preferredDate),
-        status: 'pending',
-        notes: validatedData.notes || null,
-        designDescription: validatedData.tattooDesignDescription,
-        estimatedSize: validatedData.estimatedSize,
-        estimatedPlacement: validatedData.estimatedPlacement,
-        referralSource: validatedData.referralSource || null,
+        studio_id: 'default-studio',
+        user_id: user.id,
+        appointment_date_time: new Date(validatedData.preferredDate),
+        appointment_status: 'pending_consent',
+        tattoo_description: validatedData.tattooDesignDescription,
+        placement: validatedData.estimatedPlacement,
+        estimated_size: validatedData.estimatedSize,
+        artist_notes: validatedData.notes || null,
+        deposit_amount: new (require('decimal.js'))('0'),
+        balance_due: new (require('decimal.js'))('0'),
+        booking_reference: `BK-${Date.now()}`,
       },
       include: {
         user: true,
@@ -78,7 +85,7 @@ export async function getBookings(req: Request, res: Response) {
   try {
     const bookings = await prisma.booking.findMany({
       include: { user: true },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
     });
 
     res.json({
@@ -126,13 +133,13 @@ export async function getBookingById(req: Request, res: Response) {
 export async function updateBooking(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const { status, notes } = req.body;
+    const { appointment_status, artist_notes } = req.body;
 
     const booking = await prisma.booking.update({
       where: { id },
       data: {
-        ...(status && { status }),
-        ...(notes && { notes }),
+        ...(appointment_status && { appointment_status }),
+        ...(artist_notes && { artist_notes }),
       },
       include: { user: true },
     });
@@ -157,7 +164,7 @@ export async function cancelBooking(req: Request, res: Response) {
 
     const booking = await prisma.booking.update({
       where: { id },
-      data: { status: 'cancelled' },
+      data: { appointment_status: 'cancelled' },
       include: { user: true },
     });
 

@@ -8,43 +8,26 @@ const CreateConsultationSchema = z.object({
   clientName: z.string().min(2, 'Name must be at least 2 characters'),
   clientEmail: z.string().email('Invalid email address'),
   clientPhone: z.string().min(10, 'Phone number must be at least 10 digits'),
-  preferredDate: z.string().datetime('Invalid date format').optional(),
-  consultationType: z.enum(['initial', 'design_review', 'follow_up']),
+  preferredDate: z.string().optional(),
+  consultationType: z.enum(['initial', 'design_review', 'follow_up']).optional(),
   message: z.string().min(10, 'Please provide more details about your consultation request'),
   interestedIn: z.string().optional(),
 });
+
+type ConsultationFormData = z.infer<typeof CreateConsultationSchema>;
 
 export async function createConsultation(req: Request, res: Response) {
   try {
     const validatedData = CreateConsultationSchema.parse(req.body);
 
-    // Check if user exists, create if not
-    let user = await prisma.user.findUnique({
-      where: { email: validatedData.clientEmail },
-    });
-
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email: validatedData.clientEmail,
-          name: validatedData.clientName,
-          phone: validatedData.clientPhone,
-        },
-      });
-    }
-
-    // Create the consultation request
     const consultation = await prisma.consultationRequest.create({
       data: {
-        userId: user.id,
-        type: validatedData.consultationType,
-        preferredDate: validatedData.preferredDate ? new Date(validatedData.preferredDate) : null,
-        message: validatedData.message,
-        interestedIn: validatedData.interestedIn || null,
-        status: 'pending',
-      },
-      include: {
-        user: true,
+        name: validatedData.clientName,
+        email: validatedData.clientEmail,
+        phone: validatedData.clientPhone,
+        tattoo_idea: validatedData.message,
+        preferred_contact_method: validatedData.interestedIn || null,
+        consultation_status: 'new',
       },
     });
 
@@ -73,8 +56,7 @@ export async function createConsultation(req: Request, res: Response) {
 export async function getConsultations(req: Request, res: Response) {
   try {
     const consultations = await prisma.consultationRequest.findMany({
-      include: { user: true },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
     });
 
     res.json({
@@ -96,7 +78,6 @@ export async function getConsultationById(req: Request, res: Response) {
 
     const consultation = await prisma.consultationRequest.findUnique({
       where: { id },
-      include: { user: true },
     });
 
     if (!consultation) {
@@ -122,15 +103,14 @@ export async function getConsultationById(req: Request, res: Response) {
 export async function updateConsultation(req: Request, res: Response) {
   try {
     const { id } = req.params;
-    const { status, notes } = req.body;
+    const { consultation_status, response_message } = req.body;
 
     const consultation = await prisma.consultationRequest.update({
       where: { id },
       data: {
-        ...(status && { status }),
-        ...(notes && { notes }),
+        ...(consultation_status && { consultation_status }),
+        ...(response_message && { response_message }),
       },
-      include: { user: true },
     });
 
     res.json({

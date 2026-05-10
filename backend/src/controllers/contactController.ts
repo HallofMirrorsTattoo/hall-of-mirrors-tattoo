@@ -20,10 +20,8 @@ export async function submitContact(req: Request, res: Response) {
       data: {
         name: validatedData.name,
         email: validatedData.email,
-        phone: validatedData.phone || null,
-        subject: validatedData.subject,
         message: validatedData.message,
-        status: 'unread',
+        response_status: 'new',
       },
     });
 
@@ -52,7 +50,7 @@ export async function submitContact(req: Request, res: Response) {
 export async function getContactSubmissions(req: Request, res: Response) {
   try {
     const submissions = await prisma.contactFormSubmission.findMany({
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
     });
 
     res.json({
@@ -74,7 +72,7 @@ export async function markAsRead(req: Request, res: Response) {
 
     const submission = await prisma.contactFormSubmission.update({
       where: { id },
-      data: { status: 'read' },
+      data: { response_status: 'read' },
     });
 
     res.json({
