@@ -51,24 +51,22 @@ app.use((err, req, res, next) => {
         status: err.status || 500,
     });
 });
-// Setup database and start server
-async function start() {
+// Start server immediately
+app.listen(PORT, () => {
+    console.log(`🎨 Hall of Mirrors API running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+});
+// Setup database in background (non-blocking)
+(async () => {
     try {
         console.log('🔄 Setting up database...');
         await setupDatabase();
         console.log('✅ Database ready');
-        // Now start the server
-        app.listen(PORT, () => {
-            console.log(`🎨 Hall of Mirrors API running on port ${PORT}`);
-            console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-        });
     }
     catch (error) {
-        console.error('❌ Failed to start:', error);
-        process.exit(1);
+        console.error('⚠️ Database setup error:', error);
     }
-}
-start();
+})();
 // Graceful shutdown
 process.on('SIGINT', async () => {
     console.log('\n🛑 Shutting down gracefully...');
