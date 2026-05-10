@@ -6,15 +6,14 @@ import ScrollGradientFade from './components/ScrollGradientFade';
 export default function Home() {
   return (
     <div>
-      {/* Fixed Carousel - stays at top while page scrolls */}
-      <div className="fixed top-0 left-0 right-0 h-[100dvh] z-0 w-full pointer-events-none">
-        <ShopCarousel />
-        {/* Scroll-responsive gradient fade overlay - fades away as user scrolls */}
-        <ScrollGradientFade />
-      </div>
-
       {/* Hero Section - Large carousel with centered logo and bottom buttons */}
-      <section className="h-[100dvh] relative overflow-visible bg-transparent">
+      <section className="h-[100dvh] relative overflow-hidden bg-transparent">
+        {/* Carousel Background - absolute positioned within hero only */}
+        <div className="absolute inset-0 w-full z-0 overflow-hidden">
+          <ShopCarousel />
+          <ScrollGradientFade />
+        </div>
+
         {/* Logo Section - Positioned in upper area with breathing room before buttons */}
         <div className="absolute inset-0 top-1 bottom-32 left-0 right-0 flex flex-col items-center justify-start pt-20 z-10 pointer-events-auto">
           <div className="w-full flex flex-col items-center space-y-4 animate-fadeUp" style={{ animationDelay: '0ms' }}>
