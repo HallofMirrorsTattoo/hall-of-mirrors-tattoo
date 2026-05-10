@@ -8,15 +8,15 @@ export default function Home() {
       {/* Hero Section - Large carousel with centered logo and bottom buttons */}
       <section className="h-[100dvh] px-4 relative overflow-hidden bg-[#2a2a2a]">
         {/* Large Carousel Background - fills most of page (hidden, charcoal background only) */}
-        <div className="absolute inset-0 top-1 bottom-24 -z-5 w-full hidden">
+        <div className="absolute inset-0 top-4 bottom-32 -z-5 w-full hidden">
           <ShopCarousel />
         </div>
 
         {/* Charcoal background overlay - completely opaque */}
-        <div className="absolute inset-0 top-1 bottom-24 bg-[#2a2a2a] -z-4"></div>
+        <div className="absolute inset-0 top-4 bottom-32 bg-[#2a2a2a] -z-4"></div>
 
         {/* Logo Section - Centered within carousel area only */}
-        <div className="absolute inset-0 top-1 bottom-24 left-0 right-0 flex items-center justify-center z-10">
+        <div className="absolute inset-0 top-4 bottom-32 left-0 right-0 flex items-center justify-center z-10">
           <div className="w-full flex flex-col items-center space-y-4 animate-fadeUp" style={{ animationDelay: '0ms' }}>
             {/* Main Logo - White version */}
             <Image
@@ -43,7 +43,7 @@ export default function Home() {
         </div>
 
         {/* Bottom Section - Buttons and scroll indicator */}
-        <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center justify-center z-20 gap-4 pb-8">
+        <div className="absolute bottom-32 left-0 right-0 flex flex-col items-center justify-center z-20 gap-4 pb-8">
           {/* CTA Buttons - Animated */}
           <div className="flex gap-4 flex-col md:flex-row justify-center animate-fadeUp" style={{ animationDelay: '700ms' }}>
             <Link href="/booking" className="btn-primary group">
