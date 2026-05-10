@@ -1,10 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-
-// Force rebuild on production
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function ShopCarousel() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -16,13 +13,13 @@ export default function ShopCarousel() {
     '/assets/shop-carousel/IMG_1331.jpg',
   ]);
 
-  const goToPrevious = () => {
-    setCurrentIndex((prev) => (prev - 1 + photos.length) % photos.length);
-  };
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % photos.length);
+    }, 6000);
 
-  const goToNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % photos.length);
-  };
+    return () => clearInterval(interval);
+  }, [photos.length]);
 
   return (
     <div className="w-full h-full relative overflow-hidden bg-[#2a2a2a]">
@@ -45,33 +42,14 @@ export default function ShopCarousel() {
         </div>
       ))}
 
-      {/* Navigation Arrows */}
-      <button
-        onClick={goToPrevious}
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 z-30 bg-accent-gold/80 hover:bg-accent-gold p-2 rounded-full transition-colors duration-300 hover:scale-110 active:scale-95"
-        aria-label="Previous photo"
-      >
-        <ChevronLeft className="w-6 h-6 text-primary-dark" />
-      </button>
-
-      <button
-        onClick={goToNext}
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 z-30 bg-accent-gold/80 hover:bg-accent-gold p-2 rounded-full transition-colors duration-300 hover:scale-110 active:scale-95"
-        aria-label="Next photo"
-      >
-        <ChevronRight className="w-6 h-6 text-primary-dark" />
-      </button>
-
-      {/* Carousel counter/indicator dots */}
+      {/* Carousel indicator dots */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-30 flex gap-2">
         {photos.map((_, index) => (
-          <button
+          <div
             key={index}
-            onClick={() => setCurrentIndex(index)}
             className={`w-2 h-2 rounded-full transition-all duration-300 ${
               index === currentIndex ? 'bg-accent-gold w-8' : 'bg-accent-gold/40'
             }`}
-            aria-label={`Go to photo ${index + 1}`}
           />
         ))}
       </div>
