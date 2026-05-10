@@ -4,12 +4,19 @@ const prisma = new PrismaClient();
 
 export async function initializeDatabase() {
   try {
+    // Test database connection
+    console.log('🔄 Testing database connection...');
+    await prisma.$queryRaw`SELECT 1`;
+    console.log('✅ Database connected');
+
     // Check if default studio exists
+    console.log('🔄 Checking for default studio...');
     const existingStudio = await prisma.studio.findUnique({
       where: { id: 'default-studio' },
     });
 
     if (!existingStudio) {
+      console.log('🔄 Creating default studio...');
       await prisma.studio.create({
         data: {
           id: 'default-studio',
@@ -37,7 +44,9 @@ export async function initializeDatabase() {
       console.log('✅ Default studio already exists');
     }
   } catch (error) {
-    console.error('Database initialization error:', error);
-    throw error;
+    console.error('❌ Database initialization error:', error);
+    // Don't crash the server, just log the error
+    // The tables might not exist yet if migrations haven't run
+    console.log('⚠️  Continuing without database initialization...');
   }
 }
