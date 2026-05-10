@@ -4,7 +4,7 @@
     "builder": "nixpacks"
   },
   "deploy": {
-    "startCommand": "prisma migrate deploy --skip-generate && node dist/index.js",
+    "startCommand": "prisma migrate deploy && node dist/index.js",
     "restartPolicyType": "on_failure",
     "restartPolicyMaxRetries": 5
   }
