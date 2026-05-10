@@ -23,8 +23,8 @@ export default function Home() {
                 alt="Hall of Mirrors"
                 width={200}
                 height={200}
-                className="w-32 md:w-48 h-32 md:h-48 object-contain animate-fadeUp"
-                style={{ animationDelay: '100ms' }}
+                className="w-32 md:w-48 h-32 md:h-48 object-contain animate-float"
+                style={{ animationDelay: '0ms' }}
                 priority
               />
             </div>
@@ -37,7 +37,7 @@ export default function Home() {
 
           {/* Tagline - Animated */}
           <div className="space-y-6 animate-fadeUp" style={{ animationDelay: '500ms' }}>
-            <p className="text-xl md:text-2xl text-primary-dark/80 leading-relaxed font-light max-w-2xl mx-auto">
+            <p className="text-xl md:text-2xl text-primary-dark leading-relaxed font-light max-w-2xl mx-auto">
               Dark academia meets modern artistry. Bespoke tattoo designs crafted with meticulous attention to detail and timeless elegance.
             </p>
           </div>

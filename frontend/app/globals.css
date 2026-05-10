@@ -63,7 +63,7 @@ h3 {
 
 /* Glassmorphism effect - increased transparency for luxury feel */
 .glassmorphism {
-  @apply bg-white/50 backdrop-blur-xl border border-primary-dark/10 rounded-2xl shadow-soft;
+  @apply bg-white/60 backdrop-blur-xl border border-primary-dark/10 rounded-2xl shadow-soft;
 }
 
 /* Premium button styles - dark accent button */
