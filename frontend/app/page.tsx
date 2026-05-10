@@ -5,19 +5,19 @@ import ShopCarousel from './components/ShopCarousel';
 export default function Home() {
   return (
     <div>
-      {/* Hero Section - Logo with Carousel Behind */}
-      <section className="h-[100dvh] px-4 flex flex-col items-center justify-center relative overflow-hidden">
-        {/* Carousel Background - fills entire section behind logo */}
-        <div className="absolute inset-0 -z-5">
+      {/* Hero Section - Large carousel with centered logo and bottom buttons */}
+      <section className="h-[100dvh] px-4 flex flex-col items-center justify-between relative overflow-hidden">
+        {/* Large Carousel Background - fills most of hero section */}
+        <div className="absolute inset-0 top-0 h-[85dvh] -z-5 w-full">
           <ShopCarousel />
         </div>
 
         {/* Dark overlay to ensure logo readability over carousel */}
-        <div className="absolute inset-0 bg-primary-dark/50 -z-4"></div>
+        <div className="absolute inset-0 top-0 h-[85dvh] bg-primary-dark/50 -z-4"></div>
 
-        <div className="max-w-4xl mx-auto w-full text-center space-y-4 relative z-10 flex flex-col justify-between h-full py-24">
-          {/* Logo Section - Animated */}
-          <div className="space-y-4 animate-fadeUp" style={{ animationDelay: '0ms' }}>
+        {/* Logo Section - Centered on carousel */}
+        <div className="flex-1 flex items-center justify-center relative z-10">
+          <div className="text-center space-y-4 animate-fadeUp" style={{ animationDelay: '0ms' }}>
             {/* Main Logo - White version */}
             <div className="flex justify-center">
               <Image
@@ -44,9 +44,12 @@ export default function Home() {
               />
             </div>
           </div>
+        </div>
 
+        {/* Bottom Section - Buttons and scroll indicator */}
+        <div className="flex flex-col items-center justify-center relative z-20 gap-4 pb-8">
           {/* CTA Buttons - Animated */}
-          <div className="flex gap-4 flex-col md:flex-row justify-center pt-8 animate-fadeUp" style={{ animationDelay: '700ms' }}>
+          <div className="flex gap-4 flex-col md:flex-row justify-center animate-fadeUp" style={{ animationDelay: '700ms' }}>
             <Link href="/booking" className="btn-primary group">
               <span>Book Appointment</span>
               <div className="btn-primary-icon">
@@ -59,7 +62,7 @@ export default function Home() {
           </div>
 
           {/* Scroll indicator */}
-          <div className="pt-8 animate-float" style={{ animationDelay: '1000ms' }}>
+          <div className="animate-float" style={{ animationDelay: '1000ms' }}>
             <p className="text-sm text-primary-light/70 font-medium">Scroll to explore</p>
             <div className="flex justify-center mt-2">
               <svg className="w-5 h-5 text-primary-light/60 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
