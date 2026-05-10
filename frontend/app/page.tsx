@@ -7,11 +7,11 @@ export default function Home() {
     <div>
       {/* Hero Section - Large carousel with centered logo and bottom buttons */}
       <section className="h-[100dvh] px-4 relative overflow-hidden bg-[#2a2a2a]">
-        {/* Carousel - extends to top, fades at bottom */}
-        <div className="absolute inset-0 top-0 bottom-0 -z-5 w-full">
+        {/* Carousel - extends to top, fades at bottom into charcoal */}
+        <div className="absolute inset-0 top-0 bottom-32 -z-5 w-full">
           <ShopCarousel />
-          {/* Gradient fade overlay at bottom - blends carousel into buttons */}
-          <div className="absolute inset-0 top-1/2 bg-gradient-to-b from-transparent via-transparent to-[#2a2a2a] pointer-events-none"></div>
+          {/* Gradient fade overlay at bottom - blends carousel into charcoal above buttons */}
+          <div className="absolute inset-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-[#2a2a2a] pointer-events-none z-10"></div>
         </div>
 
         {/* Logo Section - Positioned in upper area with breathing room before buttons */}
@@ -68,8 +68,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trust Indicators - Sharp edged cards on dark background */}
-      <section className="px-4 py-32 bg-primary-dark">
+      {/* Trust Indicators - Sharp edged cards on charcoal background */}
+      <section className="px-4 py-32" style={{ backgroundColor: '#2a2a2a' }}>
         <div className="max-w-6xl mx-auto relative z-10">
           <div className="card-premium">
             <div className="card-premium-inner">
@@ -96,14 +96,14 @@ export default function Home() {
       </section>
 
       {/* Featured Portfolio - Asymmetrical Bento */}
-      <section className="px-4 py-32 bg-primary-dark">
+      <section className="px-4 py-32" style={{ backgroundColor: '#2a2a2a' }}>
         <div className="max-w-6xl mx-auto relative z-10">
           <div className="space-y-8 mb-16">
             <span className="eyebrow">Featured Designs</span>
-            <h2 className="text-display-md md:text-[3.5rem] font-serif font-bold text-primary-dark">
+            <h2 className="text-display-md md:text-[3.5rem] font-serif font-bold text-primary-light">
               Meticulously Crafted <br /> Timeless Works
             </h2>
-            <p className="text-primary-dark/80 max-w-2xl text-lg font-medium">
+            <p className="text-primary-light/80 max-w-2xl text-lg font-medium">
               Each piece is a collaboration between artist and client—a permanent reflection of vision, identity, and artistry.
             </p>
           </div>
@@ -112,25 +112,25 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-8 gap-4 auto-rows-[300px]">
             <div className="md:col-span-5 md:row-span-2 card-premium rounded-[2.5rem]">
               <div className="card-premium-inner rounded-[calc(2.5rem-0.375rem)] h-full flex items-center justify-center bg-gradient-to-br from-primary-dark/5 to-accent-gold/5">
-                <p className="text-primary-dark/30 text-center">Portfolio Image 1</p>
+                <p className="text-primary-light/30 text-center">Portfolio Image 1</p>
               </div>
             </div>
 
             <div className="md:col-span-3 card-premium">
               <div className="card-premium-inner h-full flex items-center justify-center bg-gradient-to-br from-accent-gold/8 to-accent-gold/3">
-                <p className="text-primary-dark/30 text-center">Portfolio Image 2</p>
+                <p className="text-primary-light/30 text-center">Portfolio Image 2</p>
               </div>
             </div>
 
             <div className="md:col-span-3 card-premium">
               <div className="card-premium-inner h-full flex items-center justify-center bg-gradient-to-br from-accent-teal/8 to-accent-teal/3">
-                <p className="text-primary-dark/30 text-center">Portfolio Image 3</p>
+                <p className="text-primary-light/30 text-center">Portfolio Image 3</p>
               </div>
             </div>
 
             <div className="md:col-span-5 card-premium">
               <div className="card-premium-inner h-full flex items-center justify-center bg-gradient-to-br from-accent-plum/5 to-primary-dark/3">
-                <p className="text-primary-dark/30 text-center">Portfolio Image 4</p>
+                <p className="text-primary-light/30 text-center">Portfolio Image 4</p>
               </div>
             </div>
           </div>

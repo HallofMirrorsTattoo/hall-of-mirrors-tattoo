@@ -1325,6 +1325,12 @@ video {
   --tw-text-opacity: 1;
   color: rgb(161 98 7 / var(--tw-text-opacity, 1));
 }
+.text-primary-light\/80{
+  color: rgb(253 251 247 / 0.8);
+}
+.text-primary-light\/30{
+  color: rgb(253 251 247 / 0.3);
+}
 .placeholder-primary-dark\/40::-moz-placeholder{
   color: rgb(26 26 46 / 0.4);
 }
