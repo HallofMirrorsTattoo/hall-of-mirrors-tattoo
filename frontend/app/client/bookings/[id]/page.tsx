@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useClientAuth } from '@/lib/clientAuthContext';
 import { ClientProtectedRoute } from '@/lib/clientProtectedRoute';
@@ -38,7 +38,6 @@ interface Booking {
 }
 
 export default function BookingDetailPage() {
-  const router = useRouter();
   const params = useParams();
   const { accessToken } = useClientAuth();
   const [booking, setBooking] = useState<Booking | null>(null);
