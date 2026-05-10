@@ -4,7 +4,7 @@ import {
   getConsultations,
   getConsultationById,
   updateConsultation,
-} from '../controllers/consultationController';
+} from '../controllers/consultationController.js';
 
 const router = express.Router();
 

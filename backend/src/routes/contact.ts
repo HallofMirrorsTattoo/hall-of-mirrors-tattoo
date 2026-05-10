@@ -3,7 +3,7 @@ import {
   submitContact,
   getContactSubmissions,
   markAsRead,
-} from '../controllers/contactController';
+} from '../controllers/contactController.js';
 
 const router = express.Router();
 
