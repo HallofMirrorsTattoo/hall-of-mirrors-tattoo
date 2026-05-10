@@ -4,7 +4,6 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import bookingsRouter from './routes/bookings.js';
 import consultationsRouter from './routes/consultations.js';
-import contactRouter from './routes/contact.js';
 import authRouter from './routes/auth.js';
 import clientAuthRouter from './routes/clientAuth.js';
 import artistsRouter from './routes/artists.js';
@@ -67,8 +66,6 @@ app.use('/api/client/design-ideas', clientDesignRouter);
 app.use('/api/client/consultations', clientConsultationRouter);
 app.use('/api/bookings', bookingsRouter);
 app.use('/api/consultations', consultationsRouter);
-app.use('/api/contact', contactRouter);
-app.use('/api/artists', artistsRouter);
 
 // Error handler middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {

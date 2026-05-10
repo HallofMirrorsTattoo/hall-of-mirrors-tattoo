@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import pkg from 'pg';
 import { z } from 'zod';
-import { sendNewBookingNotification, sendBookingStatusUpdate, sendBookingConfirmationToClient } from '../services/emailService.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const { Client } = pkg;
@@ -100,37 +99,6 @@ export async function createBooking(req: Request, res: Response) {
 
     const booking = bookingResult.rows[0];
 
-    // Send email notifications
-    const bookingData = {
-      id: booking.id,
-      booking_reference: booking.booking_reference,
-      appointment_date_time: booking.appointment_date_time,
-      tattoo_description: booking.tattoo_description || '',
-      placement: booking.placement || '',
-      estimated_size: booking.estimated_size || '',
-      user: {
-        first_name: booking.first_name,
-        last_name: booking.last_name,
-        email: booking.email,
-        phone: booking.phone || '',
-      },
-      artist: artistData ? {
-        id: artistData.id,
-        full_name: artistData.full_name,
-        email: artistData.email,
-      } : undefined,
-    };
-
-    // Send to studio and assigned artist
-    console.log('📧 Calling sendNewBookingNotification...');
-    await sendNewBookingNotification(bookingData);
-    console.log('✅ sendNewBookingNotification complete');
-
-    // Send confirmation to client
-    console.log('📧 Calling sendBookingConfirmationToClient...');
-    console.log('📧 bookingData.user.email:', bookingData.user?.email);
-    await sendBookingConfirmationToClient(bookingData);
-    console.log('✅ sendBookingConfirmationToClient complete');
 
     res.status(201).json({
       success: true,
@@ -485,15 +453,6 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
       [status, notes || booking.artist_notes, id]
     );
 
-    // Send email notification to client
-    await sendBookingStatusUpdate(
-      booking.email,
-      `${booking.first_name} ${booking.last_name}`,
-      booking.booking_reference,
-      status,
-      req.artist.full_name,
-      notes
-    );
 
     res.json({
       success: true,

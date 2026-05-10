@@ -95,13 +95,16 @@ export default function ClientDashboardPage() {
                   </Link>
                 </div>
                 <div>
-                  <h3 className="text-lg font-serif font-bold text-primary-dark mb-3">Need more information?</h3>
+                  <h3 className="text-lg font-serif font-bold text-primary-dark mb-3">Request a consultation?</h3>
                   <p className="text-primary-dark/70 mb-4">
-                    Contact us with any questions about your bookings or our services.
+                    Use the Consultations tab above to discuss your design ideas and get expert advice.
                   </p>
-                  <Link href="/contact" className="btn-secondary">
-                    Contact Us
-                  </Link>
+                  <button
+                    onClick={() => setActiveTab('consultations')}
+                    className="btn-secondary"
+                  >
+                    View Consultations
+                  </button>
                 </div>
               </div>
             </div>

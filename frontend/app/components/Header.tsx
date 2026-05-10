@@ -40,7 +40,6 @@ export default function Header() {
             <li><Link href="/portfolio" className="text-sm font-medium text-primary-dark hover:text-accent-gold transition-colors duration-300">Portfolio</Link></li>
             <li><Link href="/services" className="text-sm font-medium text-primary-dark hover:text-accent-gold transition-colors duration-300">Services</Link></li>
             <li><Link href="/about" className="text-sm font-medium text-primary-dark hover:text-accent-gold transition-colors duration-300">About</Link></li>
-            <li><Link href="/contact" className="text-sm font-medium text-primary-dark hover:text-accent-gold transition-colors duration-300">Contact</Link></li>
           </ul>
 
 
@@ -108,7 +107,6 @@ export default function Header() {
               <li><Link href="/portfolio" className="block text-lg font-serif text-white hover:text-accent-gold transition-colors" onClick={() => setIsOpen(false)}>Portfolio</Link></li>
               <li><Link href="/services" className="block text-lg font-serif text-white hover:text-accent-gold transition-colors" onClick={() => setIsOpen(false)}>Services</Link></li>
               <li><Link href="/about" className="block text-lg font-serif text-white hover:text-accent-gold transition-colors" onClick={() => setIsOpen(false)}>About</Link></li>
-              <li><Link href="/contact" className="block text-lg font-serif text-white hover:text-accent-gold transition-colors" onClick={() => setIsOpen(false)}>Contact</Link></li>
             </ul>
             {user ? (
               <>
