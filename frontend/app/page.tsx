@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import LogoText from './components/LogoText';
 import ShopCarousel from './components/ShopCarousel';
 
 export default function Home() {
