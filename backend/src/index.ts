@@ -6,8 +6,7 @@ import { PrismaClient } from '@prisma/client';
 import bookingsRouter from './routes/bookings.js';
 import consultationsRouter from './routes/consultations.js';
 import contactRouter from './routes/contact.js';
-import { initializeDatabase } from './init.js';
-import { runMigrations } from './migrate.js';
+import { setupDatabase } from './setupDb.js';
 
 const app: Express = express();
 const prisma = new PrismaClient();
@@ -61,16 +60,12 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-// Run migrations synchronously before starting server
+// Setup database and start server
 async function start() {
   try {
-    console.log('🔄 Running database migrations...');
-    await runMigrations();
-    console.log('✅ Migrations complete');
-
-    console.log('🔄 Initializing database...');
-    await initializeDatabase();
-    console.log('✅ Database initialized');
+    console.log('🔄 Setting up database...');
+    await setupDatabase();
+    console.log('✅ Database ready');
 
     // Now start the server
     app.listen(PORT, () => {

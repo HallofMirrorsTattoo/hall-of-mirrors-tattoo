@@ -6,8 +6,7 @@ import { PrismaClient } from '@prisma/client';
 import bookingsRouter from './routes/bookings.js';
 import consultationsRouter from './routes/consultations.js';
 import contactRouter from './routes/contact.js';
-import { initializeDatabase } from './init.js';
-import { runMigrations } from './migrate.js';
+import { setupDatabase } from './setupDb.js';
 const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 5000;
@@ -52,15 +51,12 @@ app.use((err, req, res, next) => {
         status: err.status || 500,
     });
 });
-// Run migrations synchronously before starting server
+// Setup database and start server
 async function start() {
     try {
-        console.log('🔄 Running database migrations...');
-        await runMigrations();
-        console.log('✅ Migrations complete');
-        console.log('🔄 Initializing database...');
-        await initializeDatabase();
-        console.log('✅ Database initialized');
+        console.log('🔄 Setting up database...');
+        await setupDatabase();
+        console.log('✅ Database ready');
         // Now start the server
         app.listen(PORT, () => {
             console.log(`🎨 Hall of Mirrors API running on port ${PORT}`);
