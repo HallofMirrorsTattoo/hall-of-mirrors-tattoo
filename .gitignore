@@ -6,13 +6,18 @@ node_modules/
 # Testing
 /coverage
 
-# Next.js
-/.next/
+# Next.js build output (anywhere in repo)
+.next/
 /out/
+out/
 
-# Production
+# Production builds
 /build
 /dist
+dist/
+
+# TypeScript build info
+*.tsbuildinfo
 
 # Misc
 .DS_Store

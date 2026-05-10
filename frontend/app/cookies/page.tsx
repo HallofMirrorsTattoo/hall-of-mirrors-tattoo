@@ -1,11 +1,11 @@
 export default function Cookies() {
   return (
-    <div className="max-w-3xl mx-auto px-4 py-16">
-      <h1 className="text-5xl font-serif text-accent-gold mb-8">Cookie Policy</h1>
+    <div className="min-h-screen pt-32 pb-20 px-4" style={{ backgroundColor: '#2a2a2a' }}><div className="max-w-3xl mx-auto">
+      <h1 className="text-4xl md:text-5xl font-serif font-bold text-primary-light mb-10">Cookie Policy</h1>
 
-      <div className="space-y-6 text-white/80">
+      <div className="space-y-6 text-primary-light/70">
         <section>
-          <h2 className="text-2xl font-serif text-accent-gold mb-4">What Are Cookies?</h2>
+          <h2 className="text-2xl font-serif text-primary-light font-semibold mb-3">What Are Cookies?</h2>
           <p>
             Cookies are small text files stored on your device that help us remember your preferences and
             provide you with a better experience.
@@ -13,7 +13,7 @@ export default function Cookies() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-serif text-accent-gold mb-4">Types of Cookies We Use</h2>
+          <h2 className="text-2xl font-serif text-primary-light font-semibold mb-3">Types of Cookies We Use</h2>
           <p>
             <strong>Essential Cookies:</strong> Required for the site to function (authentication, security).
             These are always active.
@@ -27,7 +27,7 @@ export default function Cookies() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-serif text-accent-gold mb-4">Managing Cookies</h2>
+          <h2 className="text-2xl font-serif text-primary-light font-semibold mb-3">Managing Cookies</h2>
           <p>
             You can control cookies through your browser settings. Most browsers allow you to refuse cookies
             or alert you when cookies are being sent.
@@ -35,12 +35,13 @@ export default function Cookies() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-serif text-accent-gold mb-4">GDPR Compliance</h2>
+          <h2 className="text-2xl font-serif text-primary-light font-semibold mb-3">GDPR Compliance</h2>
           <p>
             Hall of Mirrors complies with GDPR cookie requirements. We obtain consent before storing non-essential cookies.
             You can withdraw consent at any time.
           </p>
         </section>
+      </div>
       </div>
     </div>
   );

@@ -1,11 +1,11 @@
 export default function Privacy() {
   return (
-    <div className="max-w-3xl mx-auto px-4 py-16">
-      <h1 className="text-5xl font-serif text-accent-gold mb-8">Privacy Policy</h1>
+    <div className="min-h-screen pt-32 pb-20 px-4" style={{ backgroundColor: '#2a2a2a' }}><div className="max-w-3xl mx-auto">
+      <h1 className="text-4xl md:text-5xl font-serif font-bold text-primary-light mb-10">Privacy Policy</h1>
 
-      <div className="space-y-6 text-white/80">
+      <div className="space-y-6 text-primary-light/70">
         <section>
-          <h2 className="text-2xl font-serif text-accent-gold mb-4">1. Data We Collect</h2>
+          <h2 className="text-2xl font-serif text-primary-light font-semibold mb-3">1. Data We Collect</h2>
           <p>
             Hall of Mirrors collects the following information:
           </p>
@@ -19,7 +19,7 @@ export default function Privacy() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-serif text-accent-gold mb-4">2. How We Use Your Data</h2>
+          <h2 className="text-2xl font-serif text-primary-light font-semibold mb-3">2. How We Use Your Data</h2>
           <p>
             Your data is used for:
           </p>
@@ -33,7 +33,7 @@ export default function Privacy() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-serif text-accent-gold mb-4">3. Data Retention</h2>
+          <h2 className="text-2xl font-serif text-primary-light font-semibold mb-3">3. Data Retention</h2>
           <p>
             Client records are retained for a minimum of 6 years (as required by Liverpool City Council for health records).
             Temporary files (design images from guests) are deleted after 60 days.
@@ -41,7 +41,7 @@ export default function Privacy() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-serif text-accent-gold mb-4">4. Your Rights</h2>
+          <h2 className="text-2xl font-serif text-primary-light font-semibold mb-3">4. Your Rights</h2>
           <p>
             Under GDPR, you have the right to:
           </p>
@@ -55,7 +55,7 @@ export default function Privacy() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-serif text-accent-gold mb-4">5. Security</h2>
+          <h2 className="text-2xl font-serif text-primary-light font-semibold mb-3">5. Security</h2>
           <p>
             Your data is encrypted in transit (HTTPS) and at rest. Medical information is encrypted separately.
             We do not store payment card information.
@@ -63,7 +63,7 @@ export default function Privacy() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-serif text-accent-gold mb-4">6. Third Parties</h2>
+          <h2 className="text-2xl font-serif text-primary-light font-semibold mb-3">6. Third Parties</h2>
           <p>
             We share data only with necessary third parties:
           </p>
@@ -74,6 +74,7 @@ export default function Privacy() {
           </ul>
           <p className="mt-2">All third parties are GDPR-compliant.</p>
         </section>
+      </div>
       </div>
     </div>
   );

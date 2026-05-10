@@ -1,35 +1,96 @@
+import Link from 'next/link';
+
+const services = [
+  {
+    name: 'Small Tattoo',
+    size: '1–3"',
+    desc: 'Simple designs and quick sessions. Perfect for first tattoos or additions to existing work.',
+    price: '£150 – £250',
+  },
+  {
+    name: 'Medium Tattoo',
+    size: '3–6"',
+    desc: 'Detail work, colour fills, and standard placement. Most popular session size.',
+    price: '£300 – £500',
+  },
+  {
+    name: 'Large Tattoo',
+    size: '6"+ or multi-session',
+    desc: 'Complex, fully custom designs. Price quoted after consultation based on detail and placement.',
+    price: 'Custom Quote',
+  },
+  {
+    name: 'Cover-Up',
+    size: 'Varies',
+    desc: 'Transform existing work into something you love. Requires an in-person consultation first.',
+    price: 'Custom Quote',
+  },
+];
+
 export default function Services() {
   return (
-    <div className="max-w-7xl mx-auto px-4 py-16">
-      <h1 className="text-5xl font-serif text-accent-gold mb-4">Services & Pricing</h1>
-      <p className="text-white/70 mb-12">All pricing is placeholder and will be customized</p>
+    <div className="min-h-screen pt-32 pb-20 px-4" style={{ backgroundColor: '#2a2a2a' }}>
+      <div className="max-w-4xl mx-auto space-y-12">
 
-      <div className="space-y-6">
-        <div className="glassmorphism p-6">
-          <h3 className="text-xl font-semibold text-accent-gold">Small Tattoo (1-3")</h3>
-          <p className="text-white/70 mt-2">Simple designs, quick sessions</p>
-          <p className="text-2xl text-accent-gold mt-4">£150 - £250</p>
+        {/* Header */}
+        <div className="space-y-4">
+          <span className="eyebrow">What&apos;s Included</span>
+          <h1 className="text-4xl md:text-5xl font-serif font-bold text-primary-light">
+            Services & Pricing
+          </h1>
+          <p className="text-primary-light/70 max-w-xl">
+            All prices are starting points — final quotes depend on design complexity,
+            size, and placement. Book a free consultation to get an accurate estimate.
+          </p>
         </div>
-        <div className="glassmorphism p-6">
-          <h3 className="text-xl font-semibold text-accent-gold">Medium Tattoo (3-6")</h3>
-          <p className="text-white/70 mt-2">Detail work, color, standard placement</p>
-          <p className="text-2xl text-accent-gold mt-4">£300 - £500</p>
+
+        {/* Service cards */}
+        <div className="space-y-4">
+          {services.map((s) => (
+            <div key={s.name} className="card-premium">
+              <div className="card-premium-inner">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center gap-3">
+                      <h3 className="font-serif font-semibold text-primary-light text-lg">{s.name}</h3>
+                      <span className="text-xs text-accent-gold/70 font-medium border border-accent-gold/30 rounded-full px-2 py-0.5">
+                        {s.size}
+                      </span>
+                    </div>
+                    <p className="text-primary-light/60 text-sm">{s.desc}</p>
+                  </div>
+                  <div className="text-accent-gold font-serif font-bold text-xl md:text-right whitespace-nowrap">
+                    {s.price}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
-        <div className="glassmorphism p-6">
-          <h3 className="text-xl font-semibold text-accent-gold">Large Tattoo (6"+)</h3>
-          <p className="text-white/70 mt-2">Complex designs, custom quotes</p>
-          <p className="text-2xl text-accent-gold mt-4">Custom Quote</p>
+
+        {/* Deposit note */}
+        <div className="card-premium">
+          <div className="card-premium-inner space-y-2">
+            <h3 className="font-serif font-semibold text-primary-light">Deposits</h3>
+            <p className="text-primary-light/60 text-sm">
+              A deposit is required to secure your booking. This is deducted from your final
+              session price. Deposits are non-refundable if you cancel within 48 hours of your
+              appointment.
+            </p>
+          </div>
         </div>
-        <div className="glassmorphism p-6">
-          <h3 className="text-xl font-semibold text-accent-gold">Cover-Up</h3>
-          <p className="text-white/70 mt-2">Premium pricing, 20-30% extra</p>
-          <p className="text-2xl text-accent-gold mt-4">Varies</p>
+
+        {/* CTA */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Link href="/consultation" className="btn-primary group">
+            <span>Free Consultation</span>
+            <div className="btn-primary-icon">↗</div>
+          </Link>
+          <Link href="/booking" className="btn-secondary">
+            Book Directly
+          </Link>
         </div>
-        <div className="glassmorphism p-6">
-          <h3 className="text-xl font-semibold text-accent-gold">Deposit</h3>
-          <p className="text-white/70 mt-2">Required to secure booking</p>
-          <p className="text-2xl text-accent-gold mt-4">TBD</p>
-        </div>
+
       </div>
     </div>
   );
