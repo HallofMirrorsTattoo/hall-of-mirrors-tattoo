@@ -5,17 +5,17 @@ import ScrollGradientFade from './components/ScrollGradientFade';
 
 export default function Home() {
   return (
-    <div>
+    <div className="w-full">
       {/* Hero Section - Large carousel with centered logo and bottom buttons */}
-      <section className="h-[100dvh] relative overflow-hidden bg-transparent">
-        {/* Carousel - positioned absolutely at top of section */}
-        <div className="absolute top-0 left-0 right-0 w-full h-[100dvh] z-0 pointer-events-none">
+      <section className="relative w-full h-screen overflow-hidden bg-transparent" style={{ marginTop: 0, paddingTop: 0 }}>
+        {/* Carousel - positioned absolutely, fills entire hero section */}
+        <div className="absolute inset-0 w-full h-full z-0 pointer-events-none">
           <ShopCarousel />
           <ScrollGradientFade />
         </div>
 
         {/* Logo Section - Positioned in upper area with breathing room before buttons */}
-        <div className="absolute inset-0 top-1 bottom-32 left-0 right-0 flex flex-col items-center justify-start pt-20 z-10 pointer-events-auto">
+        <div className="absolute inset-0 flex flex-col items-center justify-start pt-28 z-10 pointer-events-auto">
           <div className="w-full flex flex-col items-center space-y-4 animate-fadeUp" style={{ animationDelay: '0ms' }}>
             {/* Main Logo - White version */}
             <Image
@@ -42,7 +42,7 @@ export default function Home() {
         </div>
 
         {/* Bottom Section - Buttons and scroll indicator */}
-        <div className="absolute bottom-32 left-0 right-0 flex flex-col items-center justify-center z-20 gap-4 pb-8">
+        <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center justify-center z-20 gap-4 pb-12">
           {/* CTA Buttons - Animated */}
           <div className="flex gap-4 flex-col md:flex-row justify-center animate-fadeUp" style={{ animationDelay: '700ms' }}>
             <Link href="/booking" className="btn-primary group">
