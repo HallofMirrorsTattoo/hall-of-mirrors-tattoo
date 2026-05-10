@@ -6,12 +6,12 @@ export default function Home() {
   return (
     <div>
       {/* Hero Section - Large carousel with centered logo and bottom buttons */}
-      <section className="h-[100dvh] px-4 relative overflow-hidden bg-[#2a2a2a]">
-        {/* Carousel - extends to top, fills entire area, fades at bottom into charcoal */}
-        <div className="absolute inset-0 top-0 bottom-32 -z-5 w-full h-full">
+      <section className="h-[100dvh] relative overflow-hidden bg-[#2a2a2a]">
+        {/* Carousel - extends from very top of page behind nav, fills entire area, fades at bottom into charcoal */}
+        <div className="fixed top-0 left-0 right-0 h-[100dvh] -z-5 w-full px-4">
           <ShopCarousel />
           {/* Gradient fade overlay at bottom - blends carousel into charcoal above buttons */}
-          <div className="absolute inset-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-[#2a2a2a] pointer-events-none z-10"></div>
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-b from-transparent to-[#2a2a2a] pointer-events-none z-10"></div>
         </div>
 
         {/* Logo Section - Positioned in upper area with breathing room before buttons */}
