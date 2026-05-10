@@ -1,0 +1,311 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String   @id @default(cuid())
+  email                 String   @unique
+  password_hash         String
+  first_name            String
+  last_name             String
+  date_of_birth         DateTime?
+  phone                 String?
+  address               String?
+  city                  String?
+  postcode              String?
+  emergency_contact_name String?
+  emergency_contact_phone String?
+  account_status        String   @default("active")
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
+
+  medical_history       MedicalHistory?
+  consent_forms         ConsentForm[]
+  bookings              Booking[]
+  design_ideas          DesignIdea[]
+  reviews               Review[]
+}
+
+model MedicalHistory {
+  id                              String   @id @default(cuid())
+  user_id                         String   @unique
+  pregnant_or_breastfeeding       Boolean  @default(false)
+  blood_borne_conditions          Boolean  @default(false)
+  diabetes                        Boolean  @default(false)
+  heart_condition                 Boolean  @default(false)
+  haemophilia_or_bleeding_disorder Boolean  @default(false)
+  epilepsy_or_seizure             Boolean  @default(false)
+  skin_conditions                 String?
+  autoimmune_conditions           Boolean  @default(false)
+  blood_thinners                  Boolean  @default(false)
+  steroids_or_immunosuppressants  Boolean  @default(false)
+  alcohol_or_drugs_last_24h       Boolean  @default(false)
+  known_allergies                 String?
+  allergies_latex                 Boolean  @default(false)
+  allergies_ink                   Boolean  @default(false)
+  allergies_topical_anaesthetics  Boolean  @default(false)
+  previous_tattoo_reaction        Boolean  @default(false)
+  previous_reaction_details       String?
+  chemotherapy_or_radiotherapy    Boolean  @default(false)
+  current_medications             String?
+  created_at                      DateTime @default(now())
+  updated_at                      DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model ConsentForm {
+  id                              String   @id @default(cuid())
+  user_id                         String?
+  booking_id                      String   @unique
+  form_reference_no               String   @unique @default(cuid())
+  full_name_signed                String
+  date_signed                     DateTime
+  age_confirmed                   Boolean  @default(false)
+  health_accuracy_confirmed       Boolean  @default(false)
+  risks_understood_confirmed      Boolean  @default(false)
+  sobriety_confirmed              Boolean  @default(false)
+  suitability_confirmed           Boolean  @default(false)
+  voluntary_consent_confirmed     Boolean  @default(false)
+  design_approved_confirmed       Boolean  @default(false)
+  aftercare_responsibility_confirmed Boolean @default(false)
+  photography_permission          Boolean  @default(false)
+  gdpr_consent_confirmed          Boolean  @default(false)
+  form_status                     String   @default("pending")
+  created_at                      DateTime @default(now())
+  updated_at                      DateTime @updatedAt
+
+  user User? @relation(fields: [user_id], references: [id])
+  booking Booking @relation(fields: [booking_id], references: [id], onDelete: Cascade)
+}
+
+model Artist {
+  id                String   @id @default(cuid())
+  studio_id         String
+  full_name         String
+  email             String   @unique
+  password_hash     String
+  specialties       String?
+  years_experience  Int?
+  bio               String?
+  instagram_handle  String?
+  is_active         Boolean  @default(true)
+  role              String   @default("artist")
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  bookings          Booking[]
+  portfolio         TattooPortfolio[]
+  reviews           Review[]
+
+  @@index([studio_id])
+}
+
+model Booking {
+  id                          String   @id @default(cuid())
+  studio_id                   String
+  artist_id                   String?
+  user_id                     String?
+  guest_email                 String?
+  guest_name                  String?
+  guest_phone                 String?
+  booking_reference           String   @unique
+  appointment_date_time       DateTime
+  estimated_duration_minutes  Int      @default(120)
+  appointment_status          String   @default("pending_consent")
+  tattoo_type                 String   @default("new_tattoo")
+  tattoo_description          String?
+  placement                   String?
+  estimated_size              String?
+  color_or_bw                 String?
+  artist_notes                String?
+  design_approved             Boolean  @default(false)
+  deposit_amount              Decimal  @db.Decimal(10, 2)
+  deposit_paid                Boolean  @default(false)
+  deposit_payment_method      String?
+  deposit_paid_date           DateTime?
+  final_price_estimate        Decimal? @db.Decimal(10, 2)
+  final_price_paid            Decimal? @db.Decimal(10, 2)
+  final_payment_method        String?
+  balance_due                 Decimal  @db.Decimal(10, 2)
+  cancellation_reason         String?
+  cancellation_initiated_by   String?
+  cancellation_date           DateTime?
+  refund_issued               Boolean  @default(false)
+  refund_amount               Decimal? @db.Decimal(10, 2)
+  client_no_show              Boolean  @default(false)
+  created_at                  DateTime @default(now())
+  updated_at                  DateTime @updatedAt
+
+  user User? @relation(fields: [user_id], references: [id])
+  artist Artist? @relation(fields: [artist_id], references: [id])
+  consent_form ConsentForm?
+  design_ideas DesignIdea[]
+  payments Payment[]
+  review Review?
+
+  @@index([artist_id])
+  @@index([user_id])
+}
+
+model DesignIdea {
+  id                String   @id @default(cuid())
+  booking_id        String?
+  user_id           String?
+  file_name         String
+  file_path         String
+  file_size         Int
+  file_format       String
+  upload_date       DateTime @default(now())
+  uploaded_by       String
+  description       String?
+  is_deleted        Boolean  @default(false)
+  deleted_date      DateTime?
+  auto_delete_date  DateTime?
+  created_at        DateTime @default(now())
+
+  booking Booking? @relation(fields: [booking_id], references: [id], onDelete: SetNull)
+  user User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
+}
+
+model TattooPortfolio {
+  id                  String   @id @default(cuid())
+  artist_id           String
+  booking_id          String?
+  file_name           String
+  file_path           String
+  style               String
+  placement           String?
+  size_estimate       String?
+  color_or_bw         String?
+  completion_date     DateTime
+  portfolio_public    Boolean  @default(true)
+  instagram_posted    Boolean  @default(false)
+  instagram_url       String?
+  client_name_credited Boolean @default(false)
+  created_at          DateTime @default(now())
+
+  artist Artist @relation(fields: [artist_id], references: [id])
+
+  @@index([artist_id])
+}
+
+model ContactFormSubmission {
+  id               String   @id @default(cuid())
+  name             String
+  email            String
+  message          String
+  submission_date  DateTime @default(now())
+  response_status  String   @default("new")
+  responded_by     String?
+  response_date    DateTime?
+  response_text    String?
+  created_at       DateTime @default(now())
+}
+
+model ConsultationRequest {
+  id                      String   @id @default(cuid())
+  name                    String
+  email                   String
+  phone                   String
+  tattoo_idea             String
+  preferred_contact_method String?
+  preferred_timeframe     String?
+  consultation_status     String   @default("new")
+  assigned_to             String?
+  assigned_date           DateTime?
+  response_date           DateTime?
+  response_message        String?
+  created_at              DateTime @default(now())
+}
+
+model Review {
+  id                  String   @id @default(cuid())
+  booking_id          String   @unique
+  user_id             String?
+  artist_id           String
+  client_name_display String
+  show_full_name      Boolean  @default(false)
+  star_rating         Int
+  review_text         String?
+  tattoo_style        String?
+  tattoo_placement    String?
+  is_approved         Boolean  @default(false)
+  approval_date       DateTime?
+  approved_by         String?
+  is_published        Boolean  @default(false)
+  published_date      DateTime?
+  is_deleted          Boolean  @default(false)
+  deletion_reason     String?
+  helpful_count       Int      @default(0)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  booking Booking @relation(fields: [booking_id], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [user_id], references: [id])
+  artist Artist @relation(fields: [artist_id], references: [id])
+}
+
+model Payment {
+  id                  String   @id @default(cuid())
+  booking_id          String
+  user_id             String?
+  amount              Decimal  @db.Decimal(10, 2)
+  payment_type        String
+  payment_method      String
+  payment_status      String   @default("pending")
+  transaction_id      String?
+  stripe_charge_id    String?
+  paypal_transaction_id String?
+  refund_id           String?
+  refund_reason       String?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  booking Booking @relation(fields: [booking_id], references: [id], onDelete: Cascade)
+
+  @@index([booking_id])
+}
+
+model Studio {
+  id                            String   @id @default(cuid())
+  studio_name                   String   @default("Hall of Mirrors Tattoo")
+  address                       String
+  postcode                      String
+  phone                         String?
+  email                         String?
+  hours_monday_start            String?
+  hours_monday_end              String?
+  hours_tuesday_start           String?
+  hours_tuesday_end             String?
+  hours_wednesday_start         String?
+  hours_wednesday_end           String?
+  hours_thursday_start          String?
+  hours_thursday_end            String?
+  hours_friday_start            String?
+  hours_friday_end              String?
+  hours_saturday_start          String?
+  hours_saturday_end            String?
+  hours_sunday_start            String?
+  hours_sunday_end              String?
+  deposit_amount_fixed          Decimal? @db.Decimal(10, 2)
+  deposit_percentage            Decimal? @db.Decimal(5, 2)
+  cancellation_policy_hours     Int      @default(24)
+  about_section                 String?
+  instagram_handle              String?
+  facebook_url                  String?
+  tiktok_handle                 String?
+  council_registration_ref      String?
+  hepatitis_b_vaccination_date  DateTime?
+  professional_body_membership  String?
+  created_at                    DateTime @default(now())
+  updated_at                    DateTime @updatedAt
+}

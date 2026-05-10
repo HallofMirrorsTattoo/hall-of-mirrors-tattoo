@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-primary-dark text-white;
+  font-family: 'Inter', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  @apply font-serif;
+}
+
+/* Glassmorphism effect */
+.glassmorphism {
+  @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-lg;
+}
+
+/* Gold accent text */
+.text-accent-gold {
+  @apply text-accent-gold;
+}
+
+/* Links */
+a {
+  @apply text-accent-gold hover:text-white transition-colors;
+}
+
+/* Buttons */
+.btn-primary {
+  @apply bg-accent-gold text-primary-dark font-semibold py-2 px-6 rounded-lg hover:bg-white transition-colors;
+}
+
+.btn-secondary {
+  @apply border-2 border-accent-gold text-accent-gold py-2 px-6 rounded-lg hover:bg-accent-gold hover:text-primary-dark transition-colors;
+}
+
+/* Forms */
+input, textarea, select {
+  @apply bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-white/50 focus:outline-none focus:border-accent-gold focus:ring-2 focus:ring-accent-gold/20;
+}
+
+label {
+  @apply block text-sm font-medium text-white/90 mb-2;
+}
