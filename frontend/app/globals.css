@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -13,43 +15,164 @@ html {
 }
 
 body {
-  @apply bg-primary-dark text-white;
-  font-family: 'Inter', sans-serif;
+  @apply bg-primary-light text-primary-dark font-sans;
+  position: relative;
+}
+
+/* Film grain overlay - subtle for light background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 50;
+  mix-blend-mode: overlay;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  @apply font-serif;
+  @apply font-serif tracking-tight text-primary-dark;
 }
 
-/* Glassmorphism effect */
+h1 {
+  @apply text-display-xl font-bold;
+}
+
+h2 {
+  @apply text-display-lg;
+}
+
+h3 {
+  @apply text-display-md;
+}
+
+/* Eyebrow tags - refined for light background */
+.eyebrow {
+  @apply inline-block rounded-full bg-primary-dark/5 border border-primary-dark/10 px-3 py-1 text-[11px] uppercase tracking-[0.15em] font-medium text-primary-dark/60 mb-4;
+}
+
+/* Double-bezel card architecture - light background variant */
+.card-premium {
+  @apply p-1.5 rounded-[2rem] bg-primary-dark/5 border border-primary-dark/10;
+}
+
+.card-premium-inner {
+  @apply rounded-[calc(2rem-0.375rem)] bg-white border border-primary-dark/5 p-6 backdrop-blur-sm shadow-soft-lg;
+}
+
+/* Glassmorphism effect - refined for light background */
 .glassmorphism {
-  @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-lg;
+  @apply bg-white/60 backdrop-blur-xl border border-primary-dark/10 rounded-2xl shadow-soft;
 }
 
-/* Gold accent text */
-.text-accent-gold {
-  @apply text-accent-gold;
+/* Premium button styles - dark accent button */
+.btn-primary {
+  @apply relative inline-flex items-center gap-2 bg-primary-dark text-white font-semibold py-3 px-8 rounded-full hover:bg-primary-dark/90 transition-all duration-500 active:scale-[0.98] shadow-soft;
+  transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.btn-primary:hover .btn-primary-icon {
+  @apply translate-x-1 scale-105;
+  transform: translateX(4px) scaleY(1.05);
+}
+
+.btn-primary-icon {
+  @apply w-8 h-8 rounded-full bg-white/20 flex items-center justify-center transition-all duration-500;
+  transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Gold accent button */
+.btn-secondary {
+  @apply border-2 border-accent-gold text-primary-dark font-semibold py-3 px-8 rounded-full hover:bg-accent-gold/10 transition-all duration-500 active:scale-[0.98];
+  transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 /* Links */
 a {
-  @apply text-accent-gold hover:text-white transition-colors;
+  @apply text-accent-gold hover:text-primary-dark transition-colors duration-300;
 }
 
-/* Buttons */
-.btn-primary {
-  @apply bg-accent-gold text-primary-dark font-semibold py-2 px-6 rounded-lg hover:bg-white transition-colors;
-}
-
-.btn-secondary {
-  @apply border-2 border-accent-gold text-accent-gold py-2 px-6 rounded-lg hover:bg-accent-gold hover:text-primary-dark transition-colors;
-}
-
-/* Forms */
+/* Form elements */
 input, textarea, select {
-  @apply bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-white/50 focus:outline-none focus:border-accent-gold focus:ring-2 focus:ring-accent-gold/20;
+  @apply bg-white border border-primary-dark/10 rounded-xl px-4 py-3 text-primary-dark placeholder-primary-dark/40 focus:outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30 transition-all duration-300 shadow-soft;
+  transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 label {
-  @apply block text-sm font-medium text-white/90 mb-2;
+  @apply block text-sm font-medium text-primary-dark/80 mb-2 uppercase tracking-wider;
+}
+
+/* Scroll animation utility */
+.scroll-reveal {
+  @apply opacity-0 translate-y-8;
+  animation: fadeUp 0.8s ease-out forwards;
+}
+
+/* Floating element animation */
+.float-animation {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Premium spacing */
+section {
+  @apply py-28 md:py-40;
+}
+
+/* Typography contrast */
+.text-muted {
+  @apply text-primary-dark/60;
+}
+
+.text-light {
+  @apply text-primary-dark/80;
+}
+
+/* Subtle depth shadow */
+.shadow-depth {
+  @apply shadow-soft-lg;
+}
+
+/* Noise texture for premium feel */
+.texture-noise {
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
+}
+
+/* Dark section variant */
+.section-dark {
+  @apply bg-primary-dark text-white;
+}
+
+.section-dark h1,
+.section-dark h2,
+.section-dark h3,
+.section-dark h4,
+.section-dark h5,
+.section-dark h6 {
+  @apply text-white;
+}
+
+.section-dark .eyebrow {
+  @apply bg-white/5 border-white/10 text-white/60;
+}
+
+.section-dark .card-premium {
+  @apply bg-white/5 border-white/10;
+}
+
+.section-dark .card-premium-inner {
+  @apply bg-primary-dark border-white/5;
+}
+
+.section-dark .glassmorphism {
+  @apply bg-white/[0.08] border-white/10;
+}
+
+.section-dark .text-muted {
+  @apply text-white/60;
+}
+
+.section-dark .text-light {
+  @apply text-white/80;
 }

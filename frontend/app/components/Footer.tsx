@@ -1,51 +1,67 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Footer() {
   return (
-    <footer className="bg-primary-darker border-t border-accent-gold/20 mt-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-          {/* Studio Info */}
-          <div>
-            <h3 className="text-xl font-serif text-accent-gold mb-4">Hall of Mirrors</h3>
-            <p className="text-white/70 text-sm">
-              Suite 3, 34 Castle Street<br />
-              Liverpool L2 0NR<br />
-              United Kingdom
+    <footer className="border-t border-white/10 mt-20">
+      <div className="max-w-6xl mx-auto px-4 py-32">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-16">
+          {/* Brand */}
+          <div className="space-y-4">
+            <Image
+              src="/assets/logos/HOMLOGO.png"
+              alt="Hall of Mirrors"
+              width={60}
+              height={60}
+              className="w-14 h-14 object-contain"
+            />
+            <p className="text-white/60 text-sm leading-relaxed">
+              Bespoke tattoo artistry in Liverpool. Crafting timeless designs with meticulous precision.
             </p>
           </div>
 
+          {/* Studio */}
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-white uppercase tracking-widest">Studio</h4>
+            <address className="text-white/60 text-sm leading-relaxed not-italic">
+              Suite 3<br />
+              34 Castle Street<br />
+              Liverpool L2 0NR<br />
+              United Kingdom
+            </address>
+          </div>
+
           {/* Quick Links */}
-          <div>
-            <h4 className="text-accent-gold font-semibold mb-4">Quick Links</h4>
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-white uppercase tracking-widest">Navigate</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/booking" className="text-white/70 hover:text-accent-gold transition">Book Appointment</Link></li>
-              <li><Link href="/services" className="text-white/70 hover:text-accent-gold transition">Pricing</Link></li>
-              <li><Link href="/aftercare" className="text-white/70 hover:text-accent-gold transition">Aftercare</Link></li>
-              <li><Link href="/consultation" className="text-white/70 hover:text-accent-gold transition">Consultation</Link></li>
+              <li><Link href="/booking" className="text-white/60 hover:text-accent-gold transition-colors duration-300">Book Appointment</Link></li>
+              <li><Link href="/portfolio" className="text-white/60 hover:text-accent-gold transition-colors duration-300">Portfolio</Link></li>
+              <li><Link href="/services" className="text-white/60 hover:text-accent-gold transition-colors duration-300">Services</Link></li>
+              <li><Link href="/consultation" className="text-white/60 hover:text-accent-gold transition-colors duration-300">Consultation</Link></li>
             </ul>
           </div>
 
           {/* Legal */}
-          <div>
-            <h4 className="text-accent-gold font-semibold mb-4">Legal</h4>
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-white uppercase tracking-widest">Legal</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/terms" className="text-white/70 hover:text-accent-gold transition">Terms of Service</Link></li>
-              <li><Link href="/privacy" className="text-white/70 hover:text-accent-gold transition">Privacy Policy</Link></li>
-              <li><Link href="/cookies" className="text-white/70 hover:text-accent-gold transition">Cookie Policy</Link></li>
+              <li><Link href="/terms" className="text-white/60 hover:text-accent-gold transition-colors duration-300">Terms</Link></li>
+              <li><Link href="/privacy" className="text-white/60 hover:text-accent-gold transition-colors duration-300">Privacy</Link></li>
+              <li><Link href="/aftercare" className="text-white/60 hover:text-accent-gold transition-colors duration-300">Aftercare</Link></li>
             </ul>
           </div>
         </div>
 
-        {/* Bottom */}
-        <div className="border-t border-accent-gold/20 pt-8 flex justify-between items-center flex-col md:flex-row gap-4">
-          <p className="text-white/50 text-sm">
-            &copy; 2026 Hall of Mirrors Tattoo. All rights reserved.
+        {/* Bottom Bar */}
+        <div className="border-t border-white/10 pt-8 flex justify-between items-center flex-col md:flex-row gap-8">
+          <p className="text-white/40 text-sm">
+            &copy; {new Date().getFullYear()} Hall of Mirrors. All rights reserved.
           </p>
           <div className="flex gap-6">
-            <a href="#" className="text-white/50 hover:text-accent-gold transition">Instagram</a>
-            <a href="#" className="text-white/50 hover:text-accent-gold transition">TikTok</a>
-            <a href="#" className="text-white/50 hover:text-accent-gold transition">Facebook</a>
+            <a href="#" className="text-white/40 hover:text-accent-gold transition-colors duration-300 text-sm font-medium">Instagram</a>
+            <a href="#" className="text-white/40 hover:text-accent-gold transition-colors duration-300 text-sm font-medium">TikTok</a>
+            <a href="#" className="text-white/40 hover:text-accent-gold transition-colors duration-300 text-sm font-medium">Contact</a>
           </div>
         </div>
       </div>
