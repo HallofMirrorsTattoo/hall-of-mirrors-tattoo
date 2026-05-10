@@ -3,10 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "prisma": {
+    "seed": "node --loader ts-node/esm prisma/seed.ts"
+  },
   "scripts": {
     "dev": "node --loader ts-node/esm src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "prisma migrate deploy && prisma db seed && node dist/index.js",
     "prisma:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
     "prisma:seed": "node --loader ts-node/esm prisma/seed.ts",
