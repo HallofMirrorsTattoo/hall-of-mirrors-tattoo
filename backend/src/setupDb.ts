@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
 import pkg from 'pg';
 
-const prisma = new PrismaClient();
 const { Client } = pkg;
 
 const SCHEMA_SQL = `
@@ -146,8 +144,13 @@ CREATE INDEX IF NOT EXISTS "Artist_email_idx" ON "Artist"(email);
 `;
 
 export async function setupDatabase() {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+  });
+
   try {
     console.log('🔄 Setting up database schema...');
+    await client.connect();
 
     // Split by semicolon and execute each statement
     const statements = SCHEMA_SQL
@@ -157,7 +160,7 @@ export async function setupDatabase() {
 
     for (const statement of statements) {
       try {
-        await prisma.$executeRawUnsafe(statement);
+        await client.query(statement);
         if (statement.includes('CREATE TABLE')) {
           const tableName = statement.match(/CREATE TABLE IF NOT EXISTS "(\w+)"/)?.[1];
           if (tableName) {
@@ -229,6 +232,6 @@ export async function setupDatabase() {
     // Don't crash - tables might exist, let the app try to use the database
     return false;
   } finally {
-    await prisma.$disconnect();
+    await client.end();
   }
 }

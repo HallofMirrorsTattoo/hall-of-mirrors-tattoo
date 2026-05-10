@@ -2,7 +2,6 @@ import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { PrismaClient } from '@prisma/client';
 import bookingsRouter from './routes/bookings.js';
 import consultationsRouter from './routes/consultations.js';
 import contactRouter from './routes/contact.js';
@@ -15,7 +14,6 @@ import clientConsultationRouter from './routes/clientConsultation.js';
 import { setupDatabase } from './setupDb.js';
 
 const app: Express = express();
-const prisma = new PrismaClient();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
@@ -101,6 +99,5 @@ app.listen(PORT, () => {
 // Graceful shutdown
 process.on('SIGINT', async () => {
   console.log('\n🛑 Shutting down gracefully...');
-  await prisma.$disconnect();
   process.exit(0);
 });
