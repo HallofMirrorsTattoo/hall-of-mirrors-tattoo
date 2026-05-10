@@ -121,11 +121,11 @@ export async function createBooking(req: Request, res: Response) {
       } : undefined,
     };
 
-    // Send to studio and assigned artist (temporarily disabled for debugging)
-    // await sendNewBookingNotification(bookingData);
+    // Send to studio and assigned artist
+    await sendNewBookingNotification(bookingData);
 
-    // Send confirmation to client (temporarily disabled for debugging)
-    // await sendBookingConfirmationToClient(bookingData);
+    // Send confirmation to client
+    await sendBookingConfirmationToClient(bookingData);
 
     res.status(201).json({
       success: true,
