@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Decimal } from '@prisma/client';
 import { z } from 'zod';
 
 const prisma = new PrismaClient();
@@ -50,8 +50,8 @@ export async function createBooking(req: Request, res: Response) {
         placement: validatedData.estimatedPlacement,
         estimated_size: validatedData.estimatedSize,
         artist_notes: validatedData.notes || null,
-        deposit_amount: new (require('decimal.js'))('0'),
-        balance_due: new (require('decimal.js'))('0'),
+        deposit_amount: new Decimal('0'),
+        balance_due: new Decimal('0'),
         booking_reference: `BK-${Date.now()}`,
       },
       include: {
