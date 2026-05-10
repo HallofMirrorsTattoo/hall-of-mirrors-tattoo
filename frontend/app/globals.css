@@ -61,9 +61,9 @@ h3 {
   @apply rounded-[calc(2rem-0.375rem)] bg-white border border-primary-dark/5 p-6 backdrop-blur-sm shadow-soft-lg;
 }
 
-/* Glassmorphism effect - refined for light background */
+/* Glassmorphism effect - increased transparency for luxury feel */
 .glassmorphism {
-  @apply bg-white/60 backdrop-blur-xl border border-primary-dark/10 rounded-2xl shadow-soft;
+  @apply bg-white/50 backdrop-blur-xl border border-primary-dark/10 rounded-2xl shadow-soft;
 }
 
 /* Premium button styles - dark accent button */
@@ -119,13 +119,22 @@ section {
   @apply py-28 md:py-40;
 }
 
-/* Typography contrast */
+/* Typography contrast - improved for visibility */
 .text-muted {
-  @apply text-primary-dark/60;
+  @apply text-primary-dark/75;
 }
 
 .text-light {
-  @apply text-primary-dark/80;
+  @apply text-primary-dark/85;
+}
+
+.text-subtle {
+  @apply text-primary-dark/70;
+}
+
+/* Ensure all links are visible */
+a {
+  @apply text-accent-gold hover:text-primary-dark transition-colors duration-300;
 }
 
 /* Subtle depth shadow */
@@ -137,6 +146,40 @@ section {
 .texture-noise {
   background-image:
     url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
+}
+
+/* Gold accent patterns on light backgrounds */
+.pattern-gold-accents {
+  position: relative;
+}
+
+.pattern-gold-accents::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(212, 175, 55, 0.03) 0%, transparent 2%),
+    radial-gradient(circle at 90% 80%, rgba(212, 175, 55, 0.03) 0%, transparent 2%),
+    radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.02) 0%, transparent 3%);
+  background-size: 100% 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Gold corner accents */
+.gold-corner-accent {
+  position: relative;
+}
+
+.gold-corner-accent::after {
+  content: '';
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: rgba(212, 175, 55, 0.4);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 50%;
+  pointer-events: none;
 }
 
 /* Dark section variant */

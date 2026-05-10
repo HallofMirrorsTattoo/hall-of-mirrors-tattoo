@@ -1,21 +1,25 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import LogoText from './LogoText';
 
 export default function Footer() {
   return (
-    <footer className="border-t border-white/10 mt-20">
+    <footer className="border-t border-white/10 mt-20 section-dark">
       <div className="max-w-6xl mx-auto px-4 py-32">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-16">
           {/* Brand */}
-          <div className="space-y-4">
-            <Image
-              src="/assets/logos/HOMLOGO.png"
-              alt="Hall of Mirrors"
-              width={60}
-              height={60}
-              className="w-14 h-14 object-contain"
-            />
-            <p className="text-white/60 text-sm leading-relaxed">
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <Image
+                src="/assets/logos/HOMLOGO.png"
+                alt="Hall of Mirrors"
+                width={50}
+                height={50}
+                className="w-12 h-12 object-contain"
+              />
+              <LogoText size="sm" className="h-10" />
+            </div>
+            <p className="text-white/70 text-sm leading-relaxed">
               Bespoke tattoo artistry in Liverpool. Crafting timeless designs with meticulous precision.
             </p>
           </div>

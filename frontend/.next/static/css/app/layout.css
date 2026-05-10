@@ -550,6 +550,9 @@ video {
 .z-40{
   z-index: 40;
 }
+.z-10{
+  z-index: 10;
+}
 .m-4{
   margin: 1rem;
 }
@@ -626,6 +629,18 @@ video {
 .h-full{
   height: 100%;
 }
+.h-10{
+  height: 2.5rem;
+}
+.h-16{
+  height: 4rem;
+}
+.h-32{
+  height: 8rem;
+}
+.h-5{
+  height: 1.25rem;
+}
 .max-h-64{
   max-height: 16rem;
 }
@@ -653,6 +668,12 @@ video {
 }
 .w-full{
   width: 100%;
+}
+.w-32{
+  width: 8rem;
+}
+.w-5{
+  width: 1.25rem;
 }
 .max-w-2xl{
   max-width: 42rem;
@@ -682,6 +703,34 @@ video {
 .rotate-90{
   --tw-rotate: 90deg;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+@keyframes bounce{
+
+  0%, 100%{
+    transform: translateY(-25%);
+    animation-timing-function: cubic-bezier(0.8,0,1,1);
+  }
+
+  50%{
+    transform: none;
+    animation-timing-function: cubic-bezier(0,0,0.2,1);
+  }
+}
+.animate-bounce{
+  animation: bounce 1s infinite;
+}
+@keyframes float{
+
+  0%, 100%{
+    transform: translateY(0px);
+  }
+
+  50%{
+    transform: translateY(-8px);
+  }
+}
+.animate-float{
+  animation: float 6s ease-in-out infinite;
 }
 .cursor-pointer{
   cursor: pointer;
@@ -870,6 +919,9 @@ video {
 .pt-8{
   padding-top: 2rem;
 }
+.pt-24{
+  padding-top: 6rem;
+}
 .text-center{
   text-align: center;
 }
@@ -986,6 +1038,18 @@ video {
 }
 .text-white\/90{
   color: rgb(255 255 255 / 0.9);
+}
+.text-primary-dark\/40{
+  color: rgb(26 26 46 / 0.4);
+}
+.text-primary-dark\/50{
+  color: rgb(26 26 46 / 0.5);
+}
+.text-primary-dark\/80{
+  color: rgb(26 26 46 / 0.8);
+}
+.text-primary-dark\/75{
+  color: rgb(26 26 46 / 0.75);
 }
 .opacity-0{
   opacity: 0;
@@ -1129,12 +1193,12 @@ h3{
   backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
 }
 
-/* Glassmorphism effect - refined for light background */
+/* Glassmorphism effect - increased transparency for luxury feel */
 .glassmorphism{
   border-radius: 1rem;
   border-width: 1px;
   border-color: rgb(26 26 46 / 0.1);
-  background-color: rgb(255 255 255 / 0.6);
+  background-color: rgb(255 255 255 / 0.5);
   --tw-shadow: 0 4px 12px rgba(26, 26, 46, 0.08);
   --tw-shadow-colored: 0 4px 12px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
@@ -1320,13 +1384,30 @@ section{
   }
 }
 
-/* Typography contrast */
+/* Typography contrast - improved for visibility */
 .text-muted{
-  color: rgb(26 26 46 / 0.6);
+  color: rgb(26 26 46 / 0.75);
 }
 
 .text-light{
-  color: rgb(26 26 46 / 0.8);
+  color: rgb(26 26 46 / 0.85);
+}
+
+.text-subtle{
+  color: rgb(26 26 46 / 0.7);
+}
+
+/* Ensure all links are visible */
+a{
+  --tw-text-opacity: 1;
+  color: rgb(212 175 55 / var(--tw-text-opacity, 1));
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+a:hover{
+  --tw-text-opacity: 1;
+  color: rgb(26 26 46 / var(--tw-text-opacity, 1));
 }
 
 /* Subtle depth shadow */
@@ -1340,6 +1421,40 @@ section{
 .texture-noise {
   background-image:
     url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
+}
+
+/* Gold accent patterns on light backgrounds */
+.pattern-gold-accents {
+  position: relative;
+}
+
+.pattern-gold-accents::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(212, 175, 55, 0.03) 0%, transparent 2%),
+    radial-gradient(circle at 90% 80%, rgba(212, 175, 55, 0.03) 0%, transparent 2%),
+    radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.02) 0%, transparent 3%);
+  background-size: 100% 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Gold corner accents */
+.gold-corner-accent {
+  position: relative;
+}
+
+.gold-corner-accent::after {
+  content: '';
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: rgba(212, 175, 55, 0.4);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 50%;
+  pointer-events: none;
 }
 
 /* Dark section variant */
@@ -1438,8 +1553,20 @@ section{
     height: 3.5rem;
   }
 
+  .md\:h-24{
+    height: 6rem;
+  }
+
+  .md\:h-48{
+    height: 12rem;
+  }
+
   .md\:w-14{
     width: 3.5rem;
+  }
+
+  .md\:w-48{
+    width: 12rem;
   }
 
   .md\:grid-cols-2{
@@ -1464,6 +1591,10 @@ section{
 
   .md\:pt-40{
     padding-top: 10rem;
+  }
+
+  .md\:pt-32{
+    padding-top: 8rem;
   }
 
   .md\:text-2xl{
