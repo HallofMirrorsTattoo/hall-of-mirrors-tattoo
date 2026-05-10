@@ -52,30 +52,27 @@ app.use((err, req, res, next) => {
         status: err.status || 500,
     });
 });
-// Start server immediately
-app.listen(PORT, () => {
-    console.log(`🎨 Hall of Mirrors API running on port ${PORT}`);
-    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-});
-// Initialize database and run migrations in background (don't block startup)
-(async () => {
+// Run migrations synchronously before starting server
+async function start() {
     try {
-        console.log('🔄 Running migrations in background...');
+        console.log('🔄 Running database migrations...');
         await runMigrations();
         console.log('✅ Migrations complete');
-    }
-    catch (error) {
-        console.error('Migration error (non-blocking):', error);
-    }
-    try {
         console.log('🔄 Initializing database...');
         await initializeDatabase();
         console.log('✅ Database initialized');
+        // Now start the server
+        app.listen(PORT, () => {
+            console.log(`🎨 Hall of Mirrors API running on port ${PORT}`);
+            console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+        });
     }
     catch (error) {
-        console.error('Init error (non-blocking):', error);
+        console.error('❌ Failed to start:', error);
+        process.exit(1);
     }
-})();
+}
+start();
 // Graceful shutdown
 process.on('SIGINT', async () => {
     console.log('\n🛑 Shutting down gracefully...');
