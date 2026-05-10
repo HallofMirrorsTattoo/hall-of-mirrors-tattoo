@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+
+// Force rebuild on production
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
