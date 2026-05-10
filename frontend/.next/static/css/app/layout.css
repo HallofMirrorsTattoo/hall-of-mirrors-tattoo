@@ -511,6 +511,9 @@ video {
 [hidden]:where(:not([hidden="until-found"])) {
   display: none;
 }
+.pointer-events-none{
+  pointer-events: none;
+}
 .fixed{
   position: fixed;
 }
@@ -525,6 +528,9 @@ video {
 }
 .inset-0{
   inset: 0px;
+}
+.bottom-0{
+  bottom: 0px;
 }
 .bottom-32{
   bottom: 8rem;
@@ -1017,6 +1023,9 @@ video {
   --tw-bg-opacity: 1;
   background-color: rgb(254 252 232 / var(--tw-bg-opacity, 1));
 }
+.bg-gradient-to-b{
+  background-image: linear-gradient(to bottom, var(--tw-gradient-stops));
+}
 .bg-gradient-to-br{
   background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
 }
@@ -1034,6 +1043,18 @@ video {
   --tw-gradient-from: #fdfbf7 var(--tw-gradient-from-position);
   --tw-gradient-to: rgb(253 251 247 / 0) var(--tw-gradient-to-position);
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.from-transparent{
+  --tw-gradient-from: transparent var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(0 0 0 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+.via-transparent{
+  --tw-gradient-to: rgb(0 0 0 / 0)  var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), transparent var(--tw-gradient-via-position), var(--tw-gradient-to);
+}
+.to-\[\#2a2a2a\]{
+  --tw-gradient-to: #2a2a2a var(--tw-gradient-to-position);
 }
 .to-accent-gold\/5{
   --tw-gradient-to: rgb(212 175 55 / 0.05) var(--tw-gradient-to-position);
@@ -1254,9 +1275,6 @@ video {
 .text-primary-dark\/70{
   color: rgb(26 26 46 / 0.7);
 }
-.text-primary-dark\/75{
-  color: rgb(26 26 46 / 0.75);
-}
 .text-primary-dark\/80{
   color: rgb(26 26 46 / 0.8);
 }
@@ -1388,12 +1406,15 @@ html {
 }
 
 body{
-  --tw-bg-opacity: 1;
-  background-color: rgb(42 42 42 / var(--tw-bg-opacity, 1));
   font-family: Geist, Plus Jakarta Sans, system-ui, sans-serif;
   --tw-text-opacity: 1;
   color: rgb(253 251 247 / var(--tw-text-opacity, 1));
+  background-color: #2a2a2a;
   position: relative;
+}
+
+main {
+  background-color: #2a2a2a;
 }
 
 /* Film grain overlay - subtle for light background */
@@ -1660,8 +1681,6 @@ label{
 
 /* Premium spacing */
 section{
-  --tw-bg-opacity: 1;
-  background-color: rgb(26 26 46 / var(--tw-bg-opacity, 1));
   padding-top: 7rem;
   padding-bottom: 7rem;
 }
@@ -1671,6 +1690,9 @@ section{
     padding-top: 10rem;
     padding-bottom: 10rem;
   }
+}
+section {
+  background-color: #2a2a2a;
 }
 
 /* Typography contrast - for dark background */
@@ -1839,14 +1861,14 @@ a:hover{
   color: rgb(26 26 46 / var(--tw-text-opacity, 1));
 }
 
-.hover\:text-white:hover{
-  --tw-text-opacity: 1;
-  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
-}
-
 .hover\:text-primary-light:hover{
   --tw-text-opacity: 1;
   color: rgb(253 251 247 / var(--tw-text-opacity, 1));
+}
+
+.hover\:text-white:hover{
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
 }
 
 .hover\:opacity-80:hover{

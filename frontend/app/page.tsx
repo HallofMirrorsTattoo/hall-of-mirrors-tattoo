@@ -7,9 +7,11 @@ export default function Home() {
     <div>
       {/* Hero Section - Large carousel with centered logo and bottom buttons */}
       <section className="h-[100dvh] px-4 relative overflow-hidden bg-[#2a2a2a]">
-        {/* Carousel - behind logo, aligned to carousel/logo area */}
-        <div className="absolute inset-0 top-1 bottom-32 -z-5 w-full">
+        {/* Carousel - extends to top, fades at bottom */}
+        <div className="absolute inset-0 top-0 bottom-0 -z-5 w-full">
           <ShopCarousel />
+          {/* Gradient fade overlay at bottom - blends carousel into buttons */}
+          <div className="absolute inset-0 top-1/2 bg-gradient-to-b from-transparent via-transparent to-[#2a2a2a] pointer-events-none"></div>
         </div>
 
         {/* Logo Section - Positioned in upper area with breathing room before buttons */}

@@ -15,8 +15,13 @@ html {
 }
 
 body {
-  @apply bg-[#2a2a2a] text-primary-light font-sans;
+  @apply text-primary-light font-sans;
+  background-color: #2a2a2a;
   position: relative;
+}
+
+main {
+  background-color: #2a2a2a;
 }
 
 /* Film grain overlay - subtle for light background */
@@ -116,7 +121,8 @@ label {
 
 /* Premium spacing */
 section {
-  @apply py-28 md:py-40 bg-primary-dark;
+  @apply py-28 md:py-40;
+  background-color: #2a2a2a;
 }
 
 /* Typography contrast - for dark background */
