@@ -1,6 +1,8 @@
 import { PrismaClient } from '@prisma/client';
+import pkg from 'pg';
 
 const prisma = new PrismaClient();
+const { Client } = pkg;
 
 const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS "User" (
@@ -173,71 +175,52 @@ export async function setupDatabase() {
 
     console.log('✅ Database schema ready');
 
-    // Create default studio if it doesn't exist
+    // Create default studio if it doesn't exist (using raw pg.Client to avoid Prisma pooling issues)
     try {
-      const existingStudio = await prisma.studio.findUnique({
-        where: { id: 'default-studio' },
+      const client = new Client({
+        connectionString: process.env.DATABASE_URL,
       });
+      await client.connect();
 
-      if (!existingStudio) {
+      // Check if studio exists
+      const studioResult = await client.query(
+        'SELECT id FROM "Studio" WHERE id = $1',
+        ['default-studio']
+      );
+
+      if (studioResult.rows.length === 0) {
         console.log('🔄 Creating default studio...');
-        await prisma.studio.create({
-          data: {
-            id: 'default-studio',
-            studio_name: 'Hall of Mirrors Tattoo',
-            address: '123 High Street',
-            postcode: 'AB12 3CD',
-            phone: '+44 123 456 7890',
-            email: 'bookings@hallofmirrors.tattoo',
-            hours_monday_start: '10:00',
-            hours_monday_end: '18:00',
-            hours_tuesday_start: '10:00',
-            hours_tuesday_end: '18:00',
-            hours_wednesday_start: '10:00',
-            hours_wednesday_end: '18:00',
-            hours_thursday_start: '10:00',
-            hours_thursday_end: '18:00',
-            hours_friday_start: '10:00',
-            hours_friday_end: '18:00',
-            hours_saturday_start: '10:00',
-            hours_saturday_end: '16:00',
-          },
-        });
+        await client.query(
+          `INSERT INTO "Studio" (id, studio_name, address, postcode, phone, email, hours_monday_start, hours_monday_end, hours_tuesday_start, hours_tuesday_end, hours_wednesday_start, hours_wednesday_end, hours_thursday_start, hours_thursday_end, hours_friday_start, hours_friday_end, hours_saturday_start, hours_saturday_end, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, NOW(), NOW())`,
+          ['default-studio', 'Hall of Mirrors Tattoo', '123 High Street', 'AB12 3CD', '+44 123 456 7890', 'bookings@hallofmirrors.tattoo', '10:00', '18:00', '10:00', '18:00', '10:00', '18:00', '10:00', '18:00', '10:00', '18:00', '10:00', '16:00']
+        );
         console.log('✅ Default studio created');
       } else {
         console.log('✅ Default studio exists');
       }
-    } catch (studioErr) {
-      console.warn('⚠️ Studio creation warning:', (studioErr as any).message);
-    }
 
-    // Create Robyn as default artist if doesn't exist
-    try {
-      const existingArtist = await prisma.artist.findUnique({
-        where: { email: 'robyn@hallofmirrorstattoo.com' },
-      });
+      // Check if Robyn exists
+      const artistResult = await client.query(
+        'SELECT id FROM "Artist" WHERE email = $1',
+        ['robyn@hallofmirrorstattoo.com']
+      );
 
-      if (!existingArtist) {
+      if (artistResult.rows.length === 0) {
         console.log('🔄 Creating default artist Robyn...');
-        await prisma.artist.create({
-          data: {
-            full_name: 'Robyn',
-            email: 'robyn@hallofmirrorstattoo.com',
-            password_hash: '$2b$10$Y4qE2Mzj8Y3ZH5L4KQ9sJewQqV9C4mZ2H8K6D2X9L5Y8O1P2Q3R4',
-            studio_id: 'default-studio',
-            specialties: 'Fine line, geometric, custom designs',
-            years_experience: 8,
-            bio: 'Experienced tattoo artist specializing in fine line and geometric designs.',
-            instagram_handle: 'robyn.tattoos',
-            is_active: true,
-          },
-        });
+        await client.query(
+          `INSERT INTO "Artist" (id, studio_id, full_name, email, password_hash, specialties, years_experience, bio, instagram_handle, is_active, role, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())`,
+          ['artist-robyn-001', 'default-studio', 'Robyn', 'robyn@hallofmirrorstattoo.com', '$2b$10$Y4qE2Mzj8Y3ZH5L4KQ9sJewQqV9C4mZ2H8K6D2X9L5Y8O1P2Q3R4', 'Fine line, geometric, custom designs', 8, 'Experienced tattoo artist specializing in fine line and geometric designs.', 'robyn.tattoos', true, 'artist']
+        );
         console.log('✅ Default artist Robyn created');
       } else {
         console.log('✅ Default artist Robyn exists');
       }
-    } catch (artistErr) {
-      console.warn('⚠️ Artist creation warning:', (artistErr as any).message);
+
+      await client.end();
+    } catch (err) {
+      console.warn('⚠️ Studio/Artist creation warning:', (err as any).message);
     }
 
     return true;
