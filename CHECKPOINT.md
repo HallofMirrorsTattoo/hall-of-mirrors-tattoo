@@ -337,25 +337,148 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3006
 ✅ Lucide-react dependency added for carousel icons
 ✅ Code pushed to main (commit a563959), Vercel deployed
 
+### Phase 3 - Carousel Hero Refinement (Latest Session - May 10 Evening)
+✅ **Carousel Positioning:** Changed from absolute to fixed positioning to extend behind nav bar
+✅ **Navigation:** Carousel now sits behind navigation bar starting from very top (y=0) of viewport
+✅ **Gradient Fade:** Gradient overlay positioned at bottom of carousel (absolute bottom-0) for smooth blend to charcoal
+✅ **Edge-to-Edge:** Removed px-4 padding from carousel container - now fills full width left to right
+✅ **No Charcoal Gaps:** Carousel fills entire viewport width with no visible charcoal edges
+✅ **Z-index Stacking:** Nav (z-40 fixed) floats on top, carousel (-z-5 fixed) behind, logo/buttons on top of carousel
+✅ **Git Commits:** 
+  - 0116955: "Fix carousel to extend behind navigation bar from page top with gradient fade at bottom"
+  - 95b7782: "Remove carousel padding to extend edge-to-edge"
+✅ Vercel deployed with final hero section design
+
+---
+
+## WHAT'S LEFT TO DO (Priority Order)
+
+### Phase 4: Core Functionality Completion
+1. **Email Notifications** (HIGH PRIORITY)
+   - Booking confirmation emails to clients
+   - Consultation response notifications
+   - Signup welcome emails
+   - Requires: SendGrid API key configuration
+
+2. **Artist Consultation Response System** (HIGH PRIORITY)
+   - UI in artist dashboard to respond to consultation requests
+   - Response message field + send button
+   - Email notification to client when artist responds
+   - Endpoint: PATCH `/api/artist/consultations/:id`
+
+3. **Client Profile Editing** (MEDIUM PRIORITY)
+   - Allow clients to edit: name, email, phone, password
+   - Protected endpoints: PATCH `/api/client/profile`
+   - Form validation and success/error messages
+
+4. **Password Reset Flow** (MEDIUM PRIORITY)
+   - "Forgot Password" link on login pages
+   - Email with reset token
+   - Reset form with new password entry
+   - Endpoint: POST/PATCH `/api/auth/password-reset`
+
+### Phase 5: Enhanced Features (Lower Priority)
+5. **Image Storage for Design Ideas** (MEDIUM PRIORITY)
+   - Currently: URL-based (user provides image URL)
+   - Needed: File upload to Vercel Blob or AWS S3
+   - Update: `DesignIdea.image_url` to support file upload
+   - Components: Upload form with drag-drop in dashboard
+
+6. **Calendar/Availability Management** (MEDIUM PRIORITY)
+   - Artist can set available dates/times
+   - Booking form shows available slots
+   - Real-time availability sync
+
+7. **Booking Reminders** (LOW PRIORITY)
+   - Email reminders 24h before appointment
+   - Configurable via cron/scheduled tasks
+
+8. **Contact Form Submissions** (LOW PRIORITY)
+   - Process contact page form submissions
+   - Store in database or email to admin
+   - Endpoint: POST `/api/contact`
+
+9. **Review System** (LOW PRIORITY)
+   - Clients can leave reviews after completed booking
+   - Rating + comment
+   - Display reviews on portfolio/home
+
+10. **Portfolio Management** (LOW PRIORITY)
+    - Artist can upload/edit/delete portfolio images
+    - Different categories or styles
+    - Display on artist profile
+
+11. **Direct Messaging** (LOW PRIORITY)
+    - Real-time chat between artist and client
+    - Websocket implementation needed
+    - Message history storage
+
+12. **Payment Processing** (PHASE 6)
+    - Stripe integration
+    - Payment for bookings
+    - Deposit payments
+    - Currently: Not integrated (no payment flow)
+
+13. **Admin Dashboard** (PHASE 6)
+    - Manage artists
+    - View all bookings/consultations
+    - System settings
+    - Analytics
+
 ---
 
 ## IMMEDIATE NEXT STEPS (Phase 4)
 
-1. ✅ Phase 3 complete with charcoal background and pushed to main (commit a563959)
-2. ✅ Vercel deployed with optimized hero section (nav + carousel + logo + buttons fit in 100vh)
-3. ✅ Tested Phase 3 design on production:
-   - ✅ Charcoal background displays correctly
-   - ✅ Carousel works with photos and gold nav arrows
-   - ✅ Navigation pills styled with glass morphism
-   - ✅ Buttons visible and styled correctly (no scrolling needed)
-   - ✅ Mobile responsive (tested on 375px)
-   - ✅ Colors and contrast readable
-4. Next: Get Robyn's final feedback on charcoal background and optimized layout
-5. Implement Phase 4 features:
-   - Email notifications (booking confirmations, consultation responses, signup confirmations)
-   - Password reset flow
-   - Client can edit profile (name, phone, email)
-   - Artist dashboard response to consultations (UI for artist to respond)
+### Completed in This Session (May 10, 2026 - Evening)
+1. ✅ Phase 3.1 Carousel Hero Refinement complete and deployed
+   - ✅ Carousel extends behind navigation bar from very top of page
+   - ✅ Gradient fade at bottom blending into charcoal
+   - ✅ Edge-to-edge carousel with no charcoal gaps
+   - ✅ All git commits pushed to main (commits 0116955, 95b7782)
+   - ✅ Vercel deployment live at https://hall-of-mirrors-tattoo.vercel.app
+
+### For Next Session (Phase 4 - Core Features)
+**Start with:** Read this CHECKPOINT.md + phase3_carousel_refinement.md memory file
+
+1. **Email Notifications System** (Start here)
+   - Set up SendGrid API key in backend .env
+   - Configure emailService in `backend/src/services/emailService.ts`
+   - Add email trigger on: booking creation, consultation response, client signup
+   - Create email templates for each event type
+   - Test email flow with Robyn's account
+
+2. **Artist Consultation Response System** (Parallel with emails)
+   - Add "Respond" button to consultation cards in artist dashboard
+   - Create response form modal with message field
+   - Implement PATCH `/api/artist/consultations/:id` endpoint to save response
+   - Trigger email notification to client when artist responds
+   - Display response in client consultation tab
+
+3. **Client Profile Editing** (After above)
+   - Create `/client/profile` page with edit form
+   - Add fields: first_name, last_name, email, phone, password change
+   - Endpoint: PATCH `/api/client/profile`
+   - Add link to profile from client dashboard header
+
+4. **Password Reset Flow** (After above)
+   - Add "Forgot Password?" link on `/client/login` and `/artist/login`
+   - Create reset token generation logic
+   - Send reset email with token
+   - Create reset form page
+   - Endpoint: POST/PATCH `/api/auth/password-reset`
+
+### Local Development
+```bash
+# Terminal 1 - Backend
+cd /Users/willbangura/hall-of-mirrors-tattoo/backend
+PORT=49999 npm run dev
+
+# Terminal 2 - Frontend
+cd /Users/willbangura/hall-of-mirrors-tattoo/frontend
+npm run dev
+```
+
+**Test at:** http://localhost:3000 (or assigned port)
 
 ---
 

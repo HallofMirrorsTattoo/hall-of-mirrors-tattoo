@@ -64,6 +64,9 @@ module.exports = {
         '28': '7rem',
         '32': '8rem',
       },
+      zIndex: {
+        '-10': '-10',
+      },
     },
   },
   plugins: [],

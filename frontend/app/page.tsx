@@ -6,17 +6,17 @@ import ScrollGradientFade from './components/ScrollGradientFade';
 export default function Home() {
   return (
     <div>
-      {/* Hero Section - Large carousel with centered logo and bottom buttons */}
-      <section className="h-[100dvh] relative overflow-hidden bg-[#2a2a2a]">
-        {/* Carousel - extends from very top of page behind nav, fills entire area, fades at bottom into charcoal */}
-        <div className="fixed top-0 left-0 right-0 h-[100dvh] -z-5 w-full">
-          <ShopCarousel />
-          {/* Scroll-responsive gradient fade overlay - fades away as user scrolls */}
-          <ScrollGradientFade />
-        </div>
+      {/* Fixed Carousel - stays at top while page scrolls */}
+      <div className="fixed top-0 left-0 right-0 h-[100dvh] z-0 w-full pointer-events-none">
+        <ShopCarousel />
+        {/* Scroll-responsive gradient fade overlay - fades away as user scrolls */}
+        <ScrollGradientFade />
+      </div>
 
+      {/* Hero Section - Large carousel with centered logo and bottom buttons */}
+      <section className="h-[100dvh] relative overflow-visible bg-transparent">
         {/* Logo Section - Positioned in upper area with breathing room before buttons */}
-        <div className="absolute inset-0 top-1 bottom-32 left-0 right-0 flex flex-col items-center justify-start pt-20 z-10">
+        <div className="absolute inset-0 top-1 bottom-32 left-0 right-0 flex flex-col items-center justify-start pt-20 z-10 pointer-events-auto">
           <div className="w-full flex flex-col items-center space-y-4 animate-fadeUp" style={{ animationDelay: '0ms' }}>
             {/* Main Logo - White version */}
             <Image
@@ -70,7 +70,7 @@ export default function Home() {
       </section>
 
       {/* Trust Indicators - Sharp edged cards on charcoal background */}
-      <section className="px-4 py-32" style={{ backgroundColor: '#2a2a2a' }}>
+      <section className="relative z-20 px-4 py-32" style={{ backgroundColor: '#2a2a2a' }}>
         <div className="max-w-6xl mx-auto relative z-10">
           <div className="card-premium">
             <div className="card-premium-inner">
@@ -97,7 +97,7 @@ export default function Home() {
       </section>
 
       {/* Featured Portfolio - Asymmetrical Bento */}
-      <section className="px-4 py-32" style={{ backgroundColor: '#2a2a2a' }}>
+      <section className="relative z-20 px-4 py-32" style={{ backgroundColor: '#2a2a2a' }}>
         <div className="max-w-6xl mx-auto relative z-10">
           <div className="space-y-8 mb-16">
             <span className="eyebrow">Featured Designs</span>
@@ -145,7 +145,7 @@ export default function Home() {
       </section>
 
       {/* CTA Final Section - Dark variant */}
-      <section className="section-dark px-4 py-32">
+      <section className="relative z-20 section-dark px-4 py-32">
         <div className="max-w-4xl mx-auto card-premium">
           <div className="card-premium-inner text-center space-y-8">
             <div className="space-y-4">
