@@ -1,7 +1,11 @@
 {
-  "buildCommand": "cd frontend && npm run build",
-  "outputDirectory": "frontend/.next",
-  "env": {
-    "NEXT_PUBLIC_API_URL": "https://hall-of-mirrors-tattoo-production.up.railway.app"
-  }
+  "projects": [
+    {
+      "rootDirectory": "frontend",
+      "buildCommand": "npm run build",
+      "env": {
+        "NEXT_PUBLIC_API_URL": "https://hall-of-mirrors-tattoo-production.up.railway.app"
+      }
+    }
+  ]
 }
