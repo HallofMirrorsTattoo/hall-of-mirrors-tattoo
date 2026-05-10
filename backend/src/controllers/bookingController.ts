@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import pkg from 'pg';
 import { z } from 'zod';
-import { sendNewBookingNotification, sendBookingStatusUpdate } from '../services/emailService.js';
+import { sendNewBookingNotification, sendBookingStatusUpdate, sendBookingConfirmationToClient } from '../services/emailService.js';
 import { v4 as uuidv4 } from 'uuid';
 
 const { Client } = pkg;
@@ -101,7 +101,7 @@ export async function createBooking(req: Request, res: Response) {
     const booking = bookingResult.rows[0];
 
     // Send email notifications
-    await sendNewBookingNotification({
+    const bookingData = {
       id: booking.id,
       booking_reference: booking.booking_reference,
       appointment_date_time: booking.appointment_date_time,
@@ -119,7 +119,13 @@ export async function createBooking(req: Request, res: Response) {
         full_name: artistData.full_name,
         email: artistData.email,
       } : undefined,
-    });
+    };
+
+    // Send to studio and assigned artist
+    await sendNewBookingNotification(bookingData);
+
+    // Send confirmation to client
+    await sendBookingConfirmationToClient(bookingData);
 
     res.status(201).json({
       success: true,

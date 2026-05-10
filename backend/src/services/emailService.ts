@@ -136,6 +136,70 @@ export async function sendNewBookingNotification(booking: BookingData) {
   }
 }
 
+export async function sendBookingConfirmationToClient(booking: BookingData) {
+  try {
+    if (!SENDGRID_API_KEY) {
+      console.warn('⚠️ SendGrid API key not configured, skipping email');
+      return;
+    }
+
+    const clientName = booking.user?.first_name
+      ? `${booking.user.first_name} ${booking.user.last_name}`
+      : booking.guest_name || 'Client';
+
+    const clientEmail = booking.user?.email || booking.guest_email;
+
+    if (!clientEmail) {
+      console.warn('⚠️ No client email provided, skipping confirmation');
+      return;
+    }
+
+    const appointmentDate = new Date(booking.appointment_date_time).toLocaleDateString('en-GB', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const emailBody = `
+      <h2>Booking Confirmation</h2>
+      <p>Hi ${clientName},</p>
+
+      <p>Thank you for booking with Hall of Mirrors Tattoo Studio! We've received your booking request.</p>
+
+      <h3>Your Booking Details</h3>
+      <p><strong>Booking Reference:</strong> ${booking.booking_reference}</p>
+      <p><strong>Date & Time:</strong> ${appointmentDate}</p>
+      <p><strong>Placement:</strong> ${booking.placement}</p>
+      <p><strong>Estimated Size:</strong> ${booking.estimated_size}</p>
+
+      <h3>Your Design Description</h3>
+      <p>${booking.tattoo_description}</p>
+
+      <p>Our team will review your booking and get back to you shortly to confirm your appointment and discuss any design details.</p>
+
+      <p>If you have any questions, feel free to contact us at ${STUDIO_EMAIL}.</p>
+
+      <p>Looking forward to creating something amazing with you!</p>
+      <p><strong>Hall of Mirrors Tattoo Studio</strong></p>
+    `;
+
+    const msg = {
+      to: clientEmail,
+      from: FROM_EMAIL,
+      subject: `Booking Confirmation - ${booking.booking_reference}`,
+      html: emailBody,
+    };
+
+    await sgMail.send(msg);
+    console.log(`✅ Client confirmation email sent to ${clientEmail}`);
+  } catch (error) {
+    console.error('❌ Client confirmation email failed:', error);
+  }
+}
+
 export async function sendBookingStatusUpdate(
   clientEmail: string,
   clientName: string,
