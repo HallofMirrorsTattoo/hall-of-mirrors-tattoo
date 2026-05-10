@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <div>
       {/* Hero Section - Logo with Carousel Behind */}
-      <section className="min-h-[100dvh] px-4 flex items-center justify-center relative overflow-hidden">
+      <section className="h-[100dvh] px-4 flex flex-col items-center justify-center relative overflow-hidden">
         {/* Carousel Background - fills entire section behind logo */}
         <div className="absolute inset-0 -z-5">
           <ShopCarousel />
@@ -15,9 +15,9 @@ export default function Home() {
         {/* Dark overlay to ensure logo readability over carousel */}
         <div className="absolute inset-0 bg-primary-dark/50 -z-4"></div>
 
-        <div className="max-w-4xl mx-auto w-full text-center space-y-8 relative z-10">
+        <div className="max-w-4xl mx-auto w-full text-center space-y-4 relative z-10 flex flex-col justify-between h-full">
           {/* Logo Section - Animated */}
-          <div className="space-y-8 animate-fadeUp" style={{ animationDelay: '0ms' }}>
+          <div className="space-y-4 animate-fadeUp" style={{ animationDelay: '0ms' }}>
             {/* Main Logo - White version */}
             <div className="flex justify-center">
               <Image
