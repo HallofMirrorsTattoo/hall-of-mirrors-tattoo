@@ -41,9 +41,9 @@ export default function ShopCarousel() {
   }
 
   return (
-    <div className="w-full relative">
+    <div className="w-full h-full relative">
       {/* Carousel Container */}
-      <div className="relative w-full h-64 md:h-[500px] overflow-hidden bg-[#2a2a2a]">
+      <div className="relative w-full h-full overflow-hidden bg-[#2a2a2a]">
         {/* Photos Wrapper - Shows current photo centered with peek of adjacent ones */}
         <div className="relative w-full h-full">
           {photos.map((photo, index) => {
