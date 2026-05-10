@@ -6,13 +6,14 @@ import ScrollGradientFade from './components/ScrollGradientFade';
 export default function Home() {
   return (
     <div>
+      {/* Carousel - fixed at top */}
+      <div className="fixed top-0 left-0 right-0 h-screen z-0 w-full pointer-events-none overflow-hidden">
+        <ShopCarousel />
+        <ScrollGradientFade />
+      </div>
+
       {/* Hero Section - Large carousel with centered logo and bottom buttons */}
-      <section className="h-[100dvh] relative overflow-hidden bg-transparent">
-        {/* Carousel - positioned absolutely within hero section */}
-        <div className="absolute top-0 left-0 right-0 h-[100dvh] w-full z-0 pointer-events-none">
-          <ShopCarousel />
-          <ScrollGradientFade />
-        </div>
+      <section className="h-[100dvh] relative bg-transparent z-10">
 
         {/* Logo Section - Positioned in upper area with breathing room before buttons */}
         <div className="absolute inset-0 top-1 bottom-32 left-0 right-0 flex flex-col items-center justify-start pt-20 z-10 pointer-events-auto">
@@ -67,6 +68,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Carousel cover - hides carousel after hero section */}
+      <div className="fixed top-[100dvh] left-0 right-0 bottom-0 bg-[#2a2a2a] z-50 pointer-events-none"></div>
 
       {/* Trust Indicators - Sharp edged cards on charcoal background */}
       <section className="relative z-20 px-4 py-32" style={{ backgroundColor: '#2a2a2a' }}>
