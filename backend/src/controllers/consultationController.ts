@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import pkg from 'pg';
 import { z } from 'zod';
+import { v4 as uuidv4 } from 'uuid';
 
-const prisma = new PrismaClient();
+const { Client } = pkg;
 
 const CreateConsultationSchema = z.object({
   clientName: z.string().min(2, 'Name must be at least 2 characters'),
@@ -17,24 +18,30 @@ const CreateConsultationSchema = z.object({
 type ConsultationFormData = z.infer<typeof CreateConsultationSchema>;
 
 export async function createConsultation(req: Request, res: Response) {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+  });
+
   try {
     const validatedData = CreateConsultationSchema.parse(req.body);
+    await client.connect();
 
-    const consultation = await prisma.consultationRequest.create({
-      data: {
-        name: validatedData.clientName,
-        email: validatedData.clientEmail,
-        phone: validatedData.clientPhone,
-        tattoo_idea: validatedData.message,
-        preferred_contact_method: validatedData.interestedIn || null,
-        consultation_status: 'new',
-      },
-    });
+    const id = uuidv4();
+    await client.query(
+      `INSERT INTO "ConsultationRequest" (id, name, email, phone, tattoo_idea, preferred_contact_method, consultation_status, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
+      [id, validatedData.clientName, validatedData.clientEmail, validatedData.clientPhone, validatedData.message, validatedData.interestedIn || null, 'new']
+    );
+
+    const result = await client.query(
+      'SELECT * FROM "ConsultationRequest" WHERE id = $1',
+      [id]
+    );
 
     res.status(201).json({
       success: true,
       message: 'Consultation request submitted successfully. We will contact you soon.',
-      consultation,
+      consultation: result.rows[0],
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -50,18 +57,26 @@ export async function createConsultation(req: Request, res: Response) {
       success: false,
       error: 'Failed to create consultation request',
     });
+  } finally {
+    await client.end();
   }
 }
 
 export async function getConsultations(req: Request, res: Response) {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+  });
+
   try {
-    const consultations = await prisma.consultationRequest.findMany({
-      orderBy: { created_at: 'desc' },
-    });
+    await client.connect();
+
+    const result = await client.query(
+      'SELECT * FROM "ConsultationRequest" ORDER BY created_at DESC'
+    );
 
     res.json({
       success: true,
-      consultations,
+      consultations: result.rows,
     });
   } catch (error) {
     console.error('Fetch consultations error:', error);
@@ -69,18 +84,26 @@ export async function getConsultations(req: Request, res: Response) {
       success: false,
       error: 'Failed to fetch consultations',
     });
+  } finally {
+    await client.end();
   }
 }
 
 export async function getConsultationById(req: Request, res: Response) {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+  });
+
   try {
     const { id } = req.params;
+    await client.connect();
 
-    const consultation = await prisma.consultationRequest.findUnique({
-      where: { id },
-    });
+    const result = await client.query(
+      'SELECT * FROM "ConsultationRequest" WHERE id = $1',
+      [id]
+    );
 
-    if (!consultation) {
+    if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
         error: 'Consultation not found',
@@ -89,7 +112,7 @@ export async function getConsultationById(req: Request, res: Response) {
 
     res.json({
       success: true,
-      consultation,
+      consultation: result.rows[0],
     });
   } catch (error) {
     console.error('Fetch consultation error:', error);
@@ -97,26 +120,58 @@ export async function getConsultationById(req: Request, res: Response) {
       success: false,
       error: 'Failed to fetch consultation',
     });
+  } finally {
+    await client.end();
   }
 }
 
 export async function updateConsultation(req: Request, res: Response) {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+  });
+
   try {
     const { id } = req.params;
     const { consultation_status, response_message } = req.body;
+    await client.connect();
 
-    const consultation = await prisma.consultationRequest.update({
-      where: { id },
-      data: {
-        ...(consultation_status && { consultation_status }),
-        ...(response_message && { response_message }),
-      },
-    });
+    const updates: string[] = [];
+    const values: any[] = [id];
+    let paramIndex = 2;
+
+    if (consultation_status) {
+      updates.push(`consultation_status = $${paramIndex}`);
+      values.push(consultation_status);
+      paramIndex++;
+    }
+
+    if (response_message) {
+      updates.push(`response_message = $${paramIndex}`);
+      values.push(response_message);
+      paramIndex++;
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'No fields to update',
+      });
+    }
+
+    await client.query(
+      `UPDATE "ConsultationRequest" SET ${updates.join(', ')} WHERE id = $1`,
+      values
+    );
+
+    const result = await client.query(
+      'SELECT * FROM "ConsultationRequest" WHERE id = $1',
+      [id]
+    );
 
     res.json({
       success: true,
       message: 'Consultation updated successfully',
-      consultation,
+      consultation: result.rows[0],
     });
   } catch (error) {
     console.error('Update consultation error:', error);
@@ -124,5 +179,7 @@ export async function updateConsultation(req: Request, res: Response) {
       success: false,
       error: 'Failed to update consultation',
     });
+  } finally {
+    await client.end();
   }
 }
