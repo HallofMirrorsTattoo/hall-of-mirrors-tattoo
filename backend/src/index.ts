@@ -7,7 +7,11 @@ import bookingsRouter from './routes/bookings.js';
 import consultationsRouter from './routes/consultations.js';
 import contactRouter from './routes/contact.js';
 import authRouter from './routes/auth.js';
+import clientAuthRouter from './routes/clientAuth.js';
 import artistsRouter from './routes/artists.js';
+import clientBookingsRouter from './routes/clientBookings.js';
+import clientDesignRouter from './routes/clientDesign.js';
+import clientConsultationRouter from './routes/clientConsultation.js';
 import { setupDatabase } from './setupDb.js';
 
 const app: Express = express();
@@ -58,7 +62,11 @@ app.get('/api/health', (req: Request, res: Response) => {
 
 // Routes
 app.use('/api/auth', authRouter);
+app.use('/api/auth/client', clientAuthRouter);
 app.use('/api/artist', artistsRouter);
+app.use('/api/client/bookings', clientBookingsRouter);
+app.use('/api/client/design-ideas', clientDesignRouter);
+app.use('/api/client/consultations', clientConsultationRouter);
 app.use('/api/bookings', bookingsRouter);
 app.use('/api/consultations', consultationsRouter);
 app.use('/api/contact', contactRouter);

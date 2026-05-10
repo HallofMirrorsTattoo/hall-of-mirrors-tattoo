@@ -3,9 +3,19 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
+import { useClientAuth } from '@/lib/clientAuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, logout } = useClientAuth();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/');
+    setIsOpen(false);
+  };
 
   return (
     <header className="fixed top-0 w-full z-40 pt-6 px-4">
@@ -33,13 +43,34 @@ export default function Header() {
             <li><Link href="/contact" className="text-sm font-medium text-primary-dark hover:text-accent-gold transition-colors duration-300">Contact</Link></li>
           </ul>
 
-          {/* CTA Button */}
-          <Link href="/booking" className="hidden md:flex btn-primary">
-            <span>Book</span>
-            <div className="btn-primary-icon">
-              →
-            </div>
-          </Link>
+          {/* CTA Buttons */}
+          <div className="hidden md:flex gap-4 items-center">
+            {user ? (
+              <>
+                <Link href="/client/dashboard" className="text-sm font-medium text-primary-dark hover:text-accent-gold transition-colors">
+                  Dashboard
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="btn-secondary py-2 px-6"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/client/login" className="text-sm font-medium text-primary-dark hover:text-accent-gold transition-colors">
+                  Login
+                </Link>
+                <Link href="/booking" className="btn-primary">
+                  <span>Book</span>
+                  <div className="btn-primary-icon">
+                    →
+                  </div>
+                </Link>
+              </>
+            )}
+          </div>
 
           {/* Mobile Menu Button */}
           <button
@@ -78,9 +109,28 @@ export default function Header() {
               <li><Link href="/about" className="block text-lg font-serif text-white hover:text-accent-gold transition-colors" onClick={() => setIsOpen(false)}>About</Link></li>
               <li><Link href="/contact" className="block text-lg font-serif text-white hover:text-accent-gold transition-colors" onClick={() => setIsOpen(false)}>Contact</Link></li>
             </ul>
-            <Link href="/booking" className="btn-primary w-full flex justify-center" onClick={() => setIsOpen(false)}>
-              Book Now
-            </Link>
+            {user ? (
+              <>
+                <Link href="/client/dashboard" className="block text-lg font-serif text-white hover:text-accent-gold transition-colors" onClick={() => setIsOpen(false)}>
+                  Dashboard
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="btn-primary w-full flex justify-center"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/client/login" className="block text-lg font-serif text-white hover:text-accent-gold transition-colors" onClick={() => setIsOpen(false)}>
+                  Login
+                </Link>
+                <Link href="/booking" className="btn-primary w-full flex justify-center" onClick={() => setIsOpen(false)}>
+                  Book Now
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

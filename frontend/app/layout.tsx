@@ -3,6 +3,7 @@ import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { AuthProvider } from '@/lib/authContext';
+import { ClientAuthProvider } from '@/lib/clientAuthContext';
 
 export const metadata: Metadata = {
   title: 'Hall of Mirrors Tattoo - Liverpool',
@@ -26,11 +27,13 @@ export default function RootLayout({
       </head>
       <body>
         <AuthProvider>
-          <Header />
-          <main className="min-h-screen pt-24 md:pt-32">
-            {children}
-          </main>
-          <Footer />
+          <ClientAuthProvider>
+            <Header />
+            <main className="min-h-screen pt-24 md:pt-32">
+              {children}
+            </main>
+            <Footer />
+          </ClientAuthProvider>
         </AuthProvider>
       </body>
     </html>
