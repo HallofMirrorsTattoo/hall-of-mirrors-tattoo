@@ -45,13 +45,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Tagline - Animated */}
-          <div className="space-y-6 animate-fadeUp" style={{ animationDelay: '500ms' }}>
-            <p className="text-xl md:text-2xl text-primary-light leading-relaxed font-light max-w-2xl mx-auto">
-              Dark academia meets modern artistry. Bespoke tattoo designs crafted with meticulous attention to detail and timeless elegance.
-            </p>
-          </div>
-
           {/* CTA Buttons - Animated */}
           <div className="flex gap-4 flex-col md:flex-row justify-center pt-8 animate-fadeUp" style={{ animationDelay: '700ms' }}>
             <Link href="/booking" className="btn-primary group">
