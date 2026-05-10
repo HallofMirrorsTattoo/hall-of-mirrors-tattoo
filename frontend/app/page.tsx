@@ -15,8 +15,8 @@ export default function Home() {
         {/* Charcoal background overlay - completely opaque */}
         <div className="absolute inset-0 top-1 bottom-32 bg-[#2a2a2a] -z-4"></div>
 
-        {/* Logo Section - Centered within carousel area only */}
-        <div className="absolute inset-0 top-1 bottom-32 left-0 right-0 flex items-center justify-center z-10">
+        {/* Logo Section - Positioned in upper area with breathing room before buttons */}
+        <div className="absolute inset-0 top-1 bottom-32 left-0 right-0 flex flex-col items-center justify-start pt-20 z-10">
           <div className="w-full flex flex-col items-center space-y-4 animate-fadeUp" style={{ animationDelay: '0ms' }}>
             {/* Main Logo - White version */}
             <Image
