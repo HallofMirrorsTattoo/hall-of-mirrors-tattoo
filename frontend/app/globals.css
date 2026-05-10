@@ -61,9 +61,9 @@ h3 {
   @apply rounded-none bg-primary-dark border-none p-6 text-primary-light;
 }
 
-/* Simple cream pill - no glass morphism */
+/* Glass morphism effect on navigation */
 .glassmorphism {
-  @apply bg-primary-light border-2 border-primary-light rounded-full shadow-soft;
+  @apply bg-primary-light/80 backdrop-blur-xl border-2 border-primary-light/50 rounded-full shadow-soft;
 }
 
 /* Premium button styles - gold background with navy text */

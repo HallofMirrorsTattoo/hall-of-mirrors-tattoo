@@ -32,13 +32,9 @@ export default function ShopCarousel() {
     setCurrentIndex((prev) => (prev + 1) % photos.length);
   };
 
-  const handleDotClick = (index: number) => {
-    setCurrentIndex(index);
-  };
-
   if (loading) {
     return (
-      <div className="w-full h-96 bg-primary-dark border-2 border-primary-light flex items-center justify-center">
+      <div className="w-full h-[450px] md:h-[600px] bg-primary-dark flex items-center justify-center">
         <div className="text-primary-light">Loading carousel...</div>
       </div>
     );
@@ -47,7 +43,7 @@ export default function ShopCarousel() {
   return (
     <div className="w-full relative">
       {/* Carousel Container */}
-      <div className="relative w-full h-96 md:h-[500px] overflow-hidden bg-primary-dark border-2 border-primary-light">
+      <div className="relative w-full h-[450px] md:h-[600px] overflow-hidden bg-primary-dark">
         {/* Photos Wrapper - Shows current photo centered with peek of adjacent ones */}
         <div className="relative w-full h-full">
           {photos.map((photo, index) => {
@@ -91,24 +87,6 @@ export default function ShopCarousel() {
           <ChevronRight className="w-6 h-6 text-primary-dark" />
         </button>
 
-        {/* Dot Indicators */}
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 flex gap-2">
-          {photos.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => handleDotClick(index)}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                index === currentIndex ? 'bg-accent-gold w-8' : 'bg-primary-light/50 hover:bg-primary-light'
-              }`}
-              aria-label={`Go to photo ${index + 1}`}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Photo Counter */}
-      <div className="text-center mt-4 text-primary-light/70 text-sm">
-        {currentIndex + 1} / {photos.length}
       </div>
     </div>
   );
