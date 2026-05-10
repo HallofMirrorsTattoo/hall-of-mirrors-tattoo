@@ -26,11 +26,11 @@ export default function Header() {
 
           {/* Desktop Menu */}
           <ul className="hidden md:flex gap-8 flex-1 justify-center">
-            <li><Link href="/" className="text-sm font-medium text-white/70 hover:text-accent-gold transition-colors duration-300">Home</Link></li>
-            <li><Link href="/portfolio" className="text-sm font-medium text-white/70 hover:text-accent-gold transition-colors duration-300">Portfolio</Link></li>
-            <li><Link href="/services" className="text-sm font-medium text-white/70 hover:text-accent-gold transition-colors duration-300">Services</Link></li>
-            <li><Link href="/about" className="text-sm font-medium text-white/70 hover:text-accent-gold transition-colors duration-300">About</Link></li>
-            <li><Link href="/contact" className="text-sm font-medium text-white/70 hover:text-accent-gold transition-colors duration-300">Contact</Link></li>
+            <li><Link href="/" className="text-sm font-medium text-primary-dark hover:text-accent-gold transition-colors duration-300">Home</Link></li>
+            <li><Link href="/portfolio" className="text-sm font-medium text-primary-dark hover:text-accent-gold transition-colors duration-300">Portfolio</Link></li>
+            <li><Link href="/services" className="text-sm font-medium text-primary-dark hover:text-accent-gold transition-colors duration-300">Services</Link></li>
+            <li><Link href="/about" className="text-sm font-medium text-primary-dark hover:text-accent-gold transition-colors duration-300">About</Link></li>
+            <li><Link href="/contact" className="text-sm font-medium text-primary-dark hover:text-accent-gold transition-colors duration-300">Contact</Link></li>
           </ul>
 
           {/* CTA Button */}
