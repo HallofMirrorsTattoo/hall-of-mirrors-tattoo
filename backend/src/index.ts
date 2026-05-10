@@ -3,14 +3,9 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { PrismaClient } from '@prisma/client';
-import dotenv from 'dotenv';
 import bookingsRouter from './routes/bookings.js';
 import consultationsRouter from './routes/consultations.js';
 import contactRouter from './routes/contact.js';
-
-if (process.env.NODE_ENV !== 'production') {
-  dotenv.config();
-}
 
 const app: Express = express();
 const prisma = new PrismaClient();
