@@ -43,6 +43,7 @@ export default function Header() {
             <li><Link href="/contact" className="text-sm font-medium text-primary-dark hover:text-accent-gold transition-colors duration-300">Contact</Link></li>
           </ul>
 
+
           {/* CTA Buttons */}
           <div className="hidden md:flex gap-4 items-center">
             {user ? (

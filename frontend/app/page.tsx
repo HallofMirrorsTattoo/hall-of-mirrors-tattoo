@@ -1,25 +1,28 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import LogoText from './components/LogoText';
+import ShopCarousel from './components/ShopCarousel';
 
 export default function Home() {
   return (
     <div>
-      {/* Hero Section - Logo First */}
-      <section className="min-h-[100dvh] px-4 flex items-center justify-center relative overflow-hidden pattern-gold-accents">
-        {/* Subtle gradient orb background */}
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-dark/[0.02] rounded-full blur-3xl"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent-gold/[0.01] rounded-full blur-3xl"></div>
+      {/* Hero Section - Logo with Carousel Behind */}
+      <section className="min-h-[100dvh] px-4 flex items-center justify-center relative overflow-hidden">
+        {/* Carousel Background - fills entire section behind logo */}
+        <div className="absolute inset-0 -z-5">
+          <ShopCarousel />
         </div>
+
+        {/* Dark overlay to ensure logo readability over carousel */}
+        <div className="absolute inset-0 bg-primary-dark/50 -z-4"></div>
 
         <div className="max-w-4xl mx-auto w-full text-center space-y-8 relative z-10">
           {/* Logo Section - Animated */}
           <div className="space-y-8 animate-fadeUp" style={{ animationDelay: '0ms' }}>
-            {/* Main Logo */}
+            {/* Main Logo - White version */}
             <div className="flex justify-center">
               <Image
-                src="/assets/logos/HOMLOGO.png"
+                src="/assets/logos/White Logo.png"
                 alt="Hall of Mirrors"
                 width={200}
                 height={200}
@@ -29,15 +32,23 @@ export default function Home() {
               />
             </div>
 
-            {/* Logo Text */}
+            {/* Logo Text - White version */}
             <div className="animate-fadeUp" style={{ animationDelay: '300ms' }}>
-              <LogoText size="lg" className="mx-auto h-16 md:h-24" />
+              <Image
+                src="/assets/logos/White Logo Text.png"
+                alt="Hall of Mirrors Tattoo Studio"
+                width={400}
+                height={100}
+                className="w-48 md:w-96 h-auto object-contain mx-auto"
+                style={{ animationDelay: '300ms' }}
+                priority
+              />
             </div>
           </div>
 
           {/* Tagline - Animated */}
           <div className="space-y-6 animate-fadeUp" style={{ animationDelay: '500ms' }}>
-            <p className="text-xl md:text-2xl text-primary-dark leading-relaxed font-light max-w-2xl mx-auto">
+            <p className="text-xl md:text-2xl text-primary-light leading-relaxed font-light max-w-2xl mx-auto">
               Dark academia meets modern artistry. Bespoke tattoo designs crafted with meticulous attention to detail and timeless elegance.
             </p>
           </div>
@@ -57,9 +68,9 @@ export default function Home() {
 
           {/* Scroll indicator */}
           <div className="pt-8 animate-float" style={{ animationDelay: '1000ms' }}>
-            <p className="text-sm text-primary-dark/50 font-medium">Scroll to explore</p>
+            <p className="text-sm text-primary-light/70 font-medium">Scroll to explore</p>
             <div className="flex justify-center mt-2">
-              <svg className="w-5 h-5 text-primary-dark/40 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-primary-light/60 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
               </svg>
             </div>
@@ -67,26 +78,26 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trust Indicators - Premium Double Bezel */}
-      <section className="px-4 py-32 bg-primary-light pattern-gold-accents">
+      {/* Trust Indicators - Sharp edged cards on dark background */}
+      <section className="px-4 py-32 bg-primary-dark">
         <div className="max-w-6xl mx-auto relative z-10">
           <div className="card-premium">
             <div className="card-premium-inner">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                 <div className="space-y-3">
                   <div className="text-accent-gold text-4xl font-serif font-bold">✓</div>
-                  <h3 className="text-lg font-serif text-primary-dark font-semibold">Liverpool City Council</h3>
-                  <p className="text-primary-dark/75 text-sm font-medium">Registered & Licensed • Ref: A11394900</p>
+                  <h3 className="text-lg font-serif text-primary-light font-semibold">Liverpool City Council</h3>
+                  <p className="text-primary-light/75 text-sm font-medium">Registered & Licensed • Ref: A11394900</p>
                 </div>
                 <div className="space-y-3">
                   <div className="text-accent-gold text-4xl font-serif font-bold">✓</div>
-                  <h3 className="text-lg font-serif text-primary-dark font-semibold">Health & Safety</h3>
-                  <p className="text-primary-dark/75 text-sm font-medium">Hepatitis B Vaccinated • Autoclave Certified</p>
+                  <h3 className="text-lg font-serif text-primary-light font-semibold">Health & Safety</h3>
+                  <p className="text-primary-light/75 text-sm font-medium">Hepatitis B Vaccinated • Autoclave Certified</p>
                 </div>
                 <div className="space-y-3">
                   <div className="text-accent-gold text-4xl font-serif font-bold">✓</div>
-                  <h3 className="text-lg font-serif text-primary-dark font-semibold">Expert Artist</h3>
-                  <p className="text-primary-dark/75 text-sm font-medium">Neo-Traditional Specialist • Bespoke Designs</p>
+                  <h3 className="text-lg font-serif text-primary-light font-semibold">Expert Artist</h3>
+                  <p className="text-primary-light/75 text-sm font-medium">Neo-Traditional Specialist • Bespoke Designs</p>
                 </div>
               </div>
             </div>
@@ -95,7 +106,7 @@ export default function Home() {
       </section>
 
       {/* Featured Portfolio - Asymmetrical Bento */}
-      <section className="px-4 py-32 bg-primary-light pattern-gold-accents">
+      <section className="px-4 py-32 bg-primary-dark">
         <div className="max-w-6xl mx-auto relative z-10">
           <div className="space-y-8 mb-16">
             <span className="eyebrow">Featured Designs</span>
