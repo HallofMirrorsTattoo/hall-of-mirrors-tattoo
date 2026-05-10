@@ -15,7 +15,7 @@ export default function Home() {
         {/* Dark overlay to ensure logo readability over carousel */}
         <div className="absolute inset-0 bg-primary-dark/50 -z-4"></div>
 
-        <div className="max-w-4xl mx-auto w-full text-center space-y-4 relative z-10 flex flex-col justify-between h-full">
+        <div className="max-w-4xl mx-auto w-full text-center space-y-4 relative z-10 flex flex-col justify-between h-full py-24">
           {/* Logo Section - Animated */}
           <div className="space-y-4 animate-fadeUp" style={{ animationDelay: '0ms' }}>
             {/* Main Logo - White version */}
