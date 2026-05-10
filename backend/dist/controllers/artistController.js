@@ -1,26 +1,18 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import pkg from 'pg';
+const { Client } = pkg;
 export async function getAllActiveArtists(req, res) {
+    const client = new Client({
+        connectionString: process.env.DATABASE_URL,
+    });
     try {
-        const artists = await prisma.artist.findMany({
-            where: {
-                is_active: true,
-            },
-            select: {
-                id: true,
-                full_name: true,
-                specialties: true,
-                years_experience: true,
-                bio: true,
-                instagram_handle: true,
-            },
-            orderBy: {
-                full_name: 'asc',
-            },
-        });
+        await client.connect();
+        const result = await client.query(`SELECT id, full_name, specialties, years_experience, bio, instagram_handle
+       FROM "Artist"
+       WHERE is_active = true
+       ORDER BY full_name ASC`);
         res.json({
             success: true,
-            artists,
+            artists: result.rows,
         });
     }
     catch (error) {
@@ -29,6 +21,9 @@ export async function getAllActiveArtists(req, res) {
             success: false,
             error: 'Failed to fetch artists',
         });
+    }
+    finally {
+        await client.end();
     }
 }
 //# sourceMappingURL=artistController.js.map

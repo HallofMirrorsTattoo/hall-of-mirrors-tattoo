@@ -121,7 +121,24 @@ CREATE TABLE IF NOT EXISTS "ContactFormSubmission" (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS "Artist" (
+    id TEXT PRIMARY KEY,
+    studio_id TEXT,
+    full_name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    specialties TEXT,
+    years_experience INTEGER,
+    bio TEXT,
+    instagram_handle TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    role TEXT NOT NULL DEFAULT 'artist',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX IF NOT EXISTS "Booking_user_id_idx" ON "Booking"(user_id);
+CREATE INDEX IF NOT EXISTS "Artist_email_idx" ON "Artist"(email);
 `;
 export async function setupDatabase() {
     try {
@@ -134,10 +151,16 @@ export async function setupDatabase() {
         for (const statement of statements) {
             try {
                 await prisma.$executeRawUnsafe(statement);
+                if (statement.includes('CREATE TABLE')) {
+                    const tableName = statement.match(/CREATE TABLE IF NOT EXISTS "(\w+)"/)?.[1];
+                    if (tableName) {
+                        console.log(`  ✓ Table "${tableName}" ready`);
+                    }
+                }
             }
             catch (err) {
                 // Ignore "already exists" errors
-                if (err.message?.includes('already exists') || err.code === 'P3002') {
+                if (err.message?.includes('already exists') || err.code === 'P3002' || err.code === '42P05') {
                     continue;
                 }
                 console.warn(`⚠️ Statement warning (continuing):`, statement.substring(0, 50), err.message);
@@ -181,6 +204,35 @@ export async function setupDatabase() {
         }
         catch (studioErr) {
             console.warn('⚠️ Studio creation warning:', studioErr.message);
+        }
+        // Create Robyn as default artist if doesn't exist
+        try {
+            const existingArtist = await prisma.artist.findUnique({
+                where: { email: 'robyn@hallofmirrorstattoo.com' },
+            });
+            if (!existingArtist) {
+                console.log('🔄 Creating default artist Robyn...');
+                await prisma.artist.create({
+                    data: {
+                        full_name: 'Robyn',
+                        email: 'robyn@hallofmirrorstattoo.com',
+                        password_hash: '$2b$10$Y4qE2Mzj8Y3ZH5L4KQ9sJewQqV9C4mZ2H8K6D2X9L5Y8O1P2Q3R4',
+                        studio_id: 'default-studio',
+                        specialties: 'Fine line, geometric, custom designs',
+                        years_experience: 8,
+                        bio: 'Experienced tattoo artist specializing in fine line and geometric designs.',
+                        instagram_handle: 'robyn.tattoos',
+                        is_active: true,
+                    },
+                });
+                console.log('✅ Default artist Robyn created');
+            }
+            else {
+                console.log('✅ Default artist Robyn exists');
+            }
+        }
+        catch (artistErr) {
+            console.warn('⚠️ Artist creation warning:', artistErr.message);
         }
         return true;
     }

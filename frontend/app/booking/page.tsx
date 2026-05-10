@@ -1,10 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
+
+interface Artist {
+  id: string;
+  full_name: string;
+  specialties?: string;
+  experience?: number;
+}
 
 const BookingSchema = z.object({
   clientName: z.string().min(2, 'Name must be at least 2 characters'),
@@ -16,6 +23,7 @@ const BookingSchema = z.object({
   estimatedPlacement: z.string().min(2, 'Please specify placement'),
   referralSource: z.string().optional(),
   notes: z.string().optional(),
+  artistId: z.string().optional(),
 });
 
 type BookingFormData = z.infer<typeof BookingSchema>;
@@ -24,6 +32,26 @@ export default function BookingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [artists, setArtists] = useState<Artist[]>([]);
+  const [loadingArtists, setLoadingArtists] = useState(true);
+
+  useEffect(() => {
+    const fetchArtists = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/artists`);
+        if (response.ok) {
+          const data = await response.json();
+          setArtists(data.artists || []);
+        }
+      } catch (error) {
+        console.error('Failed to load artists:', error);
+      } finally {
+        setLoadingArtists(false);
+      }
+    };
+
+    fetchArtists();
+  }, []);
 
   const {
     register,
@@ -40,13 +68,19 @@ export default function BookingPage() {
     setErrorMessage('');
 
     try {
+      const payload: any = {
+        ...data,
+        preferredDate: new Date(data.preferredDate).toISOString(),
+      };
+
+      if (data.artistId) {
+        payload.artistId = data.artistId;
+      }
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/bookings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...data,
-          preferredDate: new Date(data.preferredDate).toISOString(),
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -214,6 +248,29 @@ export default function BookingPage() {
                       <p className="text-red-600 text-sm mt-1">{errors.estimatedPlacement.message}</p>
                     )}
                   </div>
+                </div>
+
+                <div>
+                  <label htmlFor="artistId" className="block text-sm font-semibold text-primary-dark uppercase tracking-wider mb-2">
+                    Preferred Artist (Optional)
+                  </label>
+                  <select
+                    {...register('artistId')}
+                    id="artistId"
+                    disabled={loadingArtists}
+                    className="w-full"
+                  >
+                    <option value="">No preference</option>
+                    {artists.map((artist) => (
+                      <option key={artist.id} value={artist.id}>
+                        {artist.full_name}
+                        {artist.specialties ? ` - ${artist.specialties}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  {loadingArtists && (
+                    <p className="text-gray-600 text-sm mt-1">Loading artists...</p>
+                  )}
                 </div>
 
                 <div>

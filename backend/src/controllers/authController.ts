@@ -1,14 +1,18 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import pkg from 'pg';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-const prisma = new PrismaClient();
+const { Client } = pkg;
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_key';
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'dev_refresh_secret_key';
 
 export async function artistLogin(req: Request, res: Response) {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+  });
+
   try {
     const { email, password } = req.body;
 
@@ -19,17 +23,22 @@ export async function artistLogin(req: Request, res: Response) {
       });
     }
 
-    // Find artist by email
-    const artist = await prisma.artist.findUnique({
-      where: { email },
-    });
+    await client.connect();
 
-    if (!artist) {
+    // Find artist by email
+    const result = await client.query(
+      `SELECT id, email, full_name, specialties, instagram_handle, password_hash FROM "Artist" WHERE email = $1`,
+      [email]
+    );
+
+    if (result.rows.length === 0) {
       return res.status(401).json({
         success: false,
         error: 'Invalid email or password',
       });
     }
+
+    const artist = result.rows[0];
 
     // Check if password matches
     const passwordMatch = await bcrypt.compare(password, artist.password_hash);
@@ -79,10 +88,16 @@ export async function artistLogin(req: Request, res: Response) {
       success: false,
       error: 'Login failed',
     });
+  } finally {
+    await client.end();
   }
 }
 
 export async function artistRefresh(req: Request, res: Response) {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+  });
+
   try {
     const { refreshToken } = req.body;
 
@@ -96,17 +111,22 @@ export async function artistRefresh(req: Request, res: Response) {
     try {
       const decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET) as any;
 
-      // Find artist
-      const artist = await prisma.artist.findUnique({
-        where: { id: decoded.id },
-      });
+      await client.connect();
 
-      if (!artist) {
+      // Find artist
+      const result = await client.query(
+        `SELECT id, email, full_name FROM "Artist" WHERE id = $1`,
+        [decoded.id]
+      );
+
+      if (result.rows.length === 0) {
         return res.status(401).json({
           success: false,
           error: 'Artist not found',
         });
       }
+
+      const artist = result.rows[0];
 
       // Generate new access token
       const newAccessToken = jwt.sign(
@@ -135,10 +155,16 @@ export async function artistRefresh(req: Request, res: Response) {
       success: false,
       error: 'Token refresh failed',
     });
+  } finally {
+    await client.end();
   }
 }
 
 export async function getArtistProfile(req: Request, res: Response) {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+  });
+
   try {
     if (!req.artist) {
       return res.status(401).json({
@@ -147,21 +173,15 @@ export async function getArtistProfile(req: Request, res: Response) {
       });
     }
 
-    const artist = await prisma.artist.findUnique({
-      where: { id: req.artist.id },
-      select: {
-        id: true,
-        email: true,
-        full_name: true,
-        specialties: true,
-        years_experience: true,
-        bio: true,
-        instagram_handle: true,
-        is_active: true,
-      },
-    });
+    await client.connect();
 
-    if (!artist) {
+    const result = await client.query(
+      `SELECT id, email, full_name, specialties, years_experience, bio, instagram_handle, is_active
+       FROM "Artist" WHERE id = $1`,
+      [req.artist.id]
+    );
+
+    if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
         error: 'Artist not found',
@@ -170,7 +190,7 @@ export async function getArtistProfile(req: Request, res: Response) {
 
     res.json({
       success: true,
-      artist,
+      artist: result.rows[0],
     });
   } catch (error) {
     console.error('Profile fetch error:', error);
@@ -178,5 +198,7 @@ export async function getArtistProfile(req: Request, res: Response) {
       success: false,
       error: 'Failed to fetch profile',
     });
+  } finally {
+    await client.end();
   }
 }

@@ -1,1 +1,1 @@
-{"version":3,"file":"artistController.d.ts","sourceRoot":"","sources":["../../src/controllers/artistController.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAC;AAK5C,wBAAsB,mBAAmB,CAAC,GAAG,EAAE,OAAO,EAAE,GAAG,EAAE,QAAQ,iBA8BpE"}
+{"version":3,"file":"artistController.d.ts","sourceRoot":"","sources":["../../src/controllers/artistController.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAC;AAK5C,wBAAsB,mBAAmB,CAAC,GAAG,EAAE,OAAO,EAAE,GAAG,EAAE,QAAQ,iBA4BpE"}

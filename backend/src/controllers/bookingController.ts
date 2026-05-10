@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
-import { Decimal } from 'decimal.js';
+import pkg from 'pg';
 import { z } from 'zod';
 import { sendNewBookingNotification, sendBookingStatusUpdate } from '../services/emailService.js';
+import { v4 as uuidv4 } from 'uuid';
 
-const prisma = new PrismaClient();
+const { Client } = pkg;
 
 const CreateBookingSchema = z.object({
   clientName: z.string().min(2, 'Name must be at least 2 characters'),
@@ -22,55 +22,83 @@ const CreateBookingSchema = z.object({
 type BookingFormData = z.infer<typeof CreateBookingSchema>;
 
 export async function createBooking(req: Request, res: Response) {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+  });
+
   try {
     const validatedData = CreateBookingSchema.parse(req.body);
+    await client.connect();
+
     const [firstName, ...lastNameParts] = validatedData.clientName.split(' ');
     const lastName = lastNameParts.join(' ') || 'Guest';
 
-    let user = await prisma.user.findUnique({
-      where: { email: validatedData.clientEmail },
-    });
+    // Check if user exists
+    const userResult = await client.query(
+      `SELECT id, first_name, last_name, email, phone FROM "User" WHERE email = $1`,
+      [validatedData.clientEmail]
+    );
 
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email: validatedData.clientEmail,
-          first_name: firstName,
-          last_name: lastName,
-          phone: validatedData.clientPhone,
-          password_hash: '',
-        },
-      });
+    let userId: string;
+    if (userResult.rows.length > 0) {
+      userId = userResult.rows[0].id;
+    } else {
+      userId = uuidv4();
+      await client.query(
+        `INSERT INTO "User" (id, email, first_name, last_name, phone, password_hash, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, '', NOW(), NOW())`,
+        [userId, validatedData.clientEmail, firstName, lastName, validatedData.clientPhone]
+      );
     }
 
     // Get artist if specified
-    let artist = null;
+    let artistData = null;
     if (validatedData.artistId) {
-      artist = await prisma.artist.findUnique({
-        where: { id: validatedData.artistId },
-      });
+      const artistResult = await client.query(
+        `SELECT id, full_name, email FROM "Artist" WHERE id = $1`,
+        [validatedData.artistId]
+      );
+      if (artistResult.rows.length > 0) {
+        artistData = artistResult.rows[0];
+      }
     }
 
-    const booking = await prisma.booking.create({
-      data: {
-        studio_id: 'default-studio',
-        user_id: user.id,
-        artist_id: validatedData.artistId || null,
-        appointment_date_time: new Date(validatedData.preferredDate),
-        appointment_status: 'pending_consent',
-        tattoo_description: validatedData.tattooDesignDescription,
-        placement: validatedData.estimatedPlacement,
-        estimated_size: validatedData.estimatedSize,
-        artist_notes: validatedData.notes || null,
-        deposit_amount: new Decimal('0'),
-        balance_due: new Decimal('0'),
-        booking_reference: `BK-${Date.now()}`,
-      },
-      include: {
-        user: true,
-        artist: true,
-      },
-    });
+    // Create booking
+    const bookingId = uuidv4();
+    const bookingReference = `BK-${Date.now()}`;
+
+    await client.query(
+      `INSERT INTO "Booking" (
+        id, studio_id, user_id, artist_id, appointment_date_time, appointment_status,
+        tattoo_description, placement, estimated_size, artist_notes, deposit_amount,
+        balance_due, booking_reference, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())`,
+      [
+        bookingId,
+        'default-studio',
+        userId,
+        validatedData.artistId || null,
+        validatedData.preferredDate,
+        'pending_consent',
+        validatedData.tattooDesignDescription,
+        validatedData.estimatedPlacement,
+        validatedData.estimatedSize,
+        validatedData.notes || null,
+        '0',
+        '0',
+        bookingReference,
+      ]
+    );
+
+    // Fetch the created booking with related data
+    const bookingResult = await client.query(
+      `SELECT b.*, u.first_name, u.last_name, u.email, u.phone FROM "Booking" b
+       JOIN "User" u ON b.user_id = u.id
+       WHERE b.id = $1`,
+      [bookingId]
+    );
+
+    const booking = bookingResult.rows[0];
 
     // Send email notifications
     await sendNewBookingNotification({
@@ -81,15 +109,15 @@ export async function createBooking(req: Request, res: Response) {
       placement: booking.placement || '',
       estimated_size: booking.estimated_size || '',
       user: {
-        first_name: user.first_name,
-        last_name: user.last_name,
-        email: user.email,
-        phone: user.phone || '',
+        first_name: booking.first_name,
+        last_name: booking.last_name,
+        email: booking.email,
+        phone: booking.phone || '',
       },
-      artist: artist ? {
-        id: artist.id,
-        full_name: artist.full_name,
-        email: artist.email,
+      artist: artistData ? {
+        id: artistData.id,
+        full_name: artistData.full_name,
+        email: artistData.email,
       } : undefined,
     });
 
@@ -108,35 +136,36 @@ export async function createBooking(req: Request, res: Response) {
     }
 
     const errorMessage = error instanceof Error ? error.message : String(error);
-    const errorCode = (error as any)?.code;
-    const errorMeta = (error as any)?.meta;
-
-    console.error('❌ Booking creation failed');
-    console.error('Error message:', errorMessage);
-    console.error('Error code:', errorCode);
-    console.error('Error meta:', errorMeta);
-    console.error('Full error:', error);
+    console.error('❌ Booking creation failed:', errorMessage);
 
     res.status(500).json({
       success: false,
       error: 'Failed to create booking',
       message: errorMessage,
-      code: errorCode,
-      meta: errorMeta,
     });
+  } finally {
+    await client.end();
   }
 }
 
 export async function getBookings(req: Request, res: Response) {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+  });
+
   try {
-    const bookings = await prisma.booking.findMany({
-      include: { user: true },
-      orderBy: { created_at: 'desc' },
-    });
+    await client.connect();
+
+    const result = await client.query(
+      `SELECT b.*, u.id as user_id, u.first_name, u.last_name, u.email, u.phone
+       FROM "Booking" b
+       JOIN "User" u ON b.user_id = u.id
+       ORDER BY b.created_at DESC`
+    );
 
     res.json({
       success: true,
-      bookings,
+      bookings: result.rows,
     });
   } catch (error) {
     console.error('Fetch bookings error:', error);
@@ -144,19 +173,29 @@ export async function getBookings(req: Request, res: Response) {
       success: false,
       error: 'Failed to fetch bookings',
     });
+  } finally {
+    await client.end();
   }
 }
 
 export async function getBookingById(req: Request, res: Response) {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+  });
+
   try {
     const { id } = req.params;
+    await client.connect();
 
-    const booking = await prisma.booking.findUnique({
-      where: { id },
-      include: { user: true },
-    });
+    const result = await client.query(
+      `SELECT b.*, u.id as user_id, u.first_name, u.last_name, u.email, u.phone
+       FROM "Booking" b
+       JOIN "User" u ON b.user_id = u.id
+       WHERE b.id = $1`,
+      [id]
+    );
 
-    if (!booking) {
+    if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
         error: 'Booking not found',
@@ -165,7 +204,7 @@ export async function getBookingById(req: Request, res: Response) {
 
     res.json({
       success: true,
-      booking,
+      booking: result.rows[0],
     });
   } catch (error) {
     console.error('Fetch booking error:', error);
@@ -173,27 +212,56 @@ export async function getBookingById(req: Request, res: Response) {
       success: false,
       error: 'Failed to fetch booking',
     });
+  } finally {
+    await client.end();
   }
 }
 
 export async function updateBooking(req: Request, res: Response) {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+  });
+
   try {
     const { id } = req.params;
     const { appointment_status, artist_notes } = req.body;
+    await client.connect();
 
-    const booking = await prisma.booking.update({
-      where: { id },
-      data: {
-        ...(appointment_status && { appointment_status }),
-        ...(artist_notes && { artist_notes }),
-      },
-      include: { user: true },
-    });
+    const updates: string[] = ['updated_at = NOW()'];
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    if (appointment_status) {
+      updates.push(`appointment_status = $${paramIndex}`);
+      params.push(appointment_status);
+      paramIndex++;
+    }
+
+    if (artist_notes) {
+      updates.push(`artist_notes = $${paramIndex}`);
+      params.push(artist_notes);
+      paramIndex++;
+    }
+
+    params.push(id);
+
+    const result = await client.query(
+      `UPDATE "Booking" SET ${updates.join(', ')} WHERE id = $${paramIndex}
+       RETURNING *`,
+      params
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Booking not found',
+      });
+    }
 
     res.json({
       success: true,
       message: 'Booking updated successfully',
-      booking,
+      booking: result.rows[0],
     });
   } catch (error) {
     console.error('Update booking error:', error);
@@ -201,23 +269,38 @@ export async function updateBooking(req: Request, res: Response) {
       success: false,
       error: 'Failed to update booking',
     });
+  } finally {
+    await client.end();
   }
 }
 
 export async function cancelBooking(req: Request, res: Response) {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+  });
+
   try {
     const { id } = req.params;
+    await client.connect();
 
-    const booking = await prisma.booking.update({
-      where: { id },
-      data: { appointment_status: 'cancelled' },
-      include: { user: true },
-    });
+    const result = await client.query(
+      `UPDATE "Booking" SET appointment_status = 'cancelled', updated_at = NOW()
+       WHERE id = $1
+       RETURNING *`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Booking not found',
+      });
+    }
 
     res.json({
       success: true,
       message: 'Booking cancelled',
-      booking,
+      booking: result.rows[0],
     });
   } catch (error) {
     console.error('Cancel booking error:', error);
@@ -225,11 +308,17 @@ export async function cancelBooking(req: Request, res: Response) {
       success: false,
       error: 'Failed to cancel booking',
     });
+  } finally {
+    await client.end();
   }
 }
 
 // Artist-specific endpoints
 export async function getArtistBookings(req: Request, res: Response) {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+  });
+
   try {
     if (!req.artist) {
       return res.status(401).json({
@@ -238,25 +327,22 @@ export async function getArtistBookings(req: Request, res: Response) {
       });
     }
 
-    const bookings = await prisma.booking.findMany({
-      where: {
-        artist_id: req.artist.id,
-        appointment_status: {
-          not: 'cancelled',
-        },
-      },
-      include: {
-        user: true,
-        artist: true,
-      },
-      orderBy: {
-        appointment_date_time: 'asc',
-      },
-    });
+    await client.connect();
+
+    const result = await client.query(
+      `SELECT b.*, u.id as user_id, u.first_name, u.last_name, u.email, u.phone,
+              a.id as artist_id, a.full_name as artist_name, a.email as artist_email
+       FROM "Booking" b
+       JOIN "User" u ON b.user_id = u.id
+       LEFT JOIN "Artist" a ON b.artist_id = a.id
+       WHERE b.artist_id = $1 AND b.appointment_status != 'cancelled'
+       ORDER BY b.appointment_date_time ASC`,
+      [req.artist.id]
+    );
 
     res.json({
       success: true,
-      bookings,
+      bookings: result.rows,
     });
   } catch (error) {
     console.error('Get artist bookings error:', error);
@@ -264,10 +350,16 @@ export async function getArtistBookings(req: Request, res: Response) {
       success: false,
       error: 'Failed to fetch bookings',
     });
+  } finally {
+    await client.end();
   }
 }
 
 export async function getArtistBookingById(req: Request, res: Response) {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+  });
+
   try {
     if (!req.artist) {
       return res.status(401).json({
@@ -277,21 +369,26 @@ export async function getArtistBookingById(req: Request, res: Response) {
     }
 
     const { id } = req.params;
+    await client.connect();
 
-    const booking = await prisma.booking.findUnique({
-      where: { id },
-      include: {
-        user: true,
-        artist: true,
-      },
-    });
+    const result = await client.query(
+      `SELECT b.*, u.id as user_id, u.first_name, u.last_name, u.email, u.phone,
+              a.id as artist_id, a.full_name as artist_name, a.email as artist_email
+       FROM "Booking" b
+       JOIN "User" u ON b.user_id = u.id
+       LEFT JOIN "Artist" a ON b.artist_id = a.id
+       WHERE b.id = $1`,
+      [id]
+    );
 
-    if (!booking) {
+    if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
         error: 'Booking not found',
       });
     }
+
+    const booking = result.rows[0];
 
     // Check if this booking belongs to the artist
     if (booking.artist_id !== req.artist.id) {
@@ -311,10 +408,16 @@ export async function getArtistBookingById(req: Request, res: Response) {
       success: false,
       error: 'Failed to fetch booking',
     });
+  } finally {
+    await client.end();
   }
 }
 
 export async function updateBookingStatusByArtist(req: Request, res: Response) {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+  });
+
   try {
     if (!req.artist) {
       return res.status(401).json({
@@ -335,17 +438,25 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
       });
     }
 
-    const booking = await prisma.booking.findUnique({
-      where: { id },
-      include: { user: true, artist: true },
-    });
+    await client.connect();
 
-    if (!booking) {
+    // Get booking
+    const bookingResult = await client.query(
+      `SELECT b.*, u.id as user_id, u.first_name, u.last_name, u.email, u.phone
+       FROM "Booking" b
+       JOIN "User" u ON b.user_id = u.id
+       WHERE b.id = $1`,
+      [id]
+    );
+
+    if (bookingResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
         error: 'Booking not found',
       });
     }
+
+    const booking = bookingResult.rows[0];
 
     // Check if this booking belongs to the artist
     if (booking.artist_id !== req.artist.id) {
@@ -355,31 +466,28 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
       });
     }
 
-    const updatedBooking = await prisma.booking.update({
-      where: { id },
-      data: {
-        appointment_status: status,
-        artist_notes: notes || booking.artist_notes,
-      },
-      include: { user: true, artist: true },
-    });
+    // Update booking status
+    const updateResult = await client.query(
+      `UPDATE "Booking" SET appointment_status = $1, artist_notes = $2, updated_at = NOW()
+       WHERE id = $3
+       RETURNING *`,
+      [status, notes || booking.artist_notes, id]
+    );
 
     // Send email notification to client
-    if (booking.user) {
-      await sendBookingStatusUpdate(
-        booking.user.email,
-        `${booking.user.first_name} ${booking.user.last_name}`,
-        booking.booking_reference,
-        status,
-        req.artist.full_name,
-        notes
-      );
-    }
+    await sendBookingStatusUpdate(
+      booking.email,
+      `${booking.first_name} ${booking.last_name}`,
+      booking.booking_reference,
+      status,
+      req.artist.full_name,
+      notes
+    );
 
     res.json({
       success: true,
       message: 'Booking status updated',
-      booking: updatedBooking,
+      booking: updateResult.rows[0],
     });
   } catch (error) {
     console.error('Update booking status error:', error);
@@ -387,5 +495,7 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
       success: false,
       error: 'Failed to update booking',
     });
+  } finally {
+    await client.end();
   }
 }
