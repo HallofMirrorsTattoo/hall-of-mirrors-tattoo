@@ -6,48 +6,44 @@ export default function Home() {
   return (
     <div>
       {/* Hero Section - Large carousel with centered logo and bottom buttons */}
-      <section className="h-[100dvh] px-4 flex flex-col items-center relative overflow-hidden pt-6 pb-6">
-        {/* Large Carousel Background */}
-        <div className="absolute inset-0 top-24 bottom-24 -z-5 w-full">
+      <section className="h-[100dvh] px-4 relative overflow-hidden">
+        {/* Large Carousel Background - fills most of page */}
+        <div className="absolute inset-0 top-6 bottom-28 -z-5 w-full">
           <ShopCarousel />
         </div>
 
         {/* Dark overlay to ensure logo readability over carousel */}
-        <div className="absolute inset-0 top-24 bottom-24 bg-primary-dark/50 -z-4"></div>
+        <div className="absolute inset-0 top-6 bottom-28 bg-primary-dark/50 -z-4"></div>
 
         {/* Logo Section - Centered within carousel area only */}
-        <div className="absolute inset-0 top-24 bottom-24 left-0 right-0 flex items-center justify-center relative z-10">
-          <div className="text-center space-y-4 animate-fadeUp" style={{ animationDelay: '0ms' }}>
+        <div className="absolute inset-0 top-6 bottom-28 left-0 right-0 flex items-center justify-center z-10">
+          <div className="w-full flex flex-col items-center space-y-4 animate-fadeUp" style={{ animationDelay: '0ms' }}>
             {/* Main Logo - White version */}
-            <div className="flex justify-center">
-              <Image
-                src="/assets/logos/White Logo.png"
-                alt="Hall of Mirrors"
-                width={200}
-                height={200}
-                className="w-32 md:w-48 h-32 md:h-48 object-contain animate-float"
-                style={{ animationDelay: '0ms' }}
-                priority
-              />
-            </div>
+            <Image
+              src="/assets/logos/White Logo.png"
+              alt="Hall of Mirrors"
+              width={200}
+              height={200}
+              className="w-32 md:w-48 h-32 md:h-48 object-contain animate-float"
+              style={{ animationDelay: '0ms' }}
+              priority
+            />
 
             {/* Logo Text - White version */}
-            <div className="animate-fadeUp" style={{ animationDelay: '300ms' }}>
-              <Image
-                src="/assets/logos/White Logo Text.png"
-                alt="Hall of Mirrors Tattoo Studio"
-                width={400}
-                height={100}
-                className="w-48 md:w-96 h-auto object-contain mx-auto"
-                style={{ animationDelay: '300ms' }}
-                priority
-              />
-            </div>
+            <Image
+              src="/assets/logos/White Logo Text.png"
+              alt="Hall of Mirrors Tattoo Studio"
+              width={400}
+              height={100}
+              className="w-48 md:w-96 h-auto object-contain"
+              style={{ animationDelay: '300ms' }}
+              priority
+            />
           </div>
         </div>
 
         {/* Bottom Section - Buttons and scroll indicator */}
-        <div className="flex flex-col items-center justify-center relative z-20 gap-4 pb-8">
+        <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center justify-center z-20 gap-4 pb-8">
           {/* CTA Buttons - Animated */}
           <div className="flex gap-4 flex-col md:flex-row justify-center animate-fadeUp" style={{ animationDelay: '700ms' }}>
             <Link href="/booking" className="btn-primary group">
