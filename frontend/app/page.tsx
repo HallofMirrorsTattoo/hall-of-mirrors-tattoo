@@ -16,14 +16,17 @@ export default function Home() {
         <div className="max-w-4xl mx-auto w-full text-center space-y-8 relative z-10">
           {/* Logo Section - Animated */}
           <div className="space-y-8 animate-fadeUp" style={{ animationDelay: '0ms' }}>
-            {/* Main Logo */}
-            <div className="flex justify-center">
+            {/* Main Logo - Enhanced Animation */}
+            <div className="flex justify-center relative">
+              {/* Glow effect */}
+              <div className="absolute inset-0 w-32 md:w-48 h-32 md:h-48 mx-auto bg-accent-gold/10 rounded-full blur-3xl animate-pulse-glow"></div>
+
               <Image
                 src="/assets/logos/HOMLOGO.png"
                 alt="Hall of Mirrors"
                 width={200}
                 height={200}
-                className="w-32 md:w-48 h-32 md:h-48 object-contain animate-fadeUp"
+                className="w-32 md:w-48 h-32 md:h-48 object-contain animate-float-smooth relative z-10"
                 style={{ animationDelay: '100ms' }}
                 priority
               />
@@ -37,8 +40,8 @@ export default function Home() {
 
           {/* Tagline - Animated */}
           <div className="space-y-6 animate-fadeUp" style={{ animationDelay: '500ms' }}>
-            <p className="text-xl md:text-2xl text-primary-dark/80 leading-relaxed font-light max-w-2xl mx-auto">
-              Dark academia meets modern artistry. Bespoke tattoo designs crafted with meticulous attention to detail and timeless elegance.
+            <p className="text-xl md:text-2xl text-primary-dark leading-relaxed font-light max-w-2xl mx-auto">
+              <span className="text-accent-gold font-medium">Dark academia</span> meets modern artistry. Bespoke tattoo designs crafted with meticulous attention to detail and timeless elegance.
             </p>
           </div>
 
