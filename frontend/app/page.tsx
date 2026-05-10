@@ -8,8 +8,8 @@ export default function Home() {
     <div>
       {/* Hero Section - Large carousel with centered logo and bottom buttons */}
       <section className="h-[100dvh] relative overflow-hidden bg-transparent">
-        {/* Carousel Background - absolute positioned within hero only */}
-        <div className="absolute inset-0 w-full z-0 overflow-hidden">
+        {/* Carousel - positioned absolutely within hero section */}
+        <div className="absolute top-0 left-0 right-0 h-[100dvh] w-full z-0 pointer-events-none">
           <ShopCarousel />
           <ScrollGradientFade />
         </div>
