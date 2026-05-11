@@ -3,29 +3,26 @@
 import { useState, useEffect } from 'react';
 
 export default function ScrollGradientFade() {
-  const [gradientOpacity, setGradientOpacity] = useState(1);
+  const [opacity, setOpacity] = useState(1);
 
   useEffect(() => {
-    const handleScroll = () => {
-      // Calculate how far down the page the user has scrolled
-      // Fade starts fully opaque at top, becomes transparent after scrolling ~300px
-      const scrollY = window.scrollY;
-      const fadeStart = 0;
-      const fadeEnd = 300;
-
-      // Calculate opacity: starts at 1, goes to 0 as user scrolls
-      const opacity = Math.max(0, 1 - (scrollY - fadeStart) / (fadeEnd - fadeStart));
-      setGradientOpacity(opacity);
+    const onScroll = () => {
+      const fade = Math.max(0, 1 - window.scrollY / 280);
+      setOpacity(fade);
     };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   return (
     <div
-      className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-b from-transparent to-[#2a2a2a] pointer-events-none z-10 transition-opacity duration-300"
-      style={{ opacity: gradientOpacity }}
+      className="absolute bottom-0 left-0 right-0 pointer-events-none z-20"
+      style={{
+        height: '180px',
+        background: 'linear-gradient(to bottom, transparent, #0E0C09)',
+        opacity,
+        transition: 'opacity 0.1s linear',
+      }}
     />
   );
 }

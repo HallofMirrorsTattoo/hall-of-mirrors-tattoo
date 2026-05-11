@@ -12,46 +12,74 @@ const photos = [
 ];
 
 export default function ShopCarousel() {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [current, setCurrent] = useState(0);
+  const [prev, setPrev] = useState<number | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % photos.length);
-    }, 6000);
+      setPrev(current);
+      setCurrent((c) => (c + 1) % photos.length);
+    }, 7000);
     return () => clearInterval(interval);
-  }, []);
+  }, [current]);
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-[#2a2a2a]">
-      {photos.map((photo, index) => (
+    <div className="absolute inset-0 overflow-hidden" style={{ backgroundColor: '#0E0C09' }}>
+      {photos.map((photo, i) => (
         <div
-          key={index}
-          className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-            index === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
-          }`}
+          key={photo}
+          className="absolute inset-0"
+          style={{
+            zIndex: i === current ? 2 : i === prev ? 1 : 0,
+            opacity: i === current ? 1 : 0,
+            transition: i === current
+              ? 'opacity 1.4s cubic-bezier(0.4,0,0.2,1)'
+              : i === prev
+              ? 'opacity 1.4s cubic-bezier(0.4,0,0.2,1)'
+              : 'none',
+          }}
         >
           <Image
             src={photo}
-            alt={`Hall of Mirrors shop interior - photo ${index + 1}`}
+            alt={`Hall of Mirrors studio — view ${i + 1}`}
             fill
             className="object-cover"
-            priority={index === 0}
-            quality={85}
+            style={{
+              animation: i === current ? 'kenBurns 8s ease-out forwards' : 'none',
+              transformOrigin: 'center center',
+            }}
+            priority={i === 0}
+            quality={90}
+          />
+          {/* Per-image dark overlay */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(to bottom, rgba(14,12,9,0.45) 0%, rgba(14,12,9,0.2) 40%, rgba(14,12,9,0.55) 100%)',
+            }}
           />
         </div>
       ))}
 
-      {/* Indicator dots */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex gap-2">
-        {photos.map((_, index) => (
-          <div
-            key={index}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              index === currentIndex ? 'bg-accent-gold w-8' : 'bg-accent-gold/40 w-2'
-            }`}
-          />
-        ))}
-      </div>
+      {/* Deep bottom gradient into page bg */}
+      <div
+        className="absolute bottom-0 left-0 right-0 pointer-events-none"
+        style={{
+          height: '55%',
+          background: 'linear-gradient(to bottom, transparent, #0E0C09)',
+          zIndex: 10,
+        }}
+      />
+
+      {/* Top vignette */}
+      <div
+        className="absolute top-0 left-0 right-0 pointer-events-none"
+        style={{
+          height: '30%',
+          background: 'linear-gradient(to bottom, rgba(14,12,9,0.6), transparent)',
+          zIndex: 10,
+        }}
+      />
     </div>
   );
 }

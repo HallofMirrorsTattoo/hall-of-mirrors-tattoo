@@ -1,33 +1,70 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
-import LogoText from './LogoText';
 
 export default function Footer() {
   return (
-    <footer className="border-t border-white/10 mt-20 section-dark">
-      <div className="max-w-6xl mx-auto px-4 py-32">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-16">
+    <footer style={{ backgroundColor: '#0E0C09', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
+      <div className="max-w-6xl mx-auto px-6 py-20 md:py-28">
+
+        {/* Top grid */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-8 mb-16">
+
           {/* Brand */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
+          <div className="md:col-span-4">
+            <div className="flex items-center gap-3 mb-5">
               <Image
-                src="/assets/logos/HOMLOGO.png"
+                src="/assets/logos/White Logo.png"
                 alt="Hall of Mirrors"
-                width={50}
-                height={50}
-                className="w-12 h-12 object-contain"
+                width={44}
+                height={44}
+                style={{ width: '2.75rem', height: 'auto', opacity: 0.85 }}
               />
-              <LogoText size="sm" className="h-10" />
+              <Image
+                src="/assets/logos/White Logo Text.png"
+                alt="Hall of Mirrors Tattoo Studio"
+                width={160}
+                height={40}
+                style={{ width: '9rem', height: 'auto', opacity: 0.75 }}
+              />
             </div>
-            <p className="text-white/70 text-sm leading-relaxed">
-              Bespoke tattoo artistry in Liverpool. Crafting timeless designs with meticulous precision.
+            <p style={{
+              fontFamily: '"DM Sans", sans-serif',
+              fontSize: '0.875rem',
+              lineHeight: 1.8,
+              color: 'var(--text-low)',
+              maxWidth: '28ch',
+            }}>
+              Bespoke tattoo artistry in Liverpool.<br />
+              Neo-traditional specialist. Every design custom.
             </p>
+            <div className="flex gap-4 mt-6">
+              <a href="#" className="footer-social">Instagram</a>
+              <a href="#" className="footer-social">TikTok</a>
+            </div>
           </div>
 
-          {/* Studio */}
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-white uppercase tracking-widest">Studio</h4>
-            <address className="text-white/60 text-sm leading-relaxed not-italic">
+          {/* Studio address */}
+          <div className="md:col-span-3 md:col-start-6">
+            <h4 style={{
+              fontFamily: '"DM Mono", monospace',
+              fontSize: '0.625rem',
+              letterSpacing: '0.25em',
+              textTransform: 'uppercase',
+              color: 'var(--gold)',
+              opacity: 0.6,
+              marginBottom: '1rem',
+            }}>
+              Studio
+            </h4>
+            <address style={{
+              fontFamily: '"DM Sans", sans-serif',
+              fontStyle: 'normal',
+              fontSize: '0.875rem',
+              lineHeight: 2,
+              color: 'var(--text-mid)',
+            }}>
               Suite 3<br />
               34 Castle Street<br />
               Liverpool L2 0NR<br />
@@ -35,39 +72,93 @@ export default function Footer() {
             </address>
           </div>
 
-          {/* Quick Links */}
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-white uppercase tracking-widest">Navigate</h4>
-            <ul className="space-y-2 text-sm">
-              <li><Link href="/booking" className="text-white/60 hover:text-accent-gold transition-colors duration-300">Book Appointment</Link></li>
-              <li><Link href="/portfolio" className="text-white/60 hover:text-accent-gold transition-colors duration-300">Portfolio</Link></li>
-              <li><Link href="/services" className="text-white/60 hover:text-accent-gold transition-colors duration-300">Services</Link></li>
-              <li><Link href="/consultation" className="text-white/60 hover:text-accent-gold transition-colors duration-300">Consultation</Link></li>
+          {/* Navigate */}
+          <div className="md:col-span-2">
+            <h4 style={{
+              fontFamily: '"DM Mono", monospace',
+              fontSize: '0.625rem',
+              letterSpacing: '0.25em',
+              textTransform: 'uppercase',
+              color: 'var(--gold)',
+              opacity: 0.6,
+              marginBottom: '1rem',
+            }}>
+              Navigate
+            </h4>
+            <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+              {[
+                { href: '/booking',      label: 'Book Appointment' },
+                { href: '/portfolio',    label: 'Portfolio' },
+                { href: '/services',     label: 'Services' },
+                { href: '/consultation', label: 'Consultation' },
+                { href: '/about',        label: 'About' },
+              ].map(({ href, label }) => (
+                <li key={href}>
+                  <Link href={href} className="footer-link">{label}</Link>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* Legal */}
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold text-white uppercase tracking-widest">Legal</h4>
-            <ul className="space-y-2 text-sm">
-              <li><Link href="/terms" className="text-white/60 hover:text-accent-gold transition-colors duration-300">Terms</Link></li>
-              <li><Link href="/privacy" className="text-white/60 hover:text-accent-gold transition-colors duration-300">Privacy</Link></li>
-              <li><Link href="/aftercare" className="text-white/60 hover:text-accent-gold transition-colors duration-300">Aftercare</Link></li>
+          <div className="md:col-span-2">
+            <h4 style={{
+              fontFamily: '"DM Mono", monospace',
+              fontSize: '0.625rem',
+              letterSpacing: '0.25em',
+              textTransform: 'uppercase',
+              color: 'var(--gold)',
+              opacity: 0.6,
+              marginBottom: '1rem',
+            }}>
+              Legal
+            </h4>
+            <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+              {[
+                { href: '/terms',     label: 'Terms' },
+                { href: '/privacy',   label: 'Privacy' },
+                { href: '/cookies',   label: 'Cookies' },
+                { href: '/aftercare', label: 'Aftercare' },
+              ].map(({ href, label }) => (
+                <li key={href}>
+                  <Link href={href} className="footer-link">{label}</Link>
+                </li>
+              ))}
             </ul>
           </div>
+
         </div>
 
-        {/* Bottom Bar */}
-        <div className="border-t border-white/10 pt-8 flex justify-between items-center flex-col md:flex-row gap-8">
-          <p className="text-white/40 text-sm">
-            &copy; {new Date().getFullYear()} Hall of Mirrors. All rights reserved.
+        {/* Bottom bar */}
+        <div style={{
+          borderTop: '1px solid rgba(201,168,76,0.08)',
+          paddingTop: '2rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1rem',
+        }}>
+          <p style={{
+            fontFamily: '"DM Mono", monospace',
+            fontSize: '0.6rem',
+            letterSpacing: '0.1em',
+            color: 'var(--text-low)',
+            opacity: 0.7,
+          }}>
+            © {new Date().getFullYear()} Hall of Mirrors Tattoo. All rights reserved.
           </p>
-          <div className="flex gap-6">
-            <a href="#" className="text-white/40 hover:text-accent-gold transition-colors duration-300 text-sm font-medium">Instagram</a>
-            <a href="#" className="text-white/40 hover:text-accent-gold transition-colors duration-300 text-sm font-medium">TikTok</a>
-            <a href="#" className="text-white/40 hover:text-accent-gold transition-colors duration-300 text-sm font-medium">Contact</a>
-          </div>
+          <p style={{
+            fontFamily: '"DM Mono", monospace',
+            fontSize: '0.6rem',
+            letterSpacing: '0.1em',
+            color: 'var(--text-low)',
+            opacity: 0.4,
+          }}>
+            Liverpool City Council Reg. · A11394900
+          </p>
         </div>
+
       </div>
     </footer>
   );
