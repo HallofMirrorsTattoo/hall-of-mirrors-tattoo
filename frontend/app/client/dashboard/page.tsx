@@ -97,18 +97,18 @@ export default function ClientDashboardPage() {
             <div className="card-premium-inner">
               <div className="grid md:grid-cols-2 gap-8">
                 <div>
-                  <h3 className="text-lg font-serif font-bold text-primary-dark mb-3">Want to book a new appointment?</h3>
-                  <p className="text-primary-dark/70 mb-4">
+                  <h3 className="text-lg font-serif font-bold mb-3" style={{ color: 'var(--cream)' }}>Want to book a new appointment?</h3>
+                  <p className="mb-4" style={{ color: 'var(--text-mid)' }}>
                     Start the booking process to schedule your next tattoo session with Robyn.
                   </p>
                   <Link href="/booking" className="btn-primary">
                     <span>Book Now</span>
-                    <div className="btn-primary-icon">↗</div>
+                    <span className="btn-icon" aria-hidden="true">↗</span>
                   </Link>
                 </div>
                 <div>
-                  <h3 className="text-lg font-serif font-bold text-primary-dark mb-3">Request a consultation?</h3>
-                  <p className="text-primary-dark/70 mb-4">
+                  <h3 className="text-lg font-serif font-bold mb-3" style={{ color: 'var(--cream)' }}>Request a consultation?</h3>
+                  <p className="mb-4" style={{ color: 'var(--text-mid)' }}>
                     Use the Consultations tab above to discuss your design ideas and get expert advice.
                   </p>
                   <button

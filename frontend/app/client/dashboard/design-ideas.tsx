@@ -114,32 +114,32 @@ export default function DesignIdeasTab() {
       {/* Upload Form */}
       <div className="card-premium">
         <div className="card-premium-inner">
-          <h3 className="text-lg font-serif font-bold text-primary-dark mb-6">
+          <h3 className="text-lg font-serif font-bold mb-6" style={{ color: 'var(--cream)' }}>
             Add Design Reference
           </h3>
           <form onSubmit={handleUpload} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-primary-dark/80 mb-2">Image URL</label>
+              <label htmlFor="design-image-url">Image URL</label>
               <input
+                id="design-image-url"
                 type="url"
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
                 placeholder="https://example.com/image.jpg"
-                className="w-full bg-white border border-primary-dark/10 rounded-lg px-4 py-3 text-primary-dark focus:outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
               />
-              <p className="text-xs text-primary-dark/60 mt-2">
-                Paste the URL of an image you'd like to share with Robyn
+              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.625rem', letterSpacing: '0.1em', color: 'var(--text-low)', marginTop: '0.375rem' }}>
+                Paste the URL of an image you&apos;d like to share with Robyn
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-primary-dark/80 mb-2">Description (optional)</label>
+              <label htmlFor="design-description">Description (optional)</label>
               <textarea
+                id="design-description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Tell Robyn what you like about this design..."
                 rows={3}
-                className="w-full bg-white border border-primary-dark/10 rounded-lg px-4 py-3 text-primary-dark focus:outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
               />
             </div>
 
@@ -155,10 +155,10 @@ export default function DesignIdeasTab() {
       </div>
 
       {/* Design Ideas Gallery */}
-      {error && <p className="text-red-600">{error}</p>}
+      {error && <p style={{ color: '#fca5a5', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem' }}>{error}</p>}
 
       {ideas.length === 0 ? (
-        <div className="text-center py-12 text-primary-dark/70">
+        <div className="text-center py-12" style={{ color: 'var(--text-mid)' }}>
           <p>No design ideas yet. Start by adding reference images!</p>
         </div>
       ) : (
@@ -166,7 +166,7 @@ export default function DesignIdeasTab() {
           {ideas.map((idea) => (
             <div key={idea.design_idea_id} className="card-premium">
               <div className="card-premium-inner p-0 overflow-hidden">
-                <div className="relative w-full h-48 bg-primary-dark/10">
+                <div className="relative w-full h-48" style={{ backgroundColor: 'var(--surface-2)' }}>
                   <Image
                     src={idea.image_url}
                     alt="Design idea"
@@ -176,9 +176,9 @@ export default function DesignIdeasTab() {
                 </div>
                 <div className="p-4">
                   {idea.description && (
-                    <p className="text-sm text-primary-dark/70 mb-3">{idea.description}</p>
+                    <p className="text-sm mb-3" style={{ color: 'var(--text-mid)' }}>{idea.description}</p>
                   )}
-                  <p className="text-xs text-primary-dark/50 mb-4">
+                  <p className="text-xs mb-4" style={{ color: 'var(--text-low)' }}>
                     {new Date(idea.created_at).toLocaleDateString()}
                   </p>
                   <button

@@ -19,7 +19,7 @@ export default function ClientLoginPage() {
 
     try {
       await login(formData.email, formData.password);
-      setSuccess('Login successful! Redirecting...');
+      setSuccess('Login successful. Redirecting...');
       setTimeout(() => router.push('/client/dashboard'), 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
@@ -27,47 +27,76 @@ export default function ClientLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-primary-dark pt-40 pb-20">
-      <div className="max-w-md mx-auto px-4">
+    <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg)', paddingBottom: '5rem' }}>
+      <div style={{ maxWidth: '26rem', margin: '0 auto', padding: '2rem 1.5rem 0' }}>
+
+        <div style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
+          <p className="eyebrow" style={{ marginBottom: '0.75rem' }}>Client Portal</p>
+          <h1 style={{
+            fontFamily: '"Cormorant Garamond", serif',
+            fontStyle: 'italic',
+            fontWeight: 300,
+            fontSize: 'clamp(2rem, 5vw, 3rem)',
+            color: 'var(--cream)',
+            letterSpacing: '-0.02em',
+            lineHeight: 1.0,
+          }}>
+            Welcome back
+          </h1>
+        </div>
+
         <div className="card-premium">
           <div className="card-premium-inner">
-            <h1 className="text-3xl font-serif font-bold text-primary-dark mb-8 text-center">
-              Client Login
-            </h1>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm">
-                {error}
+              <div style={{
+                marginBottom: '1.5rem',
+                padding: '1rem 1.25rem',
+                background: 'rgba(239,68,68,0.08)',
+                border: '1px solid rgba(239,68,68,0.25)',
+                borderRadius: '0.5rem',
+              }}>
+                <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: '#fca5a5' }}>
+                  {error}
+                </p>
               </div>
             )}
 
             {success && (
-              <div className="mb-6 p-4 bg-green-100 border border-green-300 rounded-lg text-green-700 text-sm">
-                {success}
+              <div style={{
+                marginBottom: '1.5rem',
+                padding: '1rem 1.25rem',
+                background: 'rgba(201,168,76,0.08)',
+                border: '1px solid rgba(201,168,76,0.25)',
+                borderRadius: '0.5rem',
+              }}>
+                <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--gold)' }}>
+                  {success}
+                </p>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-primary-dark/80 mb-2">Email</label>
+                <label htmlFor="email">Email</label>
                 <input
+                  id="email"
                   type="email"
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full bg-white border border-primary-dark/10 rounded-lg px-4 py-3 text-primary-dark focus:outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
                   placeholder="your@email.com"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-primary-dark/80 mb-2">Password</label>
+                <label htmlFor="password">Password</label>
                 <input
+                  id="password"
                   type="password"
                   required
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full bg-white border border-primary-dark/10 rounded-lg px-4 py-3 text-primary-dark focus:outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
                   placeholder="••••••••"
                 />
               </div>
@@ -75,31 +104,33 @@ export default function ClientLoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full btn-primary justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary w-full justify-center"
+                style={{ opacity: isLoading ? 0.7 : 1, marginTop: '0.5rem' }}
               >
-                {isLoading ? 'Logging in...' : 'Login'}
+                <span>{isLoading ? 'Logging in...' : 'Login'}</span>
               </button>
             </form>
 
-            <div className="mt-8 space-y-4 text-center">
-              <p className="text-sm text-primary-dark/70">
-                <Link href="/client/forgot-password" className="text-accent-gold hover:text-primary-dark font-medium">
+            <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '0.875rem', textAlign: 'center' }}>
+              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-low)' }}>
+                <Link href="/client/forgot-password" className="footer-link" style={{ color: 'var(--gold)', opacity: 1 }}>
                   Forgot your password?
                 </Link>
               </p>
-              <p className="text-sm text-primary-dark/70">
-                Don't have an account?{' '}
-                <Link href="/client/signup" className="text-accent-gold hover:text-primary-dark font-medium">
+              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-low)' }}>
+                No account?{' '}
+                <Link href="/client/signup" className="footer-link" style={{ color: 'var(--gold)', opacity: 1 }}>
                   Sign up
                 </Link>
               </p>
-              <p className="text-sm text-primary-dark/70">
-                Already have an account from a previous booking?{' '}
-                <Link href="/client/activate" className="text-accent-gold hover:text-primary-dark font-medium">
-                  Activate it
+              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-low)' }}>
+                Previous booking?{' '}
+                <Link href="/client/activate" className="footer-link" style={{ color: 'var(--gold)', opacity: 1 }}>
+                  Activate your account
                 </Link>
               </p>
             </div>
+
           </div>
         </div>
       </div>

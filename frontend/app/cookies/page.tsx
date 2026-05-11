@@ -1,6 +1,6 @@
 export default function Cookies() {
   return (
-    <div className="min-h-screen pt-32 pb-20 px-4" style={{ backgroundColor: '#2a2a2a' }}><div className="max-w-3xl mx-auto">
+    <div className="min-h-screen pt-32 pb-20 px-4" style={{ backgroundColor: 'var(--bg)' }}><div className="max-w-3xl mx-auto">
       <h1 className="text-4xl md:text-5xl font-serif font-bold text-primary-light mb-10">Cookie Policy</h1>
 
       <div className="space-y-6 text-primary-light/70">

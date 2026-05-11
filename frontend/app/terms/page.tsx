@@ -1,6 +1,6 @@
 export default function Terms() {
   return (
-    <div className="min-h-screen pt-32 pb-20 px-4" style={{ backgroundColor: '#2a2a2a' }}>
+    <div className="min-h-screen pt-32 pb-20 px-4" style={{ backgroundColor: 'var(--bg)' }}>
       <div className="max-w-3xl mx-auto">
       <h1 className="text-4xl md:text-5xl font-serif font-bold text-primary-light mb-10">Terms of Service</h1>
 

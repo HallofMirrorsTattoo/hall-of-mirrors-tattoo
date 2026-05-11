@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import AnimatedSection from '../components/AnimatedSection';
 
 const reviews = [
   {
@@ -31,61 +32,73 @@ export default function Testimonials() {
   const avgRating = (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1);
 
   return (
-    <div className="min-h-screen pt-32 pb-20 px-4" style={{ backgroundColor: '#2a2a2a' }}>
-      <div className="max-w-4xl mx-auto space-y-12">
+    <div style={{ backgroundColor: 'var(--bg)', minHeight: '100vh' }}>
+      <div style={{ maxWidth: '52rem', margin: '0 auto', padding: '2rem 1.5rem 5rem' }}>
 
-        {/* Header */}
-        <div className="space-y-4">
-          <span className="eyebrow">Client Feedback</span>
-          <h1 className="text-4xl md:text-5xl font-serif font-bold text-primary-light">
+        <AnimatedSection className="mb-16">
+          <p className="eyebrow">Client Feedback</p>
+          <h1 style={{
+            fontFamily: '"Cormorant Garamond", serif',
+            fontStyle: 'italic',
+            fontWeight: 300,
+            fontSize: 'clamp(3rem, 7vw, 5rem)',
+            color: 'var(--cream)',
+            letterSpacing: '-0.025em',
+            lineHeight: 1.0,
+            marginBottom: '1.25rem',
+          }}>
             Reviews
           </h1>
-          <div className="flex items-center gap-3">
-            <span className="text-3xl text-accent-gold font-serif font-bold">{avgRating}</span>
-            <span className="text-primary-light/50 text-sm">
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
+            <span style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '2rem', fontWeight: 400, color: 'var(--gold)', lineHeight: 1 }}>
+              {avgRating}
+            </span>
+            <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.625rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
               out of 5 &nbsp;·&nbsp; {reviews.length} reviews
             </span>
           </div>
-        </div>
+        </AnimatedSection>
 
-        {/* Review cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {reviews.map((review) => (
-            <div key={review.id} className="card-premium">
-              <div className="card-premium-inner space-y-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-semibold text-primary-light">{review.name}</p>
-                    <p className="text-primary-light/50 text-xs">{review.style}</p>
-                  </div>
-                  <span className="text-accent-gold text-sm tracking-widest">
-                    {'★'.repeat(review.rating)}
-                  </span>
+        {/* Review rows — editorial, not cards */}
+        <div style={{ borderTop: '1px solid var(--border)' }}>
+          {reviews.map((review, i) => (
+            <AnimatedSection
+              key={review.id}
+              delay={i * 80}
+              style={{ borderBottom: '1px solid var(--border)', padding: '2rem 0' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.875rem', gap: '1rem' }}>
+                <div>
+                  <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.125rem', fontWeight: 400, color: 'var(--cream)', lineHeight: 1.3, marginBottom: '0.25rem', maxWidth: 'none' }}>
+                    {review.name}
+                  </p>
+                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)', maxWidth: 'none' }}>
+                    {review.style}
+                  </p>
                 </div>
-                <p className="text-primary-light/75 text-sm leading-relaxed">{review.text}</p>
-                <p className="text-primary-light/35 text-xs">
-                  {new Date(review.date).toLocaleDateString('en-GB', {
-                    month: 'long',
-                    year: 'numeric',
-                  })}
-                </p>
+                <span style={{ color: 'var(--gold)', fontSize: '0.875rem', letterSpacing: '0.15em', flexShrink: 0 }}>
+                  {'★'.repeat(review.rating)}
+                </span>
               </div>
-            </div>
+              <p style={{ fontSize: '0.9375rem', lineHeight: 1.75, maxWidth: '56ch', marginBottom: '0.875rem' }}>
+                {review.text}
+              </p>
+              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.1em', color: 'var(--text-low)', maxWidth: 'none' }}>
+                {new Date(review.date).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
+              </p>
+            </AnimatedSection>
           ))}
         </div>
 
-        {/* CTA */}
-        <div className="card-premium">
-          <div className="card-premium-inner text-center space-y-4">
-            <p className="text-primary-light/70">
-              Had a great experience? We&apos;d love to hear from you.
-            </p>
-            <Link href="/booking" className="btn-primary group inline-flex">
-              <span>Book Your Session</span>
-              <div className="btn-primary-icon">↗</div>
-            </Link>
-          </div>
-        </div>
+        <AnimatedSection delay={300} className="mt-16 text-center">
+          <p style={{ marginBottom: '1.5rem', maxWidth: '36ch', margin: '0 auto 1.5rem' }}>
+            Had a great experience? We&apos;d love to hear from you.
+          </p>
+          <Link href="/booking" className="btn-primary inline-flex">
+            <span>Book Your Session</span>
+            <span className="btn-icon" aria-hidden="true">↗</span>
+          </Link>
+        </AnimatedSection>
 
       </div>
     </div>

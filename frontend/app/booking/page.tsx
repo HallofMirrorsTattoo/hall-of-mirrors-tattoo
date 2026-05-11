@@ -100,224 +100,247 @@ export default function BookingPage() {
   };
 
   return (
-    <div>
-      {/* Hero Section */}
-      <section className="min-h-[60dvh] px-4 py-20 flex items-center justify-center relative overflow-hidden pattern-gold-accents bg-primary-dark">
-        <div className="max-w-4xl mx-auto w-full text-center space-y-6 relative z-10">
-          <h1 className="text-4xl md:text-5xl font-serif font-bold text-primary-light">
-            Book Your Appointment
+    <div style={{ backgroundColor: 'var(--bg)', minHeight: '100vh' }}>
+
+      {/* Hero */}
+      <section style={{ minHeight: '40dvh', padding: '2rem 1.5rem 4rem', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+        <div
+          className="absolute inset-0 pointer-events-none"
+          aria-hidden="true"
+          style={{ background: 'radial-gradient(ellipse 70% 60% at 50% 60%, rgba(201,168,76,0.06) 0%, transparent 65%)' }}
+        />
+        <div style={{ maxWidth: '40rem', textAlign: 'center', position: 'relative', zIndex: 1 }}>
+          <p className="eyebrow" style={{ marginBottom: '1.25rem' }}>Book Your Session</p>
+          <h1 style={{
+            fontFamily: '"Cormorant Garamond", serif',
+            fontStyle: 'italic',
+            fontWeight: 300,
+            fontSize: 'clamp(2.75rem, 7vw, 5rem)',
+            color: 'var(--cream)',
+            letterSpacing: '-0.025em',
+            lineHeight: 1.0,
+            marginBottom: '1.5rem',
+          }}>
+            Begin your<br />appointment
           </h1>
-          <p className="text-lg text-primary-light/75 max-w-2xl mx-auto">
-            Limited availability ensures personalized attention. Complete this form and we'll confirm your booking within 24 hours.
+          <p style={{ maxWidth: '40ch', margin: '0 auto', textAlign: 'center' }}>
+            Limited availability ensures every client receives Robyn&apos;s full attention.
+            We&apos;ll confirm your booking within 24 hours.
           </p>
         </div>
       </section>
 
-      {/* Form Section */}
-      <section className="px-4 py-20 bg-primary-dark pattern-gold-accents">
-        <div className="max-w-2xl mx-auto">
+      {/* Form */}
+      <section style={{ padding: '0 1.5rem 5rem' }}>
+        <div style={{ maxWidth: '38rem', margin: '0 auto' }}>
           <div className="card-premium">
             <div className="card-premium-inner">
+
               {submitStatus === 'success' && (
-                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-green-700 font-medium">✓ Booking submitted successfully! We'll be in touch shortly.</p>
+                <div style={{
+                  marginBottom: '1.5rem',
+                  padding: '1rem 1.25rem',
+                  background: 'rgba(201,168,76,0.08)',
+                  border: '1px solid rgba(201,168,76,0.25)',
+                  borderRadius: '0.5rem',
+                }}>
+                  <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: 'var(--gold)', fontWeight: 500 }}>
+                    Booking submitted. We&apos;ll be in touch within 24 hours to confirm.
+                  </p>
                 </div>
               )}
 
               {submitStatus === 'error' && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-red-700 font-medium">✗ {errorMessage}</p>
+                <div style={{
+                  marginBottom: '1.5rem',
+                  padding: '1rem 1.25rem',
+                  background: 'rgba(239,68,68,0.08)',
+                  border: '1px solid rgba(239,68,68,0.25)',
+                  borderRadius: '0.5rem',
+                }}>
+                  <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: '#fca5a5', fontWeight: 500 }}>
+                    {errorMessage || 'Something went wrong. Please try again.'}
+                  </p>
                 </div>
               )}
 
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="clientName" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
-                      Full Name
-                    </label>
+                    <label htmlFor="clientName">Full Name</label>
                     <input
                       {...register('clientName')}
                       type="text"
                       id="clientName"
                       placeholder="Your name"
-                      className={`w-full ${errors.clientName ? 'border-red-500' : ''}`}
+                      style={errors.clientName ? { borderColor: 'rgba(239,68,68,0.5)' } : {}}
                     />
                     {errors.clientName && (
-                      <p className="text-red-600 text-sm mt-1">{errors.clientName.message}</p>
+                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginTop: '0.375rem' }}>{errors.clientName.message}</p>
                     )}
                   </div>
 
                   <div>
-                    <label htmlFor="clientEmail" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
-                      Email
-                    </label>
+                    <label htmlFor="clientEmail">Email</label>
                     <input
                       {...register('clientEmail')}
                       type="email"
                       id="clientEmail"
                       placeholder="your@email.com"
-                      className={`w-full ${errors.clientEmail ? 'border-red-500' : ''}`}
+                      style={errors.clientEmail ? { borderColor: 'rgba(239,68,68,0.5)' } : {}}
                     />
                     {errors.clientEmail && (
-                      <p className="text-red-600 text-sm mt-1">{errors.clientEmail.message}</p>
+                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginTop: '0.375rem' }}>{errors.clientEmail.message}</p>
                     )}
                   </div>
 
                   <div>
-                    <label htmlFor="clientPhone" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
-                      Phone Number
-                    </label>
+                    <label htmlFor="clientPhone">Phone Number</label>
                     <input
                       {...register('clientPhone')}
                       type="tel"
                       id="clientPhone"
-                      placeholder="+44 (0) 151 2345 6789"
-                      className={`w-full ${errors.clientPhone ? 'border-red-500' : ''}`}
+                      placeholder="+44 (0) 151 234 5678"
+                      style={errors.clientPhone ? { borderColor: 'rgba(239,68,68,0.5)' } : {}}
                     />
                     {errors.clientPhone && (
-                      <p className="text-red-600 text-sm mt-1">{errors.clientPhone.message}</p>
+                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginTop: '0.375rem' }}>{errors.clientPhone.message}</p>
                     )}
                   </div>
 
                   <div>
-                    <label htmlFor="preferredDate" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
-                      Preferred Date
-                    </label>
+                    <label htmlFor="preferredDate">Preferred Date</label>
                     <input
                       {...register('preferredDate')}
                       type="datetime-local"
                       id="preferredDate"
-                      className={`w-full ${errors.preferredDate ? 'border-red-500' : ''}`}
+                      style={errors.preferredDate ? { borderColor: 'rgba(239,68,68,0.5)' } : {}}
                     />
                     {errors.preferredDate && (
-                      <p className="text-red-600 text-sm mt-1">{errors.preferredDate.message}</p>
+                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginTop: '0.375rem' }}>{errors.preferredDate.message}</p>
                     )}
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="tattooDesignDescription" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
-                    Tattoo Design Description
-                  </label>
+                  <label htmlFor="tattooDesignDescription">Tattoo Design Description</label>
                   <textarea
                     {...register('tattooDesignDescription')}
                     id="tattooDesignDescription"
                     placeholder="Describe your tattoo design idea, inspiration, and any specific elements you want included..."
                     rows={5}
-                    className={`w-full ${errors.tattooDesignDescription ? 'border-red-500' : ''}`}
+                    style={errors.tattooDesignDescription ? { borderColor: 'rgba(239,68,68,0.5)' } : {}}
                   />
                   {errors.tattooDesignDescription && (
-                    <p className="text-red-600 text-sm mt-1">{errors.tattooDesignDescription.message}</p>
+                    <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginTop: '0.375rem' }}>{errors.tattooDesignDescription.message}</p>
                   )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="estimatedSize" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
-                      Estimated Size
-                    </label>
+                    <label htmlFor="estimatedSize">Estimated Size</label>
                     <select
                       {...register('estimatedSize')}
                       id="estimatedSize"
-                      className={`w-full ${errors.estimatedSize ? 'border-red-500' : ''}`}
+                      style={errors.estimatedSize ? { borderColor: 'rgba(239,68,68,0.5)' } : {}}
                     >
                       <option value="">Select size</option>
-                      <option value="small">Small (2-3 inches)</option>
-                      <option value="medium">Medium (3-6 inches)</option>
-                      <option value="large">Large (6-12 inches)</option>
+                      <option value="small">Small (2–3 inches)</option>
+                      <option value="medium">Medium (3–6 inches)</option>
+                      <option value="large">Large (6–12 inches)</option>
                       <option value="xlarge">Extra Large (12+ inches)</option>
                     </select>
                     {errors.estimatedSize && (
-                      <p className="text-red-600 text-sm mt-1">{errors.estimatedSize.message}</p>
+                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginTop: '0.375rem' }}>{errors.estimatedSize.message}</p>
                     )}
                   </div>
 
                   <div>
-                    <label htmlFor="estimatedPlacement" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
-                      Body Placement
-                    </label>
+                    <label htmlFor="estimatedPlacement">Body Placement</label>
                     <input
                       {...register('estimatedPlacement')}
                       type="text"
                       id="estimatedPlacement"
                       placeholder="e.g., Upper arm, chest, leg..."
-                      className={`w-full ${errors.estimatedPlacement ? 'border-red-500' : ''}`}
+                      style={errors.estimatedPlacement ? { borderColor: 'rgba(239,68,68,0.5)' } : {}}
                     />
                     {errors.estimatedPlacement && (
-                      <p className="text-red-600 text-sm mt-1">{errors.estimatedPlacement.message}</p>
+                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginTop: '0.375rem' }}>{errors.estimatedPlacement.message}</p>
                     )}
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="artistId" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
-                    Preferred Artist (Optional)
-                  </label>
+                  <label htmlFor="artistId">Preferred Artist (Optional)</label>
                   <select
                     {...register('artistId')}
                     id="artistId"
                     disabled={loadingArtists}
-                    className="w-full"
                   >
                     <option value="">No preference</option>
                     {artists.map((artist) => (
                       <option key={artist.id} value={artist.id}>
                         {artist.full_name}
-                        {artist.specialties ? ` - ${artist.specialties}` : ''}
+                        {artist.specialties ? ` — ${artist.specialties}` : ''}
                       </option>
                     ))}
                   </select>
                   {loadingArtists && (
-                    <p className="text-gray-600 text-sm mt-1">Loading artists...</p>
+                    <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.625rem', letterSpacing: '0.1em', color: 'var(--text-low)', marginTop: '0.375rem' }}>
+                      Loading artists...
+                    </p>
                   )}
                 </div>
 
                 <div>
-                  <label htmlFor="referralSource" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
-                    How did you find us? (Optional)
-                  </label>
+                  <label htmlFor="referralSource">How did you find us? (Optional)</label>
                   <input
                     {...register('referralSource')}
                     type="text"
                     id="referralSource"
-                    placeholder="Instagram, Google, Referral, etc."
-                    className="w-full"
+                    placeholder="Instagram, Google, referral..."
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="notes" className="block text-sm font-semibold text-primary-light uppercase tracking-wider mb-2">
-                    Additional Notes (Optional)
-                  </label>
+                  <label htmlFor="notes">Additional Notes (Optional)</label>
                   <textarea
                     {...register('notes')}
                     id="notes"
-                    placeholder="Any additional information we should know about..."
+                    placeholder="Anything else we should know..."
                     rows={3}
-                    className="w-full"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="btn-primary group w-full justify-center"
+                  className="btn-primary w-full justify-center"
+                  style={{ opacity: isSubmitting ? 0.7 : 1 }}
                 >
                   <span>{isSubmitting ? 'Submitting...' : 'Request Booking'}</span>
-                  <div className="btn-primary-icon">↗</div>
+                  <span className="btn-icon" aria-hidden="true">↗</span>
                 </button>
 
-                <p className="text-center text-sm text-primary-light/60">
-                  Have questions? <Link href="/consultation" className="text-accent-gold hover:text-primary-light font-medium">
+                <p style={{ textAlign: 'center', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-low)' }}>
+                  Have questions?{' '}
+                  <Link
+                    href="/consultation"
+                    style={{ color: 'var(--gold)', transition: 'color 0.25s ease' }}
+                    onMouseEnter={(e) => { (e.target as HTMLElement).style.color = 'var(--gold-bright)'; }}
+                    onMouseLeave={(e) => { (e.target as HTMLElement).style.color = 'var(--gold)'; }}
+                  >
                     Schedule a free consultation
-                  </Link> first.
+                  </Link>{' '}
+                  first.
                 </p>
               </form>
+
             </div>
           </div>
         </div>
       </section>
+
     </div>
   );
 }

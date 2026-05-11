@@ -49,30 +49,30 @@ export default function BookingsTab() {
     }
   }, [accessToken]);
 
-  const getStatusColor = (status: string) => {
+  const getStatusStyle = (status: string): React.CSSProperties => {
     switch (status) {
       case 'confirmed':
-        return 'bg-green-100 text-green-700';
+        return { background: 'rgba(201,168,76,0.12)', color: 'var(--gold)', border: '1px solid rgba(201,168,76,0.25)' };
       case 'pending_consent':
-        return 'bg-yellow-100 text-yellow-700';
+        return { background: 'rgba(201,168,76,0.08)', color: 'rgba(201,168,76,0.7)', border: '1px solid rgba(201,168,76,0.18)' };
       case 'cancelled':
-        return 'bg-red-100 text-red-700';
+        return { background: 'rgba(239,68,68,0.08)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.2)' };
       default:
-        return 'bg-gray-100 text-gray-700';
+        return { background: 'rgba(154,144,130,0.12)', color: 'var(--text-mid)', border: '1px solid rgba(154,144,130,0.2)' };
     }
   };
 
   if (loading) return <p>Loading your bookings...</p>;
-  if (error) return <p className="text-red-600">{error}</p>;
+  if (error) return <p style={{ color: '#fca5a5', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem' }}>{error}</p>;
 
   return (
     <div>
       {bookings.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-primary-dark/70 mb-6">You don't have any bookings yet.</p>
+          <p className="mb-6" style={{ color: 'var(--text-mid)' }}>You don&apos;t have any bookings yet.</p>
           <Link href="/booking" className="btn-primary">
             <span>Book Your First Appointment</span>
-            <div className="btn-primary-icon">↗</div>
+            <span className="btn-icon" aria-hidden="true">↗</span>
           </Link>
         </div>
       ) : (
@@ -86,27 +86,29 @@ export default function BookingsTab() {
               <div className="card-premium-inner">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-lg font-serif font-bold text-primary-dark">
+                    <h3 className="text-lg font-serif font-bold" style={{ color: 'var(--cream)' }}>
                       {booking.artist_name || 'Robyn'}
                     </h3>
-                    <p className="text-sm text-primary-dark/60">Ref: {booking.booking_reference}</p>
+                    <p className="text-sm" style={{ color: 'var(--text-low)' }}>Ref: {booking.booking_reference}</p>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.appointment_status)}`}>
+                  <span
+                    style={{ ...getStatusStyle(booking.appointment_status), padding: '0.25rem 0.75rem', borderRadius: '9999px', fontFamily: '"DM Mono", monospace', fontSize: '0.625rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}
+                  >
                     {booking.appointment_status.replace(/_/g, ' ')}
                   </span>
                 </div>
 
                 <div className="space-y-2 mb-4">
-                  <p className="text-sm text-primary-dark/70">
-                    📅 {new Date(booking.appointment_date).toLocaleDateString()}
+                  <p className="text-sm" style={{ color: 'var(--text-mid)' }}>
+                    {new Date(booking.appointment_date).toLocaleDateString()}
                   </p>
-                  <p className="text-sm text-primary-dark/70">
-                    🕐 {booking.appointment_time}
+                  <p className="text-sm" style={{ color: 'var(--text-mid)' }}>
+                    {booking.appointment_time}
                   </p>
                 </div>
 
-                <div className="pt-4 border-t border-primary-dark/10">
-                  <p className="text-xs text-primary-dark/60">
+                <div className="pt-4" style={{ borderTop: '1px solid var(--border)' }}>
+                  <p className="text-xs" style={{ color: 'var(--text-low)' }}>
                     Deposit: £{booking.deposit_price}
                     {booking.final_price && ` • Final: £${booking.final_price}`}
                   </p>

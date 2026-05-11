@@ -24,7 +24,6 @@ export default function ClientSignupPage() {
     setError('');
     setSuccess('');
 
-    // Validation
     if (!formData.email || !formData.password || !formData.first_name || !formData.last_name) {
       setError('Email, password, first name, and last name are required');
       return;
@@ -42,7 +41,7 @@ export default function ClientSignupPage() {
 
     try {
       await signup(formData.email, formData.password, formData.first_name, formData.last_name, formData.phone);
-      setSuccess('Signup successful! Redirecting to dashboard...');
+      setSuccess('Account created. Redirecting to your dashboard...');
       setTimeout(() => router.push('/client/dashboard'), 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Signup failed');
@@ -50,96 +49,127 @@ export default function ClientSignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-primary-dark pt-40 pb-20">
-      <div className="max-w-md mx-auto px-4">
+    <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg)', paddingBottom: '5rem' }}>
+      <div style={{ maxWidth: '26rem', margin: '0 auto', padding: '2rem 1.5rem 0' }}>
+
+        <div style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
+          <p className="eyebrow" style={{ marginBottom: '0.75rem' }}>Client Portal</p>
+          <h1 style={{
+            fontFamily: '"Cormorant Garamond", serif',
+            fontStyle: 'italic',
+            fontWeight: 300,
+            fontSize: 'clamp(2rem, 5vw, 3rem)',
+            color: 'var(--cream)',
+            letterSpacing: '-0.02em',
+            lineHeight: 1.0,
+          }}>
+            Create account
+          </h1>
+        </div>
+
         <div className="card-premium">
           <div className="card-premium-inner">
-            <h1 className="text-3xl font-serif font-bold text-primary-dark mb-8 text-center">
-              Create Account
-            </h1>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm">
-                {error}
+              <div style={{
+                marginBottom: '1.5rem',
+                padding: '1rem 1.25rem',
+                background: 'rgba(239,68,68,0.08)',
+                border: '1px solid rgba(239,68,68,0.25)',
+                borderRadius: '0.5rem',
+              }}>
+                <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: '#fca5a5' }}>
+                  {error}
+                </p>
               </div>
             )}
 
             {success && (
-              <div className="mb-6 p-4 bg-green-100 border border-green-300 rounded-lg text-green-700 text-sm">
-                {success}
+              <div style={{
+                marginBottom: '1.5rem',
+                padding: '1rem 1.25rem',
+                background: 'rgba(201,168,76,0.08)',
+                border: '1px solid rgba(201,168,76,0.25)',
+                borderRadius: '0.5rem',
+              }}>
+                <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--gold)' }}>
+                  {success}
+                </p>
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-primary-dark/80 mb-2">First Name *</label>
+                  <label htmlFor="first_name">First Name *</label>
                   <input
+                    id="first_name"
                     type="text"
                     required
                     value={formData.first_name}
                     onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                    className="w-full bg-white border border-primary-dark/10 rounded-lg px-3 py-2 text-sm text-primary-dark focus:outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
                     placeholder="First"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-primary-dark/80 mb-2">Last Name *</label>
+                  <label htmlFor="last_name">Last Name *</label>
                   <input
+                    id="last_name"
                     type="text"
                     required
                     value={formData.last_name}
                     onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                    className="w-full bg-white border border-primary-dark/10 rounded-lg px-3 py-2 text-sm text-primary-dark focus:outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
                     placeholder="Last"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-primary-dark/80 mb-2">Email *</label>
+                <label htmlFor="email">Email *</label>
                 <input
+                  id="email"
                   type="email"
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full bg-white border border-primary-dark/10 rounded-lg px-3 py-2 text-sm text-primary-dark focus:outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
                   placeholder="your@email.com"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-primary-dark/80 mb-2">Phone</label>
+                <label htmlFor="phone">Phone</label>
                 <input
+                  id="phone"
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full bg-white border border-primary-dark/10 rounded-lg px-3 py-2 text-sm text-primary-dark focus:outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
                   placeholder="+44 (0)..."
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-primary-dark/80 mb-2">Password *</label>
+                <label htmlFor="password">Password *</label>
                 <input
+                  id="password"
                   type="password"
                   required
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full bg-white border border-primary-dark/10 rounded-lg px-3 py-2 text-sm text-primary-dark focus:outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
                   placeholder="••••••••"
                 />
-                <p className="text-xs text-primary-dark/60 mt-1">At least 8 characters</p>
+                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.625rem', letterSpacing: '0.1em', color: 'var(--text-low)', marginTop: '0.375rem' }}>
+                  At least 8 characters
+                </p>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-primary-dark/80 mb-2">Confirm Password *</label>
+                <label htmlFor="confirmPassword">Confirm Password *</label>
                 <input
+                  id="confirmPassword"
                   type="password"
                   required
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  className="w-full bg-white border border-primary-dark/10 rounded-lg px-3 py-2 text-sm text-primary-dark focus:outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
                   placeholder="••••••••"
                 />
               </div>
@@ -147,16 +177,17 @@ export default function ClientSignupPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full btn-primary justify-center disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+                className="btn-primary w-full justify-center"
+                style={{ opacity: isLoading ? 0.7 : 1, marginTop: '0.5rem' }}
               >
-                {isLoading ? 'Creating account...' : 'Create Account'}
+                <span>{isLoading ? 'Creating account...' : 'Create Account'}</span>
               </button>
             </form>
 
-            <div className="mt-6 text-center">
-              <p className="text-sm text-primary-dark/70">
+            <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-low)' }}>
                 Already have an account?{' '}
-                <Link href="/client/login" className="text-accent-gold hover:text-primary-dark font-medium">
+                <Link href="/client/login" className="footer-link" style={{ color: 'var(--gold)', opacity: 1 }}>
                   Log in
                 </Link>
               </p>

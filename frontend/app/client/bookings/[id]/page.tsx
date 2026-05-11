@@ -132,14 +132,20 @@ export default function BookingDetailPage() {
               <div className="card-premium">
                 <div className="card-premium-inner">
                   <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-serif font-bold text-primary-dark">Status</h2>
-                    <span className={`px-4 py-2 rounded-full font-medium ${
-                      booking.appointment_status === 'confirmed'
-                        ? 'bg-green-100 text-green-700'
+                    <h2 className="text-2xl font-serif font-bold" style={{ color: 'var(--cream)' }}>Status</h2>
+                    <span style={{
+                      ...(booking.appointment_status === 'confirmed'
+                        ? { background: 'rgba(201,168,76,0.12)', color: 'var(--gold)', border: '1px solid rgba(201,168,76,0.25)' }
                         : booking.appointment_status === 'pending_consent'
-                        ? 'bg-yellow-100 text-yellow-700'
-                        : 'bg-red-100 text-red-700'
-                    }`}>
+                        ? { background: 'rgba(201,168,76,0.08)', color: 'rgba(201,168,76,0.7)', border: '1px solid rgba(201,168,76,0.18)' }
+                        : { background: 'rgba(239,68,68,0.08)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.2)' }),
+                      padding: '0.375rem 1rem',
+                      borderRadius: '9999px',
+                      fontFamily: '"DM Mono", monospace',
+                      fontSize: '0.625rem',
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase' as const,
+                    }}>
                       {booking.appointment_status.replace(/_/g, ' ')}
                     </span>
                   </div>
@@ -222,11 +228,11 @@ export default function BookingDetailPage() {
               {booking.design_ideas && booking.design_ideas.length > 0 && (
                 <div className="card-premium">
                   <div className="card-premium-inner">
-                    <h2 className="text-2xl font-serif font-bold text-primary-dark mb-6">Design References</h2>
+                    <h2 className="text-2xl font-serif font-bold mb-6" style={{ color: 'var(--cream)' }}>Design References</h2>
                     <div className="grid grid-cols-2 gap-4">
                       {booking.design_ideas.map((idea) => (
-                        <div key={idea.id} className="rounded-lg overflow-hidden bg-primary-dark/5">
-                          <div className="relative w-full h-32 bg-primary-dark/10">
+                        <div key={idea.id} className="rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--surface-2)' }}>
+                          <div className="relative w-full h-32" style={{ backgroundColor: 'var(--surface)' }}>
                             <img
                               src={idea.image_url}
                               alt="Design reference"

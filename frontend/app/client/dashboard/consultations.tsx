@@ -93,20 +93,18 @@ export default function ConsultationsTab() {
       {/* Request Form */}
       <div className="card-premium">
         <div className="card-premium-inner">
-          <h3 className="text-lg font-serif font-bold text-primary-dark mb-6">
+          <h3 className="text-lg font-serif font-bold mb-6" style={{ color: 'var(--cream)' }}>
             Request a Consultation
           </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-primary-dark/80 mb-2">
-                Tell Robyn about your tattoo ideas
-              </label>
+              <label htmlFor="consultation-message">Tell Robyn about your tattoo ideas</label>
               <textarea
+                id="consultation-message"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Describe the design, style, size, and placement you have in mind..."
                 rows={4}
-                className="w-full bg-white border border-primary-dark/10 rounded-lg px-4 py-3 text-primary-dark placeholder-primary-dark/40 focus:outline-none focus:border-accent-gold focus:ring-1 focus:ring-accent-gold/30"
               />
             </div>
 
@@ -122,10 +120,10 @@ export default function ConsultationsTab() {
       </div>
 
       {/* Consultations List */}
-      {error && <p className="text-red-600">{error}</p>}
+      {error && <p style={{ color: '#fca5a5', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem' }}>{error}</p>}
 
       {consultations.length === 0 ? (
-        <div className="text-center py-12 text-primary-dark/70">
+        <div className="text-center py-12" style={{ color: 'var(--text-mid)' }}>
           <p>No consultations yet. Submit your ideas above!</p>
         </div>
       ) : (
@@ -134,32 +132,38 @@ export default function ConsultationsTab() {
             <div key={consultation.consultation_id} className="card-premium">
               <div className="card-premium-inner">
                 <div className="flex justify-between items-start mb-4">
-                  <h4 className="text-lg font-serif font-bold text-primary-dark">
+                  <h4 className="text-lg font-serif font-bold" style={{ color: 'var(--cream)' }}>
                     {consultation.artist_name || 'Robyn'}
                   </h4>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    consultation.status === 'pending'
-                      ? 'bg-yellow-100 text-yellow-700'
-                      : 'bg-green-100 text-green-700'
-                  }`}>
+                  <span style={{
+                    ...(consultation.status === 'pending'
+                      ? { background: 'rgba(201,168,76,0.08)', color: 'rgba(201,168,76,0.7)', border: '1px solid rgba(201,168,76,0.18)' }
+                      : { background: 'rgba(201,168,76,0.12)', color: 'var(--gold)', border: '1px solid rgba(201,168,76,0.25)' }),
+                    padding: '0.25rem 0.75rem',
+                    borderRadius: '9999px',
+                    fontFamily: '"DM Mono", monospace',
+                    fontSize: '0.625rem',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase' as const,
+                  }}>
                     {consultation.status}
                   </span>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <p className="text-xs text-primary-dark/60 mb-1">Your message:</p>
-                    <p className="text-primary-dark/80">{consultation.message}</p>
+                    <p className="text-xs mb-1" style={{ color: 'var(--text-low)' }}>Your message:</p>
+                    <p style={{ color: 'var(--text)' }}>{consultation.message}</p>
                   </div>
 
                   {consultation.artist_response && (
-                    <div className="pt-4 border-t border-accent-gold/30 bg-accent-gold/5 p-4 rounded-lg">
-                      <p className="text-xs text-primary-dark/60 mb-2">Robyn's response:</p>
-                      <p className="text-primary-dark/80">{consultation.artist_response}</p>
+                    <div className="pt-4 p-4 rounded-lg" style={{ borderTop: '1px solid rgba(201,168,76,0.2)', background: 'rgba(201,168,76,0.04)' }}>
+                      <p className="text-xs mb-2" style={{ color: 'var(--text-low)' }}>Robyn&apos;s response:</p>
+                      <p style={{ color: 'var(--text)' }}>{consultation.artist_response}</p>
                     </div>
                   )}
 
-                  <p className="text-xs text-primary-dark/50">
+                  <p className="text-xs" style={{ color: 'var(--text-low)' }}>
                     {new Date(consultation.created_at).toLocaleDateString()}
                   </p>
                 </div>
