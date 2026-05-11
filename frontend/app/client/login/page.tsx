@@ -83,6 +83,11 @@ export default function ClientLoginPage() {
 
             <div className="mt-8 space-y-4 text-center">
               <p className="text-sm text-primary-dark/70">
+                <Link href="/client/forgot-password" className="text-accent-gold hover:text-primary-dark font-medium">
+                  Forgot your password?
+                </Link>
+              </p>
+              <p className="text-sm text-primary-dark/70">
                 Don't have an account?{' '}
                 <Link href="/client/signup" className="text-accent-gold hover:text-primary-dark font-medium">
                   Sign up

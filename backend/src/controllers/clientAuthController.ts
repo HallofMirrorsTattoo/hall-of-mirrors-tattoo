@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import pkg from 'pg';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import { sendWelcomeEmail, sendPasswordResetEmail } from '../services/emailService.js';
 
 const { Client } = pkg;
 
@@ -70,6 +72,10 @@ export async function clientSignup(req: Request, res: Response) {
       JWT_REFRESH_SECRET,
       { expiresIn: '30d' }
     );
+
+    // Welcome email — non-blocking
+    sendWelcomeEmail({ clientEmail: user.email, clientFirstName: user.first_name })
+      .catch((e) => console.error('[email] welcome email failed:', e));
 
     res.status(201).json({
       success: true,
@@ -329,6 +335,122 @@ export async function clientActivate(req: Request, res: Response) {
       success: false,
       error: 'Account activation failed',
     });
+  } finally {
+    await client.end();
+  }
+}
+
+export async function forgotPassword(req: Request, res: Response) {
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, error: 'Email is required' });
+    }
+
+    await client.connect();
+    const result = await client.query(
+      `SELECT id, first_name, email FROM "User" WHERE email = $1`,
+      [email]
+    );
+
+    // Always return success to prevent email enumeration
+    if (result.rows.length === 0) {
+      return res.json({ success: true, message: 'If that email exists, a reset link has been sent.' });
+    }
+
+    const user = result.rows[0];
+    const token = crypto.randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await client.query(
+      `UPDATE "User" SET password_reset_token = $1, password_reset_expires = $2 WHERE id = $3`,
+      [token, expires, user.id]
+    );
+
+    sendPasswordResetEmail({
+      clientEmail: user.email,
+      clientFirstName: user.first_name,
+      resetToken: token,
+    }).catch((e) => console.error('[email] password reset email failed:', e));
+
+    res.json({ success: true, message: 'If that email exists, a reset link has been sent.' });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ success: false, error: 'Failed to process request' });
+  } finally {
+    await client.end();
+  }
+}
+
+export async function resetPassword(req: Request, res: Response) {
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  try {
+    const { email, token, password } = req.body;
+    if (!email || !token || !password) {
+      return res.status(400).json({ success: false, error: 'Email, token, and password are required' });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 8 characters' });
+    }
+
+    await client.connect();
+    const result = await client.query(
+      `SELECT id, email, first_name FROM "User" WHERE email = $1 AND password_reset_token = $2 AND password_reset_expires > NOW()`,
+      [email, token]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({ success: false, error: 'Invalid or expired reset link' });
+    }
+
+    const user = result.rows[0];
+    const password_hash = await bcrypt.hash(password, 10);
+
+    await client.query(
+      `UPDATE "User" SET password_hash = $1, password_reset_token = NULL, password_reset_expires = NULL, updated_at = NOW() WHERE id = $2`,
+      [password_hash, user.id]
+    );
+
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ success: false, error: 'Failed to reset password' });
+  } finally {
+    await client.end();
+  }
+}
+
+export async function updateClientProfile(req: Request, res: Response) {
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: 'Not authenticated' });
+    }
+
+    const { first_name, last_name, phone, address, city, postcode, emergency_contact_name, emergency_contact_phone } = req.body;
+
+    await client.connect();
+    const result = await client.query(
+      `UPDATE "User"
+       SET first_name = COALESCE($1, first_name),
+           last_name = COALESCE($2, last_name),
+           phone = COALESCE($3, phone),
+           address = COALESCE($4, address),
+           city = COALESCE($5, city),
+           postcode = COALESCE($6, postcode),
+           emergency_contact_name = COALESCE($7, emergency_contact_name),
+           emergency_contact_phone = COALESCE($8, emergency_contact_phone),
+           updated_at = NOW()
+       WHERE id = $9
+       RETURNING id, email, first_name, last_name, phone, address, city, postcode, emergency_contact_name, emergency_contact_phone`,
+      [first_name, last_name, phone, address, city, postcode, emergency_contact_name, emergency_contact_phone, req.user.id]
+    );
+
+    res.json({ success: true, user: result.rows[0] });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ success: false, error: 'Failed to update profile' });
   } finally {
     await client.end();
   }

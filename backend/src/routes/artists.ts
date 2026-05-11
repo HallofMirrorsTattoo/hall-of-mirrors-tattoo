@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllActiveArtists } from '../controllers/artistController.js';
+import { getAllActiveArtists, getArtistConsultations, respondToConsultation } from '../controllers/artistController.js';
 import {
   getArtistBookings,
   getArtistBookingById,
@@ -16,5 +16,7 @@ router.get('/', getAllActiveArtists);
 router.get('/bookings', authMiddleware, getArtistBookings);
 router.get('/bookings/:id', authMiddleware, getArtistBookingById);
 router.patch('/bookings/:id', authMiddleware, updateBookingStatusByArtist);
+router.get('/consultations', authMiddleware, getArtistConsultations);
+router.patch('/consultations/:id', authMiddleware, respondToConsultation);
 
 export default router;

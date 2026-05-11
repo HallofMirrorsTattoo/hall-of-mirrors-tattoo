@@ -139,8 +139,27 @@ CREATE TABLE IF NOT EXISTS "Artist" (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS "Consultation" (
+    consultation_id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    artist_id TEXT NOT NULL,
+    message TEXT NOT NULL,
+    preferred_dates TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    artist_response TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES "User"(id) ON DELETE CASCADE,
+    FOREIGN KEY (artist_id) REFERENCES "Artist"(id) ON DELETE CASCADE
+);
+
 CREATE INDEX IF NOT EXISTS "Booking_user_id_idx" ON "Booking"(user_id);
 CREATE INDEX IF NOT EXISTS "Artist_email_idx" ON "Artist"(email);
+CREATE INDEX IF NOT EXISTS "Consultation_artist_id_idx" ON "Consultation"(artist_id);
+CREATE INDEX IF NOT EXISTS "Consultation_user_id_idx" ON "Consultation"(user_id);
+
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS password_reset_token TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS password_reset_expires TIMESTAMP;
 `;
 
 export async function setupDatabase() {

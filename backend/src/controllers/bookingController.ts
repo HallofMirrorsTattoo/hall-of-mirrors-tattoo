@@ -2,6 +2,10 @@ import { Request, Response } from 'express';
 import pkg from 'pg';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  sendBookingConfirmationToClient,
+  sendBookingNotificationToStudio,
+} from '../services/emailService.js';
 
 const { Client } = pkg;
 
@@ -99,6 +103,29 @@ export async function createBooking(req: Request, res: Response) {
 
     const booking = bookingResult.rows[0];
 
+    // Fire emails non-blocking — don't let email failure block the response
+    const appointmentDate = new Date(validatedData.preferredDate);
+    sendBookingConfirmationToClient({
+      clientEmail: validatedData.clientEmail,
+      clientName: validatedData.clientName,
+      bookingReference,
+      appointmentDate,
+      placement: validatedData.estimatedPlacement,
+      estimatedSize: validatedData.estimatedSize,
+      artistName: artistData?.full_name,
+    }).catch((e) => console.error('[email] confirmation failed:', e));
+
+    sendBookingNotificationToStudio({
+      clientName: validatedData.clientName,
+      clientEmail: validatedData.clientEmail,
+      clientPhone: validatedData.clientPhone,
+      bookingReference,
+      appointmentDate,
+      placement: validatedData.estimatedPlacement,
+      estimatedSize: validatedData.estimatedSize,
+      description: validatedData.tattooDesignDescription,
+      artistName: artistData?.full_name,
+    }).catch((e) => console.error('[email] studio notification failed:', e));
 
     res.status(201).json({
       success: true,
