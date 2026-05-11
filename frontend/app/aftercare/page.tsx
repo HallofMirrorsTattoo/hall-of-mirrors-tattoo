@@ -1,5 +1,14 @@
+import Link from 'next/link';
+import AnimatedSection from '@/app/components/AnimatedSection';
+
+export const metadata = {
+  title: 'Aftercare Guide — Hall of Mirrors Tattoo',
+  description: 'How to care for your new tattoo. Step-by-step aftercare instructions from Hall of Mirrors Tattoo Studio, Liverpool.',
+};
+
 const phases = [
   {
+    number: '01',
     title: 'First 3 Hours',
     items: [
       'Keep bandage or protective film on — do not remove early',
@@ -9,6 +18,7 @@ const phases = [
     ],
   },
   {
+    number: '02',
     title: 'First 24 Hours',
     items: [
       'Remove bandage after 2–3 hours',
@@ -19,6 +29,7 @@ const phases = [
     ],
   },
   {
+    number: '03',
     title: 'Days 2–7',
     items: [
       'Wash 2–3 times daily with unscented soap',
@@ -30,6 +41,7 @@ const phases = [
     ],
   },
   {
+    number: '04',
     title: 'Weeks 2–4',
     items: [
       'Continue moisturising with lotion or aftercare balm',
@@ -42,57 +54,197 @@ const phases = [
 
 export default function Aftercare() {
   return (
-    <div className="min-h-screen pt-32 pb-20 px-4" style={{ backgroundColor: '#2a2a2a' }}>
-      <div className="max-w-3xl mx-auto space-y-10">
+    <main style={{ background: 'var(--bg)' }} className="min-h-screen">
 
-        {/* Header */}
-        <div className="space-y-4">
-          <span className="eyebrow">Post-Session Care</span>
-          <h1 className="text-4xl md:text-5xl font-serif font-bold text-primary-light">
-            Aftercare Instructions
-          </h1>
-          <p className="text-primary-light/70">
-            Following these steps protects your investment and ensures the best possible heal.
-          </p>
+      {/* Hero */}
+      <section className="pt-40 pb-24 px-6">
+        <div className="max-w-3xl mx-auto">
+          <AnimatedSection>
+            <span className="eyebrow">Post-Session Care</span>
+            <h1
+              style={{
+                fontFamily: '"Cormorant Garamond", serif',
+                fontStyle: 'italic',
+                fontWeight: 300,
+                fontSize: 'clamp(2.75rem, 6vw, 4.5rem)',
+                lineHeight: 1.05,
+                letterSpacing: '-0.02em',
+                color: 'var(--cream)',
+                marginTop: '1rem',
+                marginBottom: '1.5rem',
+              }}
+            >
+              Caring For Your Tattoo
+            </h1>
+            <p
+              style={{
+                fontFamily: '"DM Sans", system-ui, sans-serif',
+                color: 'var(--text-mid)',
+                fontSize: '1.0625rem',
+                lineHeight: 1.75,
+                maxWidth: '55ch',
+              }}
+            >
+              Following these steps protects your investment and ensures the best possible
+              heal. If you have any questions at any point, Robyn is always happy to help.
+            </p>
+          </AnimatedSection>
         </div>
+      </section>
 
-        {/* Phase cards */}
-        <div className="space-y-4">
+      <div className="section-divider px-6"><span>HOM</span></div>
+
+      {/* Phases */}
+      <section className="py-20 px-6">
+        <div className="max-w-3xl mx-auto space-y-5">
           {phases.map((phase, i) => (
-            <div key={phase.title} className="card-premium">
-              <div className="card-premium-inner space-y-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-accent-gold font-serif font-bold text-lg w-6 text-center">
-                    {i + 1}
+            <AnimatedSection key={phase.number} delay={i * 80}>
+              <div className="card-premium">
+                <div
+                  className="card-premium-inner"
+                  style={{ display: 'flex', gap: '1.75rem', alignItems: 'flex-start' }}
+                >
+                  {/* Phase number */}
+                  <span
+                    style={{
+                      fontFamily: '"DM Mono", monospace',
+                      fontSize: '2.25rem',
+                      fontWeight: 400,
+                      color: 'var(--gold)',
+                      opacity: 0.45,
+                      lineHeight: 1,
+                      flexShrink: 0,
+                      paddingTop: '0.125rem',
+                      minWidth: '2.75rem',
+                    }}
+                  >
+                    {phase.number}
                   </span>
-                  <h2 className="font-serif font-semibold text-primary-light">{phase.title}</h2>
+
+                  {/* Content */}
+                  <div style={{ flex: 1 }}>
+                    <h2
+                      style={{
+                        fontFamily: '"Cormorant Garamond", serif',
+                        fontStyle: 'italic',
+                        fontWeight: 500,
+                        fontSize: '1.375rem',
+                        color: 'var(--cream)',
+                        marginBottom: '0.875rem',
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      {phase.title}
+                    </h2>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {phase.items.map((item) => (
+                        <li
+                          key={item}
+                          style={{
+                            display: 'flex',
+                            gap: '0.625rem',
+                            fontFamily: '"DM Sans", system-ui, sans-serif',
+                            fontSize: '0.9375rem',
+                            color: 'var(--text-mid)',
+                            lineHeight: 1.6,
+                          }}
+                        >
+                          <span style={{ color: 'var(--gold)', opacity: 0.5, flexShrink: 0, marginTop: '0.1em' }}>—</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-                <ul className="space-y-2 pl-9">
-                  {phase.items.map((item) => (
-                    <li key={item} className="text-primary-light/65 text-sm flex gap-2">
-                      <span className="text-accent-gold/60 mt-0.5">–</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
               </div>
-            </div>
+            </AnimatedSection>
           ))}
         </div>
+      </section>
 
-        {/* Warning */}
-        <div className="card-premium border border-accent-gold/20">
-          <div className="card-premium-inner space-y-2">
-            <p className="font-semibold text-primary-light text-sm">Important</p>
-            <p className="text-primary-light/65 text-sm leading-relaxed">
-              If you experience excessive redness, swelling, warmth, or any discharge lasting more
-              than a few days — or any signs of infection — contact a healthcare professional
-              immediately. Do not wait.
-            </p>
-          </div>
+      {/* Warning */}
+      <section className="pb-20 px-6">
+        <div className="max-w-3xl mx-auto">
+          <AnimatedSection delay={100}>
+            <div
+              className="card-premium"
+              style={{ borderColor: 'rgba(201,168,76,0.25)' }}
+            >
+              <div className="card-premium-inner" style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+                {/* Gold rule — full-height accent, not a border-left on the card */}
+                <div
+                  style={{
+                    width: '2px',
+                    alignSelf: 'stretch',
+                    background: 'linear-gradient(to bottom, rgba(201,168,76,0.6), rgba(201,168,76,0.15))',
+                    borderRadius: '1px',
+                    flexShrink: 0,
+                  }}
+                />
+                <div>
+                  <span className="eyebrow" style={{ marginBottom: '0.75rem' }}>Important</span>
+                  <p
+                    style={{
+                      fontFamily: '"DM Sans", system-ui, sans-serif',
+                      fontSize: '0.9375rem',
+                      color: 'var(--text-mid)',
+                      lineHeight: 1.75,
+                      maxWidth: '60ch',
+                    }}
+                  >
+                    If you experience excessive redness, swelling, warmth, or any discharge lasting
+                    more than a few days — or any signs of infection — contact a healthcare
+                    professional immediately. Do not wait.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </AnimatedSection>
         </div>
+      </section>
 
-      </div>
-    </div>
+      <div className="section-divider px-6"><span>HOM</span></div>
+
+      {/* CTA */}
+      <section className="py-24 px-6" style={{ textAlign: 'center' }}>
+        <AnimatedSection>
+          <span className="eyebrow">Ready For More?</span>
+          <h2
+            style={{
+              fontFamily: '"Cormorant Garamond", serif',
+              fontStyle: 'italic',
+              fontWeight: 300,
+              fontSize: 'clamp(2rem, 4vw, 3rem)',
+              color: 'var(--cream)',
+              marginTop: '1rem',
+              marginBottom: '1rem',
+              lineHeight: 1.1,
+            }}
+          >
+            Book Your Next Session
+          </h2>
+          <p
+            style={{
+              fontFamily: '"DM Sans", system-ui, sans-serif',
+              color: 'var(--text-mid)',
+              fontSize: '1rem',
+              marginBottom: '2.5rem',
+            }}
+          >
+            When you&apos;re healed and ready, Robyn would love to hear from you.
+          </p>
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link href="/booking" className="btn-primary">
+              <span>Book a Session</span>
+              <span className="btn-icon" aria-hidden="true">→</span>
+            </Link>
+            <Link href="/contact" className="btn-secondary">
+              Get in Touch
+            </Link>
+          </div>
+        </AnimatedSection>
+      </section>
+
+    </main>
   );
 }
