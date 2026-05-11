@@ -57,22 +57,6 @@ app.get('/api/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Temporary DB debug endpoint — remove after diagnosing
-app.get('/api/debug/db', async (req: Request, res: Response) => {
-  const pkg = await import('pg');
-  const { Client } = pkg.default;
-  const client = new Client({ connectionString: process.env.DATABASE_URL });
-  try {
-    await client.connect();
-    await client.query('SELECT 1');
-    res.json({ db: 'connected', url_set: !!process.env.DATABASE_URL });
-  } catch (err: any) {
-    res.json({ db: 'error', url_set: !!process.env.DATABASE_URL, error: err.message });
-  } finally {
-    await client.end().catch(() => {});
-  }
-});
-
 // Routes
 app.use('/api/auth', authRouter);
 app.use('/api/auth/client', clientAuthRouter);
