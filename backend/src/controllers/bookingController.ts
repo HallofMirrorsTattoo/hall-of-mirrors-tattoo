@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import pkg from 'pg';
 import { z } from 'zod';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import {
   sendBookingConfirmationToClient,
   sendBookingNotificationToStudio,
@@ -46,7 +46,7 @@ export async function createBooking(req: Request, res: Response) {
     if (userResult.rows.length > 0) {
       userId = userResult.rows[0].id;
     } else {
-      userId = uuidv4();
+      userId = randomUUID();
       await client.query(
         `INSERT INTO "User" (id, email, first_name, last_name, phone, password_hash, created_at, updated_at)
          VALUES ($1, $2, $3, $4, $5, '', NOW(), NOW())`,
@@ -67,7 +67,7 @@ export async function createBooking(req: Request, res: Response) {
     }
 
     // Create booking
-    const bookingId = uuidv4();
+    const bookingId = randomUUID();
     const bookingReference = `BK-${Date.now()}`;
 
     await client.query(

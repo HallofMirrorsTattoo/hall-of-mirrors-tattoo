@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import pkg from 'pg';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { clientAuthMiddleware } from '../middleware/clientAuth.js';
 
 const { Client } = pkg;
@@ -52,7 +52,7 @@ router.post('/', async (req: Request, res: Response) => {
       `INSERT INTO "Consultation" (consultation_id, user_id, artist_id, message, preferred_dates, status, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, 'pending', NOW(), NOW())
        RETURNING consultation_id, message, status, created_at`,
-      [uuidv4(), req.user.id, artist_id, message, preferred_dates || null]
+      [randomUUID(), req.user.id, artist_id, message, preferred_dates || null]
     );
 
     res.status(201).json({

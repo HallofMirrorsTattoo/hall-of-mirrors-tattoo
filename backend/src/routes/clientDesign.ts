@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import pkg from 'pg';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import multer from 'multer';
 import { clientAuthMiddleware } from '../middleware/clientAuth.js';
 
@@ -68,7 +68,7 @@ router.post('/', upload.single('image'), async (req: Request, res: Response) => 
     if (req.file) {
       // File upload path
       const ext = req.file.originalname.split('.').pop() || 'jpg';
-      const fileName = `${uuidv4()}.${ext}`;
+      const fileName = `${randomUUID()}.${ext}`;
       imageUrl = await uploadToSupabase(req.file.buffer, fileName, req.file.mimetype);
     } else if (req.body.image_url) {
       // URL path (backward compatible)
@@ -83,7 +83,7 @@ router.post('/', upload.single('image'), async (req: Request, res: Response) => 
       `INSERT INTO "DesignIdea" (design_idea_id, user_id, booking_id, image_url, description, created_at, updated_at)
        VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
        RETURNING design_idea_id, image_url, description, created_at`,
-      [uuidv4(), req.user.id, bookingId || null, imageUrl, description || null]
+      [randomUUID(), req.user.id, bookingId || null, imageUrl, description || null]
     );
 
     res.status(201).json({ success: true, design_idea: result.rows[0] });

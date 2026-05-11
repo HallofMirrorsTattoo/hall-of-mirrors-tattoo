@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import pkg from 'pg';
 import { z } from 'zod';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 const { Client } = pkg;
 
@@ -26,7 +26,7 @@ export async function createConsultation(req: Request, res: Response) {
     const validatedData = CreateConsultationSchema.parse(req.body);
     await client.connect();
 
-    const id = uuidv4();
+    const id = randomUUID();
     await client.query(
       `INSERT INTO "ConsultationRequest" (id, name, email, phone, tattoo_idea, preferred_contact_method, consultation_status, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
