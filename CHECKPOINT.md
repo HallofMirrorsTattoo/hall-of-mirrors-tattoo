@@ -1,7 +1,7 @@
 # Hall of Mirrors Tattoo — Master Checkpoint
 
-**Last Updated:** May 11, 2026 — Phase 3 v2 Luxury Redesign Complete + Deployed  
-**Status:** Production Live ✅ | Luxury redesign live on Vercel | Email 70% complete
+**Last Updated:** May 11, 2026 — Design Elevation (commit `f9d34dc`) deployed  
+**Status:** Production Live ✅ | Editorial luxury redesign live on Vercel | Email 70% complete
 
 ---
 
@@ -101,19 +101,23 @@ All fonts imported via Google Fonts at top of `globals.css`.
 |---|---|
 | `.glass` | Dark glassmorphism — `rgba(23,20,16,0.75)` + `backdrop-filter: blur(20px)` + gold border |
 | `.glass-light` | Light glassmorphism — cream-tinted |
-| `.card-premium` | Surface card with hover glow effect (uses `--card-x`/`--card-y` CSS vars) |
+| `.card-premium` | Surface card — `border-radius: 0.75rem`, hover gold border + glow (no translateY lift) |
 | `.btn-primary` | Gold pill button with shimmer on hover |
 | `.btn-secondary` | Transparent pill button with gold border |
 | `.eyebrow` | DM Mono, uppercase, gold, 0.6875rem, 0.25em tracking |
 | `.reveal` | Hidden state for scroll reveals (opacity:0, translateY 28px) |
 | `.reveal.visible` | Revealed state — added by AnimatedSection.tsx IntersectionObserver |
 | `.reveal-delay-1` through `.reveal-delay-5` | Stagger delays (0.1s–0.55s) |
+| `.reveal-left` / `.reveal-left.visible` | Horizontal directional reveal variant |
 | `.section-divider` | Full-width gold gradient line with centred text |
 | `.footer-link` | DM Sans footer nav link with gold hover |
 | `.footer-social` | DM Mono uppercase social link with gold hover |
-| `.text-gold-shimmer` | Animated gold gradient shimmer text |
+| `.text-gold-solid` | Solid gold emphasis text (replaces removed `.text-gold-shimmer`) |
 | `.text-gold` / `.text-cream` / `.text-mid` / `.text-low` | Colour utilities |
 | `.bg-surface` / `.bg-surface-2` | Surface background utilities |
+| `.service-row` | Editorial service table row — CSS grid: numeral / hairline / content |
+| `.service-num` | Large italic Cormorant numeral (gold, dims to 0.4 opacity, brightens on hover) |
+| `.service-divider` | 1px vertical hairline — brightens gold on `.service-row:hover` |
 
 ### Animations
 
@@ -126,8 +130,10 @@ All keyframes are defined in BOTH `globals.css` (for inline `style={{ animation 
 | `fadeIn` | Opacity-only fade |
 | `float` | Gentle vertical bob |
 | `pulseGlow` | Logo radial glow pulse |
-| `shimmer` | Gold text shimmer (moves background-position) |
+| `shimmer` | Background shimmer (background-position only — not used on text) |
 | `lineIn` | Decorative lines drawing in from left |
+| `drawLine` | Horizontal line draw (scaleX 0→1, transform-origin: left) |
+| `slideUp` | Opacity + translateY entry (alternative to fadeUp) |
 
 ---
 
@@ -173,6 +179,7 @@ frontend/
 │           ├── White Logo.png       — Icon only (used in nav, footer)
 │           └── White Logo Text.png  — Text lockup (used in footer)
 ├── tailwind.config.js          — v3 config with gold/obsidian tokens + font families + animations
+├── PRODUCT.md                  — Brand/user context for the impeccable design skill
 └── .env.local                  — NEXT_PUBLIC_API_URL=http://localhost:49999
 ```
 
@@ -190,11 +197,11 @@ frontend/
 ## Homepage Sections (page.tsx)
 
 1. **Hero** — full-viewport sticky carousel (Ken Burns), "Hall of Mirrors" italic CSS watermark, logo + radial glow, italic tagline, two CTA buttons (Book / Portfolio), DM Mono scroll indicator
-2. **Credentials strip** — 3-col horizontal bar with gold dividers, DM Mono eyebrow labels (8+ Years / 100% Custom / 1:1 Consultation)
-3. **Portfolio "The Work"** — asymmetric 8-col grid (5+3 alternating rows), ghost Roman numeral watermarks, scroll reveals, DM Mono/Cormorant card labels
-4. **The Artist** — 2-col split, Cormorant italic heading, bio paragraphs, stats row (8+ / 100% / 1:1), mirror-frame photo placeholder with nested gold borders + corner accents + logo watermark
-5. **Services** — 3 numbered cards (01/02/03), gold numbering, "Find out more →" link
-6. **Final CTA** — centred logo, "Ready to begin?" Cormorant italic, radial gold glow
+2. **Credentials strip** — 3-col bar, LEFT-aligned text, ghost Roman numerals (I/II/III) at 7rem italic as per-column visual anchors, `py-12` height
+3. **Portfolio "The Work"** — asymmetric 8-col grid (5+3 alternating rows), ghost Roman numeral watermarks, scroll reveals, DM Mono/Cormorant card labels. Heading: `clamp(3.5rem, 8vw, 6rem)`.
+4. **The Artist** — 2-col split, Cormorant italic heading at `clamp(3rem, 7vw, 5.5rem)`, bio paragraphs, stats row (8+ / 100% / 1:1), mirror-frame photo placeholder
+5. **Services** — editorial numbered table (`.service-row`): large italic Cormorant numeral left + 1px hairline divider + title/description right. Heading: `clamp(3rem, 7vw, 5.5rem)`. Hover illuminates numeral and hairline gold.
+6. **Final CTA** — atmospheric "Begin." watermark at `clamp(6rem, 20vw, 16rem)`, dual radial glows, DM Mono location line (`Suite 3 · Castle Street · Liverpool`), heading at `clamp(3rem, 7vw, 5.5rem)`. No logo.
 
 `<div class="section-divider"><span>HOM</span></div>` appears between each section.
 
@@ -276,6 +283,8 @@ SendGrid API key is configured in Railway environment variables. Studio-side ema
 - Artist auth + JWT + dashboard (accept/reject bookings)
 - Client auth + JWT + dashboard (3 tabs: bookings, design ideas, consultations)
 - Luxury Phase 3 v2 redesign (obsidian palette, Cormorant Garamond, Ken Burns, cursor glow, scroll reveals)
+- Design elevation — editorial services table, ghost-numeral credentials strip, dramatic CTA, pushed heading scales, banned-pattern fixes (`f9d34dc`)
+- `frontend/PRODUCT.md` created (impeccable skill context file)
 - Production deployment on Vercel + Railway
 - SendGrid setup + studio notification emails working
 
@@ -331,6 +340,8 @@ Railway backend deploys separately — check Railway dashboard for backend deplo
 6. **Two separate auth systems** — artist tokens and client tokens are completely separate. Artist tokens stored in one localStorage key, client tokens in another. The middleware files are different too (`auth.ts` vs `clientAuth.ts`).
 7. **Supabase prepared statements** — use raw `pg.Client` for all production queries. Never switch back to Prisma client for Supabase-pooled connections.
 8. **Artist ID** — Robyn's ID is `artist-robyn-001`. Hard-coded in some places; search before adding new artist logic.
+9. **No gradient text** — `background-clip: text` with a gradient is banned. `.text-gold-shimmer` was removed. Use solid `var(--gold)` with font-weight for gold emphasis.
+10. **No identical card grids** — don't repeat the same `card-premium` block N times for a list of services/features. Use the `.service-row` editorial table pattern instead.
 
 ---
 
