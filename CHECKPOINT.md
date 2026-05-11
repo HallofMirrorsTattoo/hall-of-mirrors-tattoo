@@ -1,7 +1,7 @@
 # Hall of Mirrors Tattoo — Master Checkpoint
 
-**Last Updated:** May 11, 2026 — Sitewide design elevation complete (commit `cbbcea1`)
-**Status:** Production Live ✅ | Phase 0 done | Phase 2 (consent form) done | DB connection fixed | Design system applied uniformly sitewide
+**Last Updated:** May 11, 2026 — Booking fixes + file uploads (commits `ba2c1e3`–`6b773ff`)
+**Status:** Production Live ✅ | Phase 0 done | Phase 2 done | Booking form working | File uploads live | Railway build fixed
 
 ---
 
@@ -368,6 +368,16 @@ The full roadmap is documented in the plan file:
 - Design elevation (editorial services table, ghost-numeral credentials strip, dramatic CTA)
 - `frontend/PRODUCT.md` created (impeccable skill context file)
 - Production deployment on Vercel + Railway
+- **Booking form fixes + file uploads (commits `ba2c1e3`–`6b773ff`, May 11 2026):**
+  - Booking form pre-fills name/email/phone for logged-in clients
+  - Fixed artists dropdown (was calling `/api/artists`, route is at `/api/artist`; alias added)
+  - `crypto is not defined` crash fixed — replaced `uuid` v14 with `crypto.randomUUID()` throughout backend
+  - Railway build `tsc: not found` fixed — `backend/nixpacks.toml` forces `npm ci --include=dev`
+  - Error display now shows actual database error, not generic string
+  - Design ideas: replaced URL input with proper file picker (click-to-browse, preview, 10 MB limit)
+  - File uploads to Supabase Storage via backend multipart endpoint (requires `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` in Railway)
+  - Client dashboard tabs and booking detail page: all remaining `text-primary-dark` / `bg-primary-dark` contrast issues fixed
+
 - **Sitewide design elevation (commit `cbbcea1`, 18 files, May 11 2026):**
   - Root cause fixed: inner pages used `backgroundColor: '#2a2a2a'` (should be `var(--bg)` = `#0E0C09`) and `text-primary-dark` (#0E0C09) inside dark-surface cards — near-zero contrast everywhere
   - Full rewrites: `services/page.tsx` (editorial numbered table), `about/page.tsx` (2-col split + credentials rows), `portfolio/page.tsx` (atmospheric placeholder), `testimonials/page.tsx` (editorial review rows)
@@ -389,7 +399,7 @@ The full roadmap is documented in the plan file:
 
 ### Phase 1 — Booking Completion
 - [ ] Availability calendar (Robyn/Christina to decide: Option A blocking vs Option B explicit slots)
-- [ ] File uploads for design ideas (currently URL-only — use Supabase Storage)
+- [x] ~~File uploads for design ideas~~ — **Done ✅** (Supabase Storage, file picker UI)
 - [ ] Stripe deposit payments (collect deposit on booking → Payment model has `stripe_charge_id`)
 
 ### Phase 2 — already done ✅ (consent form shipped)
