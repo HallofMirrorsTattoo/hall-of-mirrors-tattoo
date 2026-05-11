@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useClientAuth } from '@/lib/clientAuthContext';
 
@@ -16,24 +16,21 @@ export default function DesignIdeasTab() {
   const [ideas, setIdeas] = useState<DesignIdea[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
   const [description, setDescription] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchIdeas = async () => {
       try {
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/client/design-ideas`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
+          { headers: { Authorization: `Bearer ${accessToken}` } }
         );
-
         if (!response.ok) throw new Error('Failed to fetch design ideas');
-
         const data = await response.json();
         setIdeas(data.design_ideas || []);
       } catch (err) {
@@ -43,43 +40,58 @@ export default function DesignIdeasTab() {
       }
     };
 
-    if (accessToken) {
-      fetchIdeas();
-    }
+    if (accessToken) fetchIdeas();
   }, [accessToken]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    setSelectedFile(file);
+    setUploadError('');
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setPreview(ev.target?.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setPreview(null);
+    }
+  };
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!imageUrl) {
-      alert('Please provide an image URL');
+    if (!selectedFile) {
+      setUploadError('Please choose an image first');
       return;
     }
 
     setUploading(true);
+    setUploadError('');
     try {
+      const formData = new FormData();
+      formData.append('image', selectedFile);
+      if (description) formData.append('description', description);
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/client/design-ideas`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({
-            image_url: imageUrl,
-            description: description || null,
-          }),
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: formData,
         }
       );
 
-      if (!response.ok) throw new Error('Failed to upload design idea');
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Upload failed');
+      }
 
       const data = await response.json();
       setIdeas([data.design_idea, ...ideas]);
-      setImageUrl('');
+      setSelectedFile(null);
+      setPreview(null);
       setDescription('');
+      if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Upload failed');
+      setUploadError(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setUploading(false);
     }
@@ -91,45 +103,70 @@ export default function DesignIdeasTab() {
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/client/design-ideas/${id}`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
+        { method: 'DELETE', headers: { Authorization: `Bearer ${accessToken}` } }
       );
-
-      if (!response.ok) throw new Error('Failed to delete design idea');
-
+      if (!response.ok) throw new Error('Failed to delete');
       setIdeas(ideas.filter(idea => idea.design_idea_id !== id));
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Delete failed');
     }
   };
 
-  if (loading) return <p>Loading your design ideas...</p>;
+  if (loading) return (
+    <div style={{ padding: '3rem 0', textAlign: 'center' }}>
+      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-low)' }}>Loading...</p>
+    </div>
+  );
 
   return (
-    <div className="space-y-8">
-      {/* Upload Form */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+
+      {/* Upload form */}
       <div className="card-premium">
         <div className="card-premium-inner">
-          <h3 className="text-lg font-serif font-bold mb-6" style={{ color: 'var(--cream)' }}>
+          <h3 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.25rem', fontWeight: 400, color: 'var(--cream)', marginBottom: '1.5rem' }}>
             Add Design Reference
           </h3>
-          <form onSubmit={handleUpload} className="space-y-4">
+          <form onSubmit={handleUpload} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+
+            {/* Drop zone / file picker */}
             <div>
-              <label htmlFor="design-image-url">Image URL</label>
+              <label htmlFor="design-image">Image</label>
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                style={{
+                  border: '1px dashed var(--border)',
+                  borderRadius: '0.5rem',
+                  padding: '2rem',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'border-color 0.2s ease',
+                  backgroundColor: 'var(--surface)',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.35)')}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+              >
+                {preview ? (
+                  <div style={{ position: 'relative', width: '100%', height: '10rem', marginBottom: '0.75rem' }}>
+                    <Image src={preview} alt="Preview" fill style={{ objectFit: 'contain', borderRadius: '0.25rem' }} />
+                  </div>
+                ) : (
+                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', marginBottom: '0.5rem' }}>
+                    Click to choose a photo
+                  </p>
+                )}
+                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.1em', color: 'var(--text-low)' }}>
+                  {selectedFile ? selectedFile.name : 'JPG, PNG, WEBP — max 10 MB'}
+                </p>
+              </div>
               <input
-                id="design-image-url"
-                type="url"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://example.com/image.jpg"
+                ref={fileInputRef}
+                id="design-image"
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                style={{ display: 'none' }}
               />
-              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.625rem', letterSpacing: '0.1em', color: 'var(--text-low)', marginTop: '0.375rem' }}>
-                Paste the URL of an image you&apos;d like to share with Robyn
-              </p>
             </div>
 
             <div>
@@ -143,48 +180,49 @@ export default function DesignIdeasTab() {
               />
             </div>
 
+            {uploadError && (
+              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: '#fca5a5' }}>{uploadError}</p>
+            )}
+
             <button
               type="submit"
-              disabled={uploading}
-              className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={uploading || !selectedFile}
+              className="btn-primary"
+              style={{ opacity: uploading || !selectedFile ? 0.5 : 1, cursor: !selectedFile ? 'not-allowed' : 'pointer' }}
             >
-              {uploading ? 'Adding...' : 'Add Design Reference'}
+              {uploading ? 'Uploading...' : 'Add Design Reference'}
             </button>
           </form>
         </div>
       </div>
 
-      {/* Design Ideas Gallery */}
+      {/* Gallery */}
       {error && <p style={{ color: '#fca5a5', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem' }}>{error}</p>}
 
       {ideas.length === 0 ? (
-        <div className="text-center py-12" style={{ color: 'var(--text-mid)' }}>
-          <p>No design ideas yet. Start by adding reference images!</p>
+        <div style={{ textAlign: 'center', padding: '3rem 0' }}>
+          <p style={{ color: 'var(--text-mid)', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem' }}>
+            No design references yet. Upload a photo to share with Robyn.
+          </p>
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-3">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(14rem, 1fr))', gap: '1.25rem' }}>
           {ideas.map((idea) => (
             <div key={idea.design_idea_id} className="card-premium">
-              <div className="card-premium-inner p-0 overflow-hidden">
-                <div className="relative w-full h-48" style={{ backgroundColor: 'var(--surface-2)' }}>
-                  <Image
-                    src={idea.image_url}
-                    alt="Design idea"
-                    fill
-                    className="object-cover"
-                  />
+              <div className="card-premium-inner" style={{ padding: 0, overflow: 'hidden' }}>
+                <div style={{ position: 'relative', width: '100%', height: '10rem', backgroundColor: 'var(--surface-2)' }}>
+                  <Image src={idea.image_url} alt="Design idea" fill style={{ objectFit: 'cover' }} />
                 </div>
-                <div className="p-4">
+                <div style={{ padding: '0.875rem 1rem' }}>
                   {idea.description && (
-                    <p className="text-sm mb-3" style={{ color: 'var(--text-mid)' }}>{idea.description}</p>
+                    <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-mid)', marginBottom: '0.5rem', lineHeight: 1.5 }}>
+                      {idea.description}
+                    </p>
                   )}
-                  <p className="text-xs mb-4" style={{ color: 'var(--text-low)' }}>
-                    {new Date(idea.created_at).toLocaleDateString()}
+                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.1em', color: 'var(--text-low)', marginBottom: '0.875rem' }}>
+                    {new Date(idea.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </p>
-                  <button
-                    onClick={() => handleDelete(idea.design_idea_id)}
-                    className="w-full btn-secondary text-sm py-2"
-                  >
+                  <button onClick={() => handleDelete(idea.design_idea_id)} className="btn-secondary" style={{ width: '100%', fontSize: '0.8125rem', padding: '0.5rem 0' }}>
                     Delete
                   </button>
                 </div>

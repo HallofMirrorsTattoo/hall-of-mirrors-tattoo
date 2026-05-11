@@ -142,12 +142,12 @@ export async function createBooking(req: Request, res: Response) {
     }
 
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('❌ Booking creation failed:', errorMessage);
+    const errorDetail = error instanceof Error ? error.stack : String(error);
+    console.error('❌ Booking creation failed:', errorDetail);
 
     res.status(500).json({
       success: false,
-      error: 'Failed to create booking',
-      message: errorMessage,
+      error: errorMessage, // send the actual error, not a generic string
     });
   } finally {
     await client.end();

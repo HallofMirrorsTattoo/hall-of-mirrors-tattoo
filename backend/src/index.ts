@@ -62,6 +62,7 @@ app.get('/api/health', (req: Request, res: Response) => {
 app.use('/api/auth', authRouter);
 app.use('/api/auth/client', clientAuthRouter);
 app.use('/api/artist', artistsRouter);
+app.use('/api/artists', artistsRouter); // alias — plural form used by some clients
 app.use('/api/client/bookings', clientBookingsRouter);
 app.use('/api/client/design-ideas', clientDesignRouter);
 app.use('/api/client/consultations', clientConsultationRouter);
