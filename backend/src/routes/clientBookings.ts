@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import pkg from 'pg';
-import { clientAuthMiddleware } from '../middleware/clientAuth';
+import { clientAuthMiddleware } from '../middleware/clientAuth.js';
 
 const { Client } = pkg;
 const router = Router();
