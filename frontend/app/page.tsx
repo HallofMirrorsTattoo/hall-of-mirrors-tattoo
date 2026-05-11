@@ -130,24 +130,40 @@ export default function Home() {
           <div className="max-w-5xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-3">
               {([
-                { label: 'Licensed',        title: 'Liverpool City Council', detail: 'Ref: A11394900' },
-                { label: 'Health & Safety', title: 'Autoclave Certified',    detail: 'Hepatitis B Vaccinated' },
-                { label: 'Specialist',      title: 'Neo-Traditional',        detail: 'Bespoke Designs' },
+                { roman: 'I',   label: 'Licensed',        title: 'Liverpool City Council', detail: 'Ref: A11394900' },
+                { roman: 'II',  label: 'Health & Safety', title: 'Autoclave Certified',    detail: 'Hepatitis B Vaccinated' },
+                { roman: 'III', label: 'Specialist',      title: 'Neo-Traditional',        detail: 'Bespoke Designs' },
               ] as const).map((item, i) => (
                 <AnimatedSection
                   key={item.label}
                   delay={i * 120}
-                  className={`py-8 px-8 text-center${i < 2 ? ' md:border-r' : ''}`}
+                  className={`py-12 px-10 relative overflow-hidden${i < 2 ? ' md:border-r' : ''}`}
                   style={{ borderColor: 'rgba(201,168,76,0.12)' }}
                 >
-                  <p className="eyebrow" style={{ marginBottom: '0.5rem' }}>{item.label}</p>
+                  {/* Ghost Roman numeral — visual anchor */}
+                  <span
+                    className="absolute top-0 right-4 pointer-events-none select-none"
+                    style={{
+                      fontFamily: '"Cormorant Garamond", serif',
+                      fontStyle: 'italic',
+                      fontSize: '7rem',
+                      fontWeight: 300,
+                      color: 'var(--gold)',
+                      opacity: 0.045,
+                      lineHeight: 1,
+                    }}
+                    aria-hidden="true"
+                  >
+                    {item.roman}
+                  </span>
+                  <p className="eyebrow" style={{ marginBottom: '0.75rem' }}>{item.label}</p>
                   <p style={{
                     fontFamily: '"Cormorant Garamond", serif',
-                    fontSize: '1.2rem',
+                    fontSize: '1.25rem',
                     fontWeight: 400,
                     color: 'var(--cream)',
                     lineHeight: 1.3,
-                    marginBottom: '0.25rem',
+                    marginBottom: '0.375rem',
                     maxWidth: 'none',
                   }}>
                     {item.title}
@@ -176,11 +192,11 @@ export default function Home() {
               <h2 style={{
                 fontFamily: '"Cormorant Garamond", serif',
                 fontStyle: 'italic',
-                fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
+                fontSize: 'clamp(3.5rem, 8vw, 6rem)',
                 fontWeight: 300,
                 color: 'var(--cream)',
-                lineHeight: 1.05,
-                letterSpacing: '-0.02em',
+                lineHeight: 1.0,
+                letterSpacing: '-0.025em',
                 marginBottom: '1.25rem',
               }}>
                 Every mark<br />tells a story
@@ -273,10 +289,10 @@ export default function Home() {
                   fontFamily: '"Cormorant Garamond", serif',
                   fontWeight: 300,
                   fontStyle: 'italic',
-                  fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+                  fontSize: 'clamp(3rem, 7vw, 5.5rem)',
                   color: 'var(--cream)',
-                  lineHeight: 1.1,
-                  letterSpacing: '-0.02em',
+                  lineHeight: 1.0,
+                  letterSpacing: '-0.025em',
                   marginBottom: '1.5rem',
                 }}>
                   Robyn creates work<br />that lasts lifetimes
@@ -369,77 +385,119 @@ export default function Home() {
                 fontFamily: '"Cormorant Garamond", serif',
                 fontStyle: 'italic',
                 fontWeight: 300,
-                fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+                fontSize: 'clamp(3rem, 7vw, 5.5rem)',
                 color: 'var(--cream)',
-                letterSpacing: '-0.02em',
+                letterSpacing: '-0.025em',
+                lineHeight: 1.0,
               }}>
                 What we offer
               </h2>
             </AnimatedSection>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Editorial numbered table */}
+            <div style={{ borderTop: '1px solid var(--border)' }}>
               {([
-                { n: '01', title: 'Bespoke Tattoo',     desc: 'Custom designs drawn from scratch, created in close collaboration with you from initial concept to final line.',                              link: '/booking' },
-                { n: '02', title: 'Free Consultation',   desc: 'A relaxed conversation to discuss your idea, placement, sizing, and what the design process looks like.',                                   link: '/consultation' },
-                { n: '03', title: 'Cover-Up Work',       desc: "Skilled cover-up and rework of existing tattoos. Book a consultation to discuss what's possible.",                                          link: '/consultation' },
+                { n: '01', title: 'Bespoke Tattoo',   desc: 'Custom designs drawn from scratch, created in close collaboration with you from initial concept to final line.', link: '/booking' },
+                { n: '02', title: 'Free Consultation', desc: 'A relaxed conversation to discuss your idea, placement, sizing, and what the design process looks like.',        link: '/consultation' },
+                { n: '03', title: 'Cover-Up Work',     desc: "Skilled cover-up and rework of existing tattoos. Book a consultation to discuss what's possible.",              link: '/consultation' },
               ] as const).map((s, i) => (
-                <AnimatedSection key={s.n} delay={i * 100}>
-                  <Link href={s.link} className="block card-premium group h-full">
-                    <div className="card-premium-inner flex flex-col" style={{ minHeight: '220px' }}>
-                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6875rem', color: 'var(--gold)', opacity: 0.6, marginBottom: '1rem', letterSpacing: '0.1em' }}>
-                        {s.n}
-                      </p>
-                      <h3 style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1.5rem', fontWeight: 400, color: 'var(--cream)', marginBottom: '0.75rem', lineHeight: 1.2 }}>
+                <AnimatedSection key={s.n} delay={i * 100} style={{ borderBottom: '1px solid var(--border)' }}>
+                  <Link href={s.link} className="service-row group">
+                    <span className="service-num">{s.n}</span>
+                    <span className="service-divider" aria-hidden="true" />
+                    <div style={{ paddingTop: '0.25rem', paddingBottom: '0.25rem' }}>
+                      <h3 style={{
+                        fontFamily: '"Cormorant Garamond", serif',
+                        fontStyle: 'italic',
+                        fontSize: 'clamp(1.5rem, 3vw, 2.125rem)',
+                        fontWeight: 300,
+                        color: 'var(--cream)',
+                        marginBottom: '0.625rem',
+                        lineHeight: 1.2,
+                        transition: 'color 0.4s ease',
+                      }}>
                         {s.title}
                       </h3>
-                      <p style={{ fontSize: '0.9rem', lineHeight: 1.7, flex: 1, maxWidth: 'none' }}>
+                      <p style={{ fontSize: '0.9rem', lineHeight: 1.75, maxWidth: '55ch', marginBottom: '1.25rem' }}>
                         {s.desc}
                       </p>
-                      <p className="group-hover:translate-x-1 transition-transform duration-300 mt-6" style={{ fontSize: '0.8125rem', color: 'var(--gold)', fontFamily: '"DM Sans", sans-serif' }}>
-                        Find out more →
-                      </p>
+                      <span style={{
+                        fontFamily: '"DM Mono", monospace',
+                        fontSize: '0.6875rem',
+                        letterSpacing: '0.12em',
+                        textTransform: 'uppercase' as const,
+                        color: 'var(--gold)',
+                        opacity: 0.55,
+                        transition: 'opacity 0.4s ease',
+                        display: 'inline-block',
+                      }}
+                        className="group-hover:opacity-100"
+                      >
+                        Find out more ↗
+                      </span>
                     </div>
                   </Link>
                 </AnimatedSection>
               ))}
             </div>
 
-            <AnimatedSection delay={300} className="mt-8 text-center">
-              <Link href="/services" className="btn-secondary">All Services & Pricing</Link>
+            <AnimatedSection delay={300} className="mt-12 text-center">
+              <Link href="/services" className="btn-secondary">All Services &amp; Pricing</Link>
             </AnimatedSection>
 
           </div>
         </section>
 
         {/* ── FINAL CTA ──────────────────────────────────────────────────────── */}
-        <section className="px-6 py-32 md:py-48 relative overflow-hidden" style={{ backgroundColor: '#0E0C09' }}>
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse 70% 60% at 50% 50%, rgba(201,168,76,0.06) 0%, transparent 70%)' }}
-            aria-hidden="true"
-          />
+        <section className="px-6 py-36 md:py-56 relative overflow-hidden" style={{ backgroundColor: '#0E0C09' }}>
+          {/* Layered radial atmosphere */}
+          <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 80% 70% at 50% 60%, rgba(201,168,76,0.07) 0%, transparent 65%)' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 50% 55% at 25% 15%, rgba(201,168,76,0.04) 0%, transparent 60%)' }} />
+          </div>
+          {/* Atmospheric watermark */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden="true">
+            <span style={{
+              fontFamily: '"Cormorant Garamond", serif',
+              fontStyle: 'italic',
+              fontSize: 'clamp(6rem, 20vw, 16rem)',
+              fontWeight: 300,
+              color: 'var(--gold)',
+              opacity: 0.03,
+              letterSpacing: '-0.03em',
+              userSelect: 'none',
+              lineHeight: 1,
+              whiteSpace: 'nowrap',
+            }}>
+              Begin.
+            </span>
+          </div>
           <div className="max-w-3xl mx-auto text-center relative z-10">
             <AnimatedSection>
-              <Image
-                src="/assets/logos/White Logo.png"
-                alt="Hall of Mirrors"
-                width={72}
-                height={72}
-                style={{ width: '4rem', height: 'auto', margin: '0 auto 2rem', opacity: 0.65 }}
-              />
+              <p style={{
+                fontFamily: '"DM Mono", monospace',
+                fontSize: '0.6rem',
+                letterSpacing: '0.35em',
+                textTransform: 'uppercase',
+                color: 'var(--gold)',
+                opacity: 0.4,
+                marginBottom: '2.5rem',
+              }}>
+                Suite 3 · Castle Street · Liverpool
+              </p>
               <h2 style={{
                 fontFamily: '"Cormorant Garamond", serif',
                 fontStyle: 'italic',
                 fontWeight: 300,
-                fontSize: 'clamp(2.25rem, 6vw, 4rem)',
+                fontSize: 'clamp(3rem, 7vw, 5.5rem)',
                 color: 'var(--cream)',
-                letterSpacing: '-0.02em',
-                lineHeight: 1.1,
-                marginBottom: '1.25rem',
+                letterSpacing: '-0.025em',
+                lineHeight: 1.0,
+                marginBottom: '1.5rem',
               }}>
                 Ready to begin?
               </h2>
-              <p style={{ margin: '0 auto 2.5rem', maxWidth: '38ch', textAlign: 'center' }}>
+              <p style={{ margin: '0 auto 3rem', maxWidth: '38ch', textAlign: 'center' }}>
                 Limited availability ensures every client receives Robyn&apos;s full attention.
                 Book now or start with a free consultation.
               </p>

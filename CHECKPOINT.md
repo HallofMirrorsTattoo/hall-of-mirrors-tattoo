@@ -1,510 +1,345 @@
-# Hall of Mirrors Tattoo - Development Checkpoint
+# Hall of Mirrors Tattoo — Master Checkpoint
 
-**Last Updated:** May 10, 2026 (Phase 3 Complete + Viewport Optimization)
-**Status:** Phase 1 (Booking + Artist Auth) + Phase 2 (Client Auth + Dashboard) + Phase 3 (Dark Theme & Carousel + Charcoal Background) COMPLETE ✅
-
----
-
-## ARCHITECTURE
-
-- **Frontend:** Next.js 14 (TypeScript, React, Tailwind CSS)
-- **Backend:** Express.js (TypeScript, ts-node/ESM)
-- **Database:** PostgreSQL via Supabase
-- **ORM:** Prisma (with raw pg Client fallback for pooling issues)
-- **Styling:** Premium dark academia (navy, charcoal, gold #d4af37, cream #fdfbf7)
+**Last Updated:** May 11, 2026 — Phase 3 v2 Luxury Redesign Complete + Deployed  
+**Status:** Production Live ✅ | Luxury redesign live on Vercel | Email 70% complete
 
 ---
 
-## COMPLETED FEATURES
+## What This Is
 
-### ✅ Database & Schema
-- Full Prisma schema with 12 models (User, Artist, Studio, Booking, MedicalHistory, ConsentForm, DesignIdea, TattooPortfolio, ConsultationRequest, ContactFormSubmission, Payment, Review)
-- Database migrations applied to production Supabase
-- All tables created and functional
+A full-stack booking and portfolio website built as a gift by Will for his partner **Robyn**, who runs **Hall of Mirrors Tattoo Studio** — a bespoke neo-traditional tattoo studio at Suite 3, 34 Castle Street, Liverpool L2 0NR.
 
-### ✅ Artist Management
-- Artist model with full auth-ready structure (password_hash, role, is_active)
-- **Robyn** added to database:
-  - ID: `artist-robyn-001`
-  - Email: robyn@hallofmirrorstattoo.com
-  - Specialties: Fine line, geometric, custom designs
-  - Years experience: 8
-  - Status: Active
-- `/api/artists` endpoint (public, returns active artists)
-- Uses raw pg Client to bypass Supabase pooling issues
-
-### ✅ Booking System
-- Full booking form with fields:
-  - Client name, email, phone
-  - Preferred date/time
-  - Tattoo design description, placement, size, color
-  - **Artist selection dropdown** (optional, working)
-  - Referral source, additional notes
-- Form validation via Zod schema
-- Artist selector fetches and displays from `/api/artists`
-- Booking submission to `/api/bookings`
-- Booking model tracks full lifecycle
-
-### ✅ Frontend Pages
-- Home, Portfolio, Services, About, Contact pages
-- Booking page (with working artist selector showing Robyn)
-- Consultation request page
-- Contact form page
-- Responsive design (mobile-optimized)
-- Premium styling with glass morphism, smooth animations
-- Header with navigation, Footer with social links
-
-### ✅ Backend Infrastructure
-- Express server with security middleware (Helmet, CORS, rate limiting)
-- Route structure: `/api/auth`, `/api/artists`, `/api/bookings`, `/api/consultations`, `/api/contact`
-- Health check endpoint
-- Error handling middleware
-- CORS configured for localhost:3000-3009 and production domains
-
-### ✅ Design & Styling
-- Premium dark academia aesthetic
-- Responsive layouts
-- Typography: Garamond (headers), Inter (body)
-- Color scheme: Navy #1a1a2e, Charcoal, Gold #d4af37, Cream #fdfbf7
-- Glass morphism effects
-- Smooth transitions and animations
+This is the canonical reference document. Read this before every session.
 
 ---
 
-## COMPLETED TODAY
+## Live URLs
 
-### Booking System Fix
-- ✅ Refactored bookingController to use raw pg.Client (fixed Supabase pooling issue)
-- ✅ All booking endpoints working: create, read, update, cancel, artist-specific
-- ✅ POST /api/bookings tested and confirmed working
-- ✅ Booking status management fully functional
+| Environment | URL |
+|---|---|
+| **Frontend (Vercel)** | https://hall-of-mirrors-tattoo.vercel.app |
+| **Backend (Railway)** | https://hall-of-mirrors-tattoo-production.up.railway.app |
+| **GitHub** | (check `git remote -v` from project root) |
 
-### Artist Authentication
-- ✅ Refactored authController to use raw pg.Client
-- ✅ JWT implementation complete (7-day access tokens, 30-day refresh tokens)
-- ✅ POST /api/auth/artist/login tested and working
-- ✅ Artist password authentication with bcrypt
-- ✅ Robyn test account configured (robyn123)
-
-### Artist Dashboard
-- ✅ Full artist dashboard UI implemented (bookings list + details)
-- ✅ Booking filtering by status (all, pending_consent, confirmed, completed)
-- ✅ Accept/Reject booking buttons functional
-- ✅ Artist can view client details, tattoo description, placement
-- ✅ Status updates trigger email notifications to clients
-- ✅ Authentication protection redirects unauthorized users to login
-
-### PHASE 3: Design System Overhaul (Dark Theme & Shop Carousel)
-- ✅ Dark theme redesign: Charcoal background (#2a2a2a), cream text, gold accents
-- ✅ Removed glass morphism from cards: Sharp-edged cards with gold borders, clean design
-- ✅ Restored glass morphism on navigation: Cream pill with navy text, rounded-full for synergy
-- ✅ Button redesign: Gold background with navy text (primary), cream outline (secondary)
-- ✅ Shop carousel component: 5 photos, click navigation, peek preview of adjacent photos
-- ✅ Carousel features: Gold nav arrows, smooth 0.5s transitions, removed dot indicators (conflicted with logo)
-- ✅ Carousel height: Optimized to h-48 mobile / h-72 desktop for viewport fit
-- ✅ Hero section: White logo stacked, carousel behind with dark overlay for readability
-- ✅ Viewport optimization: Navigation + carousel + logo + buttons fit in 100dvh without scrolling
-- ✅ Mobile responsive: Tested and verified on 375px viewport and desktop
-- ✅ Form elements: Dark backgrounds with light borders, cream text
-- ✅ Typography: Cream color headings and body text, Elms Sans font, sizes maintained
-- ✅ Overall aesthetic: Simple, welcoming, professional, luxurious as requested
-
-### PHASE 2: Client Authentication & Dashboard
-- ✅ Client signup endpoint with email validation and password hashing
-- ✅ Client login endpoint with JWT token generation (7d access, 30d refresh)
-- ✅ Client auth middleware with Bearer token validation
-- ✅ Client auth context with localStorage persistence (separate from artist auth)
-- ✅ Protected route wrapper (ClientProtectedRoute) for client pages
-- ✅ Signup page with validation (first_name, last_name, email, phone, password)
-- ✅ Login page with email/password form
-- ✅ Client dashboard with 3 tabs:
-  - Bookings tab: List all client bookings, click to view details
-  - Design Ideas tab: Upload design images with descriptions, gallery view, delete
-  - Consultations tab: Request consultations with artist, view pending/responded status
-- ✅ Booking detail page with appointment info, design details, artist profile, payment breakdown, cancel button
-- ✅ Design ideas endpoints: POST/GET/DELETE
-- ✅ Consultation request endpoints: POST/GET
-- ✅ Booking management endpoints: GET all/detail, PATCH cancel
-- ✅ Header navigation updated for client auth state
-- ✅ Account activation for guest-created accounts
-
-### Frontend Ready
-- ✅ Artist login page (app/artist/login/page.tsx)
-- ✅ Artist dashboard page (app/artist/dashboard/page.tsx)
-- ✅ Client login page (app/client/login/page.tsx)
-- ✅ Client signup page (app/client/signup/page.tsx)
-- ✅ Client dashboard page (app/client/dashboard/page.tsx)
-- ✅ Client booking detail page (app/client/bookings/[id]/page.tsx)
-- ✅ Dashboard tab components (bookings.tsx, design-ideas.tsx, consultations.tsx)
-- ✅ Artist auth context with token management
-- ✅ Client auth context with token management (separate storage)
-- ✅ Frontend deployed to Vercel (rebuilding after build fix)
-- ✅ Vercel build error fixed (removed unused router import)
-
-## PARTIALLY COMPLETED
-
-- **Email service:** ✅ Implementation complete, ⚠️ needs SendGrid API key for production
-- **Deployment:** Routes ready, environment variables need production values
+**Test credentials:**
+- Artist login: `robyn@hallofmirrorstattoo.com` / `robyn123`
+- Client: create via `/client/signup` on any environment
 
 ---
 
-## NOT STARTED
+## Local Development
 
-- Email notifications (signup, booking confirmation, consultation responses)
-- Password reset flow
-- Client profile editing
-- Image storage backend (file upload for design ideas - currently URL-based)
-- Direct messaging between artists/clients
-- Payment processing (Stripe)
-- Admin dashboard
-- Review system
-- Portfolio management (artist can update their portfolio)
-- SMS notifications
-- Calendar availability management
-- Booking reminders (email/SMS)
-- Contact form responses
-- Artist response to consultations via dashboard
-
----
-
-## CURRENT SETUP (Local Development)
-
-**Backend:** `http://localhost:49999`
-- Command: `PORT=49999 npm run dev` from `/backend`
-- Uses `DATABASE_URL` from `.env`
-- Connects to Supabase PostgreSQL
-
-**Frontend:** Dynamic ports (currently 3006-3009+)
-- Command: `npm run dev` from `/frontend`
-- Uses `NEXT_PUBLIC_API_URL=http://localhost:49999` from `.env.local`
-- CORS configured to allow these ports
-
-**Database:** Supabase (same instance for dev/staging)
-
----
-
-## KEY FILES & STRUCTURE
-
-```
-/backend
-  ├── src/
-  │   ├── index.ts (Express app with all routes mounted)
-  │   ├── setupDb.ts (Database initialization)
-  │   ├── controllers/ 
-  │   │   ├── artistController.ts (artist auth, profile)
-  │   │   ├── clientAuthController.ts (client auth NEW)
-  │   │   ├── bookingController.ts (booking CRUD)
-  │   │   └── consultationController.ts (consultations)
-  │   ├── routes/
-  │   │   ├── auth.ts (artist auth)
-  │   │   ├── artists.ts (get artists)
-  │   │   ├── bookings.ts (create booking)
-  │   │   ├── clientAuth.ts (client auth NEW)
-  │   │   ├── clientBookings.ts (client bookings NEW)
-  │   │   ├── clientDesign.ts (design ideas NEW)
-  │   │   └── clientConsultation.ts (consultations NEW)
-  │   ├── middleware/
-  │   │   ├── auth.ts (artist auth middleware)
-  │   │   └── clientAuth.ts (client auth middleware NEW)
-  │   └── services/ (emailService skeleton)
-  ├── prisma/
-  │   ├── schema.prisma (Full data model)
-  │   └── migrations/ (Database schema)
-  └── .env (DATABASE_URL, JWT_SECRET, etc)
-
-/frontend
-  ├── app/
-  │   ├── page.tsx (Home)
-  │   ├── booking/page.tsx (Booking form with artist selector)
-  │   ├── portfolio/page.tsx
-  │   ├── services/page.tsx
-  │   ├── about/page.tsx
-  │   ├── contact/page.tsx
-  │   ├── artist/ (Artist auth & dashboard)
-  │   │   ├── login/page.tsx
-  │   │   └── dashboard/page.tsx
-  │   ├── client/ (Client auth & dashboard NEW)
-  │   │   ├── login/page.tsx
-  │   │   ├── signup/page.tsx
-  │   │   ├── dashboard/
-  │   │   │   ├── page.tsx (3 tabs: bookings, design-ideas, consultations)
-  │   │   │   ├── bookings.tsx
-  │   │   │   ├── design-ideas.tsx
-  │   │   │   └── consultations.tsx
-  │   │   └── bookings/
-  │   │       └── [id]/page.tsx (Booking detail view)
-  │   ├── components/ (Header.tsx with auth-aware nav, Footer.tsx, etc)
-  │   └── layout.tsx (AuthProvider, ClientAuthProvider)
-  ├── lib/
-  │   ├── authContext.tsx (Artist auth context)
-  │   ├── clientAuthContext.tsx (Client auth context NEW)
-  │   └── clientProtectedRoute.tsx (Protected route wrapper NEW)
-  ├── public/assets/ (Logos, images)
-  └── .env.local (NEXT_PUBLIC_API_URL=http://localhost:49999)
-```
-
----
-
-## KNOWN ISSUES & WORKAROUNDS
-
-### Supabase Connection Pooling
-- **Issue:** "prepared statement already exists" error with Prisma queries
-- **Cause:** Supabase connection pooler caching prepared statements
-- **Workaround:** Use raw `pg.Client` instead of Prisma
-- **Status:** ✅ Fixed for artist endpoint, ⚠️ Still affects booking controller
-- **To Fix:** Update booking controller like artistController (use raw SQL)
-
-### CORS Configuration
-- **Issue:** Frontend on different ports couldn't reach backend API
-- **Fix Applied:** Added localhost:3000-3009 to CORS allowed origins in `backend/src/index.ts`
-- **Production:** Add actual domain to CORS list before deploying
-
----
-
-## ENVIRONMENT VARIABLES
-
-### Backend `.env`
-```
-DATABASE_URL=postgresql://[user]:[pass]@aws-1-eu-west-3.pooler.supabase.com:6543/postgres
-NODE_ENV=development
-```
-
-### Frontend `.env.local`
-```
-NEXT_PUBLIC_API_URL=http://localhost:49999
-NEXT_PUBLIC_STRIPE_KEY=pk_test_xxx
-NEXT_PUBLIC_SITE_URL=http://localhost:3006
-```
-
----
-
-## DEPENDENCIES
-
-**Backend:**
-- express, typescript, ts-node
-- @prisma/client, prisma
-- pg (PostgreSQL client)
-- @sendgrid/mail
-- jsonwebtoken, bcrypt
-- helmet, cors, express-rate-limit
-
-**Frontend:**
-- next 14.2.35, react 18+, typescript
-- tailwindcss, react-hook-form
-- zod (schema validation)
-- lucide-react (icons)
-
----
-
-## RECENT ACCOMPLISHMENTS
-
-### Phase 1
-✅ Added Robyn (artist-robyn-001) to database with full details
-✅ Fixed `/api/artists` endpoint using raw pg Client
-✅ Fixed CORS configuration for frontend port flexibility
-✅ Database migration completed successfully
-✅ Booking form artist selector fully functional
-✅ Artist authentication (JWT) working
-✅ Artist dashboard fully functional
-
-### Phase 2 (Completed)
-✅ Client authentication system (signup, login, refresh, activate)
-✅ Client auth middleware and context
-✅ Client protected routes
-✅ Client dashboard with 3 tabs
-✅ Design ideas upload and gallery
-✅ Consultation request system
-✅ Booking detail view with full information
-✅ Header navigation updated for client auth state
-✅ All backend routes implemented and tested
-✅ All frontend pages implemented
-✅ Vercel build error fixed (unused router import)
-✅ Code pushed to main
-
-### Phase 3 (Completed - Updated)
-✅ Dark theme redesign: Charcoal background (#2a2a2a) + cream text + gold accents
-✅ Removed glass morphism from cards: Sharp cards with gold borders
-✅ Restored glass morphism on header: Cream pill shape with navy text for synergy
-✅ Button redesign: Gold bg + navy text (reversed from light theme)
-✅ Shop carousel component: 5 Robyn photos, click nav, peek preview
-✅ Carousel optimization: Gold nav arrows, 0.5s smooth transitions, removed conflicting indicators
-✅ Carousel height adjusted: h-48 mobile / h-72 desktop for viewport fit
-✅ Hero section: White logo + text stacked, carousel background
-✅ Viewport optimization: Navigation + carousel + logo + buttons fit in 100dvh without scrolling
-✅ Mobile responsive: Tested and verified on mobile (375px) and desktop
-✅ Form styling: Dark backgrounds, light borders, cream text
-✅ All color and typography updates for dark theme
-✅ Lucide-react dependency added for carousel icons
-✅ Code pushed to main (commit a563959), Vercel deployed
-
-### Phase 3 - Carousel Hero Refinement (Latest Session - May 10 Evening)
-✅ **Carousel Positioning:** Changed from absolute to fixed positioning to extend behind nav bar
-✅ **Navigation:** Carousel now sits behind navigation bar starting from very top (y=0) of viewport
-✅ **Gradient Fade:** Gradient overlay positioned at bottom of carousel (absolute bottom-0) for smooth blend to charcoal
-✅ **Edge-to-Edge:** Removed px-4 padding from carousel container - now fills full width left to right
-✅ **No Charcoal Gaps:** Carousel fills entire viewport width with no visible charcoal edges
-✅ **Z-index Stacking:** Nav (z-40 fixed) floats on top, carousel (-z-5 fixed) behind, logo/buttons on top of carousel
-✅ **Git Commits:** 
-  - 0116955: "Fix carousel to extend behind navigation bar from page top with gradient fade at bottom"
-  - 95b7782: "Remove carousel padding to extend edge-to-edge"
-✅ Vercel deployed with final hero section design
-
----
-
-## WHAT'S LEFT TO DO (Priority Order)
-
-### Phase 4: Core Functionality Completion
-1. **Email Notifications** (HIGH PRIORITY)
-   - Booking confirmation emails to clients
-   - Consultation response notifications
-   - Signup welcome emails
-   - Requires: SendGrid API key configuration
-
-2. **Artist Consultation Response System** (HIGH PRIORITY)
-   - UI in artist dashboard to respond to consultation requests
-   - Response message field + send button
-   - Email notification to client when artist responds
-   - Endpoint: PATCH `/api/artist/consultations/:id`
-
-3. **Client Profile Editing** (MEDIUM PRIORITY)
-   - Allow clients to edit: name, email, phone, password
-   - Protected endpoints: PATCH `/api/client/profile`
-   - Form validation and success/error messages
-
-4. **Password Reset Flow** (MEDIUM PRIORITY)
-   - "Forgot Password" link on login pages
-   - Email with reset token
-   - Reset form with new password entry
-   - Endpoint: POST/PATCH `/api/auth/password-reset`
-
-### Phase 5: Enhanced Features (Lower Priority)
-5. **Image Storage for Design Ideas** (MEDIUM PRIORITY)
-   - Currently: URL-based (user provides image URL)
-   - Needed: File upload to Vercel Blob or AWS S3
-   - Update: `DesignIdea.image_url` to support file upload
-   - Components: Upload form with drag-drop in dashboard
-
-6. **Calendar/Availability Management** (MEDIUM PRIORITY)
-   - Artist can set available dates/times
-   - Booking form shows available slots
-   - Real-time availability sync
-
-7. **Booking Reminders** (LOW PRIORITY)
-   - Email reminders 24h before appointment
-   - Configurable via cron/scheduled tasks
-
-8. **Contact Form Submissions** (LOW PRIORITY)
-   - Process contact page form submissions
-   - Store in database or email to admin
-   - Endpoint: POST `/api/contact`
-
-9. **Review System** (LOW PRIORITY)
-   - Clients can leave reviews after completed booking
-   - Rating + comment
-   - Display reviews on portfolio/home
-
-10. **Portfolio Management** (LOW PRIORITY)
-    - Artist can upload/edit/delete portfolio images
-    - Different categories or styles
-    - Display on artist profile
-
-11. **Direct Messaging** (LOW PRIORITY)
-    - Real-time chat between artist and client
-    - Websocket implementation needed
-    - Message history storage
-
-12. **Payment Processing** (PHASE 6)
-    - Stripe integration
-    - Payment for bookings
-    - Deposit payments
-    - Currently: Not integrated (no payment flow)
-
-13. **Admin Dashboard** (PHASE 6)
-    - Manage artists
-    - View all bookings/consultations
-    - System settings
-    - Analytics
-
----
-
-## IMMEDIATE NEXT STEPS (Phase 4)
-
-### Completed in This Session (May 10, 2026 - Evening)
-1. ✅ Phase 3.1 Carousel Hero Refinement complete and deployed
-   - ✅ Carousel extends behind navigation bar from very top of page
-   - ✅ Gradient fade at bottom blending into charcoal
-   - ✅ Edge-to-edge carousel with no charcoal gaps
-   - ✅ All git commits pushed to main (commits 0116955, 95b7782)
-   - ✅ Vercel deployment live at https://hall-of-mirrors-tattoo.vercel.app
-
-### For Next Session (Phase 4 - Core Features)
-**Start with:** Read this CHECKPOINT.md + phase3_carousel_refinement.md memory file
-
-1. **Email Notifications System** (Start here)
-   - Set up SendGrid API key in backend .env
-   - Configure emailService in `backend/src/services/emailService.ts`
-   - Add email trigger on: booking creation, consultation response, client signup
-   - Create email templates for each event type
-   - Test email flow with Robyn's account
-
-2. **Artist Consultation Response System** (Parallel with emails)
-   - Add "Respond" button to consultation cards in artist dashboard
-   - Create response form modal with message field
-   - Implement PATCH `/api/artist/consultations/:id` endpoint to save response
-   - Trigger email notification to client when artist responds
-   - Display response in client consultation tab
-
-3. **Client Profile Editing** (After above)
-   - Create `/client/profile` page with edit form
-   - Add fields: first_name, last_name, email, phone, password change
-   - Endpoint: PATCH `/api/client/profile`
-   - Add link to profile from client dashboard header
-
-4. **Password Reset Flow** (After above)
-   - Add "Forgot Password?" link on `/client/login` and `/artist/login`
-   - Create reset token generation logic
-   - Send reset email with token
-   - Create reset form page
-   - Endpoint: POST/PATCH `/api/auth/password-reset`
-
-### Local Development
 ```bash
-# Terminal 1 - Backend
+# Terminal 1 — Backend (always on port 49999)
 cd /Users/willbangura/hall-of-mirrors-tattoo/backend
 PORT=49999 npm run dev
 
-# Terminal 2 - Frontend
+# Terminal 2 — Frontend
 cd /Users/willbangura/hall-of-mirrors-tattoo/frontend
 npm run dev
+# Opens on http://localhost:3000 (or next available port)
 ```
 
-**Test at:** http://localhost:3000 (or assigned port)
+**Deploy:** `git push origin main` → Vercel auto-deploys frontend within ~2 minutes.
 
 ---
 
-## DEPLOYMENT CHECKLIST
+## Tech Stack
 
-### Before Going Live:
-- [ ] Fix remaining Prisma pooling issues
-- [ ] Complete email notifications setup
-- [ ] Test booking flow end-to-end
-- [ ] Set up production Supabase project
-- [ ] Configure Railway for backend
-- [ ] Configure Vercel for frontend
-- [ ] Update CORS with production domain
-- [ ] Set all production environment variables
-- [ ] Test on staging environment
-- [ ] Configure custom domain
-- [ ] Set up SSL/HTTPS
-- [ ] Configure database backups
-- [ ] Set up monitoring/logging
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 14 (App Router), TypeScript, React 18 |
+| Styling | Tailwind CSS v3 + custom `globals.css` design tokens |
+| Backend | Node.js + Express.js (TypeScript, ts-node) |
+| Database | PostgreSQL via Supabase (Prisma schema + raw `pg.Client` for queries) |
+| Auth | JWT — two separate systems: artist auth + client auth |
+| Email | SendGrid (`@sendgrid/mail`) |
+| Frontend hosting | Vercel (auto-deploy from `main`) |
+| Backend hosting | Railway |
+| Fonts | Google Fonts: Cormorant Garamond + DM Sans + DM Mono |
+
+**Critical:** Tailwind v3 (not v4). Do not use v4 syntax. Config is `tailwind.config.js` (CJS).
 
 ---
 
-## IMPORTANT NOTES
+## Design System (Phase 3 v2 — Current)
 
-- **Supabase Pooling:** Use raw pg Client for direct queries to avoid prepared statement issues
-- **CORS:** Must update for production domain before deploying
-- **Artist Passwords:** Robyn's password hash is a placeholder - set real password before production
-- **Email Templates:** Not yet created - needed for notifications
-- **Stripe Keys:** Using test keys - need production keys for live payments
+This is the definitive design. All future work uses this system. The previous charcoal/cream/sharp-card design is in git history only (commit before `df7c969`).
+
+### Colour Tokens (CSS custom properties in `globals.css` `:root`)
+
+| Token | Value | Usage |
+|---|---|---|
+| `--bg` | `#0E0C09` | Page background — obsidian warm black |
+| `--surface` | `#171410` | Card backgrounds |
+| `--surface-2` | `#1D1A15` | Elevated surfaces |
+| `--gold` | `#C9A84C` | Primary accent — burnished gold |
+| `--gold-bright` | `#E0C876` | Gold hover/shimmer highlight |
+| `--gold-muted` | `rgba(201,168,76,0.15)` | Subtle gold tint |
+| `--cream` | `#F2EDE0` | Primary text on dark |
+| `--text` | `#EDE8D8` | Body text |
+| `--text-mid` | `#9A9082` | Secondary text |
+| `--text-low` | `#635C52` | Tertiary/muted text |
+| `--border` | `#2A2520` | Card borders |
+| `--border-light` | `rgba(201,168,76,0.18)` | Subtle gold borders |
+| `--cursor-x` | `50%` | Set dynamically by CursorGlow.tsx |
+| `--cursor-y` | `50%` | Set dynamically by CursorGlow.tsx |
+
+### Typography
+
+| Role | Font | Weight | Notes |
+|---|---|---|---|
+| Display / hero headings | Cormorant Garamond | 300–600 italic | `font-style: italic` always |
+| Body text | DM Sans | 300–600 | System-ui fallback |
+| Labels / eyebrows / mono | DM Mono | 400–500 | Uppercase, tracked |
+
+All fonts imported via Google Fonts at top of `globals.css`.
+
+### CSS Utility Classes (defined in `globals.css`)
+
+| Class | Description |
+|---|---|
+| `.glass` | Dark glassmorphism — `rgba(23,20,16,0.75)` + `backdrop-filter: blur(20px)` + gold border |
+| `.glass-light` | Light glassmorphism — cream-tinted |
+| `.card-premium` | Surface card with hover glow effect (uses `--card-x`/`--card-y` CSS vars) |
+| `.btn-primary` | Gold pill button with shimmer on hover |
+| `.btn-secondary` | Transparent pill button with gold border |
+| `.eyebrow` | DM Mono, uppercase, gold, 0.6875rem, 0.25em tracking |
+| `.reveal` | Hidden state for scroll reveals (opacity:0, translateY 28px) |
+| `.reveal.visible` | Revealed state — added by AnimatedSection.tsx IntersectionObserver |
+| `.reveal-delay-1` through `.reveal-delay-5` | Stagger delays (0.1s–0.55s) |
+| `.section-divider` | Full-width gold gradient line with centred text |
+| `.footer-link` | DM Sans footer nav link with gold hover |
+| `.footer-social` | DM Mono uppercase social link with gold hover |
+| `.text-gold-shimmer` | Animated gold gradient shimmer text |
+| `.text-gold` / `.text-cream` / `.text-mid` / `.text-low` | Colour utilities |
+| `.bg-surface` / `.bg-surface-2` | Surface background utilities |
+
+### Animations
+
+All keyframes are defined in BOTH `globals.css` (for inline `style={{ animation }}` usage) AND `tailwind.config.js` (for `animate-*` utility class usage). This is intentional — Tailwind JIT won't generate keyframes for animation names used only in inline styles.
+
+| Keyframe | Usage |
+|---|---|
+| `kenBurns` | Carousel images — slow zoom `scale(1.0) → scale(1.12)` over 8s |
+| `fadeUp` | Elements entering viewport |
+| `fadeIn` | Opacity-only fade |
+| `float` | Gentle vertical bob |
+| `pulseGlow` | Logo radial glow pulse |
+| `shimmer` | Gold text shimmer (moves background-position) |
+| `lineIn` | Decorative lines drawing in from left |
+
+---
+
+## Frontend File Structure
+
+```
+frontend/
+├── app/
+│   ├── layout.tsx              — Root layout: fonts preconnect, Header, Footer, CursorGlow
+│   ├── globals.css             — ENTIRE design system (tokens, typography, utilities, keyframes)
+│   ├── page.tsx                — Homepage (Server Component — no 'use client')
+│   ├── booking/page.tsx        — Booking form with artist selector
+│   ├── portfolio/page.tsx      — Gallery (placeholder — needs Robyn's photos)
+│   ├── services/page.tsx       — Services detail pages
+│   ├── about/page.tsx          — About / studio story (placeholder)
+│   ├── contact/page.tsx        — Contact form
+│   ├── artist/
+│   │   ├── login/page.tsx      — Artist login
+│   │   └── dashboard/page.tsx  — Artist dashboard (bookings, consultations)
+│   ├── client/
+│   │   ├── login/page.tsx
+│   │   ├── signup/page.tsx
+│   │   ├── dashboard/
+│   │   │   ├── page.tsx        — 3-tab dashboard (bookings / design ideas / consultations)
+│   │   │   ├── bookings.tsx
+│   │   │   ├── design-ideas.tsx
+│   │   │   └── consultations.tsx
+│   │   └── bookings/[id]/page.tsx — Booking detail view
+│   └── components/
+│       ├── Header.tsx          — 'use client' — dark glass nav, scroll opacity, active link, mobile menu
+│       ├── Footer.tsx          — 'use client' — editorial 12-col grid, CSS-only hover states
+│       ├── ShopCarousel.tsx    — Ken Burns carousel with prev/next navigation
+│       ├── AnimatedSection.tsx — 'use client' — IntersectionObserver scroll reveal wrapper
+│       ├── CursorGlow.tsx      — 'use client' — tracks mouse, sets --cursor-x/--cursor-y on :root
+│       └── ScrollGradientFade.tsx — Gradient overlay at bottom of carousel
+├── lib/
+│   ├── authContext.tsx         — Artist JWT auth context + localStorage
+│   ├── clientAuthContext.tsx   — Client JWT auth context + localStorage (separate)
+│   └── clientProtectedRoute.tsx — Route guard for client pages
+├── public/
+│   └── assets/
+│       └── logos/
+│           ├── White Logo.png       — Icon only (used in nav, footer)
+│           └── White Logo Text.png  — Text lockup (used in footer)
+├── tailwind.config.js          — v3 config with gold/obsidian tokens + font families + animations
+└── .env.local                  — NEXT_PUBLIC_API_URL=http://localhost:49999
+```
+
+### Key Component Rules
+
+- **`AnimatedSection.tsx`** must be `'use client'` — uses `useRef`, `useEffect`, `IntersectionObserver`
+- **`CursorGlow.tsx`** must be `'use client'` — uses `useEffect`, `window.addEventListener`
+- **`Footer.tsx`** must be `'use client'` — avoids RSC serialisation errors with Next.js hydration
+- **`Header.tsx`** must be `'use client'` — uses `usePathname`, `useEffect`, scroll listener
+- **`page.tsx`** (homepage) is a **Server Component** — no event handlers, no `useState`, no `useEffect`
+- Never put `as React.CSSProperties` in a Server Component — import React first or remove the cast
+
+---
+
+## Homepage Sections (page.tsx)
+
+1. **Hero** — full-viewport sticky carousel (Ken Burns), "Hall of Mirrors" italic CSS watermark, logo + radial glow, italic tagline, two CTA buttons (Book / Portfolio), DM Mono scroll indicator
+2. **Credentials strip** — 3-col horizontal bar with gold dividers, DM Mono eyebrow labels (8+ Years / 100% Custom / 1:1 Consultation)
+3. **Portfolio "The Work"** — asymmetric 8-col grid (5+3 alternating rows), ghost Roman numeral watermarks, scroll reveals, DM Mono/Cormorant card labels
+4. **The Artist** — 2-col split, Cormorant italic heading, bio paragraphs, stats row (8+ / 100% / 1:1), mirror-frame photo placeholder with nested gold borders + corner accents + logo watermark
+5. **Services** — 3 numbered cards (01/02/03), gold numbering, "Find out more →" link
+6. **Final CTA** — centred logo, "Ready to begin?" Cormorant italic, radial gold glow
+
+`<div class="section-divider"><span>HOM</span></div>` appears between each section.
+
+---
+
+## Backend API Endpoints
+
+Base URL local: `http://localhost:49999`  
+Base URL production: `https://hall-of-mirrors-tattoo-production.up.railway.app`
+
+### Public
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/artists` | List active artists (used by booking form) |
+| POST | `/api/bookings` | Create a booking (no auth required) |
+| POST | `/api/contact` | Submit contact form |
+
+### Client Auth
+| Method | Path | Description |
+|---|---|---|
+| POST | `/api/auth/client/signup` | Register new client |
+| POST | `/api/auth/client/login` | Login → returns JWT |
+| POST | `/api/auth/client/activate` | Activate guest account |
+| GET | `/api/client/bookings` | Client's own bookings |
+| GET | `/api/client/bookings/:id` | Single booking detail |
+| PATCH | `/api/client/bookings/:id` | Cancel a booking |
+| POST | `/api/client/design-ideas` | Upload design idea (URL-based) |
+| GET | `/api/client/design-ideas` | Client's design ideas |
+| DELETE | `/api/client/design-ideas/:id` | Delete design idea |
+| POST | `/api/client/consultations` | Request consultation |
+| GET | `/api/client/consultations` | Client's consultations |
+
+### Artist Auth
+| Method | Path | Description |
+|---|---|---|
+| POST | `/api/auth/artist/login` | Artist login → returns JWT |
+| GET | `/api/artist/bookings` | All bookings (artist view) |
+| PATCH | `/api/artist/bookings/:id` | Accept / reject booking |
+| GET | `/api/artist/consultations` | All consultation requests |
+
+### Key Backend Files
+```
+backend/src/
+├── index.ts                    — Express app, middleware, route mounting
+├── controllers/
+│   ├── artistController.ts     — Artist auth, profile (uses raw pg.Client)
+│   ├── clientAuthController.ts — Client auth
+│   ├── bookingController.ts    — Booking CRUD (uses raw pg.Client)
+│   └── consultationController.ts
+├── routes/                     — One file per resource group
+├── middleware/
+│   ├── auth.ts                 — Artist JWT middleware
+│   └── clientAuth.ts           — Client JWT middleware
+└── services/
+    └── emailService.ts         — SendGrid email sending
+```
+
+**Supabase pooling workaround:** Prisma throws "prepared statement already exists" with Supabase's pooler. All production queries use raw `pg.Client` instead of Prisma. Prisma schema is still the source of truth for the data model.
+
+---
+
+## Email Notifications (Phase 4 — 70% Complete)
+
+| Email type | Status |
+|---|---|
+| Studio booking notification → `studio@hallofmirrorstattoo.com` | ✅ Working |
+| Client booking confirmation | ⚠️ Code written, not arriving (delivery/settings issue) |
+| Client signup welcome | ❌ Not implemented |
+| Artist consultation response → client | ❌ Not implemented |
+| Password reset | ❌ Not implemented |
+
+SendGrid API key is configured in Railway environment variables. Studio-side emails confirmed working.
+
+---
+
+## What's Done ✅
+
+- Full booking system (form → backend → database)
+- Artist auth + JWT + dashboard (accept/reject bookings)
+- Client auth + JWT + dashboard (3 tabs: bookings, design ideas, consultations)
+- Luxury Phase 3 v2 redesign (obsidian palette, Cormorant Garamond, Ken Burns, cursor glow, scroll reveals)
+- Production deployment on Vercel + Railway
+- SendGrid setup + studio notification emails working
+
+---
+
+## What's Still To Do ⚠️
+
+### High Priority
+- [ ] Fix client confirmation emails (SendGrid delivery issue — code is written)
+- [ ] Artist consultation response UI (respond button + message in dashboard)
+- [ ] Client profile editing page (`/client/profile`)
+- [ ] Password reset flow (forgot password → email → reset form)
+
+### Medium Priority
+- [ ] Real portfolio images — replace placeholder dark cards in homepage grid
+- [ ] Robyn's artist photo — replace mirror-frame placeholder in Artist section
+- [ ] Social media links — Instagram + TikTok in footer currently `href="#"`
+- [ ] Portfolio page (`/portfolio`) — full gallery, currently placeholder
+- [ ] About page — Robyn's bio and studio story
+- [ ] File upload for design ideas (currently URL-based only)
+
+### Lower Priority
+- [ ] Calendar / availability management
+- [ ] Booking reminder emails (24h before)
+- [ ] Review system (post-booking)
+- [ ] Direct messaging (artist ↔ client)
+- [ ] Stripe payment integration (deposits)
+- [ ] Admin dashboard
+
+---
+
+## Deployment
+
+```bash
+# From project root — triggers Vercel auto-deploy
+git add -A
+git commit -m "Your message"
+git push origin main
+```
+
+Vercel builds from `main` branch. Build command: `npm run build`. Output: `.next/`.  
+Railway backend deploys separately — check Railway dashboard for backend deploys.
+
+---
+
+## Known Gotchas
+
+1. **Tailwind v3 not v4** — `tailwind.config.js` uses CJS exports. v4 syntax (`@import "tailwindcss"`) will break the build.
+2. **Keyframes in globals.css AND tailwind.config.js** — intentional duplication. Tailwind only generates keyframe CSS for `animate-*` classes used in scanned content; keyframes used in inline `style={{ animation }}` props need to be in globals.css directly.
+3. **Footer and AnimatedSection must be `'use client'`** — Next.js App Router will throw serialisation errors otherwise.
+4. **No `blur()` in CSS `transform`** — `blur()` is a `filter` function, not a `transform` function. Use `filter: blur()` separately.
+5. **Stale `.next` cache** — if you add new client components and see manifest errors, run `rm -rf frontend/.next` and restart the dev server.
+6. **Two separate auth systems** — artist tokens and client tokens are completely separate. Artist tokens stored in one localStorage key, client tokens in another. The middleware files are different too (`auth.ts` vs `clientAuth.ts`).
+7. **Supabase prepared statements** — use raw `pg.Client` for all production queries. Never switch back to Prisma client for Supabase-pooled connections.
+8. **Artist ID** — Robyn's ID is `artist-robyn-001`. Hard-coded in some places; search before adding new artist logic.
+
+---
+
+## Placeholders to Replace with Real Assets
+
+| Location | Placeholder | What's needed |
+|---|---|---|
+| Homepage portfolio grid | Dark cards with Roman numerals | Robyn's tattoo photos |
+| Homepage Artist section | Mirror-frame "coming soon" box | Robyn's portrait photo |
+| Footer Instagram link | `href="#"` | Real Instagram URL |
+| Footer TikTok link | `href="#"` | Real TikTok URL |
+| Carousel images | Stock/placeholder images | Robyn's studio/work photos |

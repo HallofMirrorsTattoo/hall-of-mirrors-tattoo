@@ -55,6 +55,8 @@ module.exports = {
         'shimmer':      'shimmer 2.5s ease-in-out infinite',
         'line-in':      'lineIn 1.2s cubic-bezier(0.32,0.72,0,1) forwards',
         'reveal-mask':  'revealMask 1s cubic-bezier(0.77,0,0.175,1) forwards',
+        'draw-line':    'drawLine 1s cubic-bezier(0.32,0.72,0,1) forwards',
+        'slide-up':     'slideUp 0.9s cubic-bezier(0.32,0.72,0,1) forwards',
       },
       keyframes: {
         kenBurns: {
@@ -88,6 +90,14 @@ module.exports = {
         revealMask: {
           '0%':   { clipPath: 'inset(0 100% 0 0)' },
           '100%': { clipPath: 'inset(0 0% 0 0)' },
+        },
+        drawLine: {
+          '0%':   { transform: 'scaleX(0)', transformOrigin: 'left' },
+          '100%': { transform: 'scaleX(1)', transformOrigin: 'left' },
+        },
+        slideUp: {
+          '0%':   { opacity: '0', transform: 'translateY(40px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },
       boxShadow: {

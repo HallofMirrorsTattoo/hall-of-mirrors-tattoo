@@ -145,8 +145,8 @@ p {
 .card-premium {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 1.25rem;
-  transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease;
+  border-radius: 0.75rem;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
   position: relative;
   overflow: hidden;
 }
@@ -168,7 +168,6 @@ p {
 .card-premium:hover {
   border-color: rgba(201, 168, 76, 0.3);
   box-shadow: 0 0 40px rgba(201, 168, 76, 0.08), 0 20px 50px rgba(0,0,0,0.5);
-  transform: translateY(-2px);
 }
 
 .card-premium:hover::before {
@@ -327,20 +326,10 @@ label {
 .reveal-delay-4 { transition-delay: 0.4s; }
 .reveal-delay-5 { transition-delay: 0.55s; }
 
-/* ─── Gold text shimmer ─────────────────────────────────────────────────────── */
-.text-gold-shimmer {
-  background: linear-gradient(
-    90deg,
-    var(--gold) 0%,
-    var(--gold-bright) 40%,
-    var(--gold) 60%,
-    var(--gold-bright) 100%
-  );
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: shimmer 3s linear infinite;
+/* ─── Gold text emphasis ────────────────────────────────────────────────────── */
+.text-gold-solid {
+  color: var(--gold);
+  font-weight: 600;
 }
 
 /* ─── Section defaults ──────────────────────────────────────────────────────── */
@@ -439,3 +428,68 @@ a {
 .border-gold  { border-color: var(--border-light); }
 .bg-surface   { background-color: var(--surface); }
 .bg-surface-2 { background-color: var(--surface-2); }
+
+/* ─── Editorial service rows ────────────────────────────────────────────────── */
+.service-row {
+  display: grid;
+  grid-template-columns: 5.5rem 1px 1fr;
+  align-items: center;
+  gap: 0 2.5rem;
+  padding: 2.75rem 0;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+}
+
+.service-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: clamp(2.25rem, 4.5vw, 3.5rem);
+  font-weight: 300;
+  color: var(--gold);
+  opacity: 0.4;
+  line-height: 1;
+  text-align: right;
+  transition: opacity 0.5s cubic-bezier(0.32,0.72,0,1),
+              color 0.5s cubic-bezier(0.32,0.72,0,1);
+}
+
+.service-row:hover .service-num {
+  opacity: 1;
+  color: var(--gold-bright);
+}
+
+.service-divider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--border);
+  transition: background 0.5s ease;
+}
+
+.service-row:hover .service-divider {
+  background: rgba(201, 168, 76, 0.28);
+}
+
+/* ─── Directional reveal variants ───────────────────────────────────────────── */
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 0.9s cubic-bezier(0.32,0.72,0,1),
+              transform 0.9s cubic-bezier(0.32,0.72,0,1);
+}
+
+.reveal-left.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ─── Additional keyframes ──────────────────────────────────────────────────── */
+@keyframes drawLine {
+  from { transform: scaleX(0); transform-origin: left; }
+  to   { transform: scaleX(1); transform-origin: left; }
+}
+
+@keyframes slideUp {
+  0%   { opacity: 0; transform: translateY(40px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
