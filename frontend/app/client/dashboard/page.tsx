@@ -10,10 +10,19 @@ import DesignIdeasTab from './design-ideas';
 import ConsultationsTab from './consultations';
 import ConsentFormsTab from './consent-forms';
 
+const TABS = [
+  { id: 'bookings',      label: 'Your Bookings' },
+  { id: 'design-ideas',  label: 'Design Ideas' },
+  { id: 'consultations', label: 'Consultations' },
+  { id: 'consent-forms', label: 'Consent Forms' },
+] as const;
+
+type TabId = typeof TABS[number]['id'];
+
 export default function ClientDashboardPage() {
   const router = useRouter();
   const { user, logout } = useClientAuth();
-  const [activeTab, setActiveTab] = useState('bookings');
+  const [activeTab, setActiveTab] = useState<TabId>('bookings');
 
   const handleLogout = () => {
     logout();
@@ -22,83 +31,88 @@ export default function ClientDashboardPage() {
 
   return (
     <ClientProtectedRoute>
-      <div className="min-h-screen bg-primary-dark pt-32 pb-20">
-        <div className="max-w-6xl mx-auto px-4">
+      <div style={{ backgroundColor: 'var(--bg)', minHeight: '100vh', paddingTop: '8rem', paddingBottom: '5rem' }}>
+        <div style={{ maxWidth: '72rem', margin: '0 auto', padding: '0 1rem' }}>
+
           {/* Header */}
-          <div className="flex justify-between items-center mb-12">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '3rem' }}>
             <div>
-              <h1 className="text-4xl md:text-5xl font-serif font-bold text-primary-dark mb-2">
-                Welcome back, {user?.first_name}
+              <p className="eyebrow" style={{ marginBottom: '0.5rem' }}>Client Portal</p>
+              <h1 style={{
+                fontFamily: '"Cormorant Garamond", serif',
+                fontStyle: 'italic',
+                fontWeight: 300,
+                fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+                color: 'var(--cream)',
+                letterSpacing: '-0.02em',
+                lineHeight: 1.1,
+                marginBottom: '0.5rem',
+              }}>
+                Welcome back{user?.first_name ? `, ${user.first_name}` : ''}
               </h1>
-              <p className="text-primary-dark/70">Manage your tattoo bookings and consultations</p>
+              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.6 }}>
+                Manage your bookings, design ideas, and consultations
+              </p>
             </div>
-            <button
-              onClick={handleLogout}
-              className="btn-secondary"
-            >
+            <button onClick={handleLogout} className="btn-secondary" style={{ flexShrink: 0, marginTop: '0.5rem' }}>
               Logout
             </button>
           </div>
 
-          {/* Tabs Navigation */}
-          <div className="flex gap-4 mb-8 border-b border-primary-dark/10">
-            <button
-              onClick={() => setActiveTab('bookings')}
-              className={`pb-4 font-medium transition-colors ${
-                activeTab === 'bookings'
-                  ? 'text-accent-gold border-b-2 border-accent-gold'
-                  : 'text-primary-dark/70 hover:text-primary-dark'
-              }`}
-            >
-              Your Bookings
-            </button>
-            <button
-              onClick={() => setActiveTab('design-ideas')}
-              className={`pb-4 font-medium transition-colors ${
-                activeTab === 'design-ideas'
-                  ? 'text-accent-gold border-b-2 border-accent-gold'
-                  : 'text-primary-dark/70 hover:text-primary-dark'
-              }`}
-            >
-              Design Ideas
-            </button>
-            <button
-              onClick={() => setActiveTab('consultations')}
-              className={`pb-4 font-medium transition-colors ${
-                activeTab === 'consultations'
-                  ? 'text-accent-gold border-b-2 border-accent-gold'
-                  : 'text-primary-dark/70 hover:text-primary-dark'
-              }`}
-            >
-              Consultations
-            </button>
-            <button
-              onClick={() => setActiveTab('consent-forms')}
-              className={`pb-4 font-medium transition-colors ${
-                activeTab === 'consent-forms'
-                  ? 'text-accent-gold border-b-2 border-accent-gold'
-                  : 'text-primary-dark/70 hover:text-primary-dark'
-              }`}
-            >
-              Consent Forms
-            </button>
+          {/* Tab Navigation */}
+          <div style={{ borderBottom: '1px solid var(--border)', marginBottom: '2.5rem', display: 'flex', gap: '0' }}>
+            {TABS.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  style={{
+                    paddingBottom: '1rem',
+                    paddingRight: '1.5rem',
+                    paddingLeft: '0',
+                    fontFamily: '"DM Sans", sans-serif',
+                    fontSize: '0.875rem',
+                    fontWeight: isActive ? 500 : 400,
+                    color: isActive ? 'var(--gold)' : 'var(--text-mid)',
+                    background: 'none',
+                    border: 'none',
+                    borderBottom: isActive ? '2px solid var(--gold)' : '2px solid transparent',
+                    marginBottom: '-1px',
+                    cursor: 'pointer',
+                    transition: 'color 0.2s ease',
+                    whiteSpace: 'nowrap',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) e.currentTarget.style.color = 'var(--cream)';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) e.currentTarget.style.color = 'var(--text-mid)';
+                  }}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
 
           {/* Tab Content */}
-          <div className="min-h-96">
-            {activeTab === 'bookings' && <BookingsTab />}
-            {activeTab === 'design-ideas' && <DesignIdeasTab />}
+          <div style={{ minHeight: '24rem' }}>
+            {activeTab === 'bookings'      && <BookingsTab />}
+            {activeTab === 'design-ideas'  && <DesignIdeasTab />}
             {activeTab === 'consultations' && <ConsultationsTab />}
             {activeTab === 'consent-forms' && <ConsentFormsTab />}
           </div>
 
           {/* Quick Actions */}
-          <div className="mt-16 card-premium">
+          <div className="card-premium" style={{ marginTop: '4rem' }}>
             <div className="card-premium-inner">
               <div className="grid md:grid-cols-2 gap-8">
                 <div>
-                  <h3 className="text-lg font-serif font-bold mb-3" style={{ color: 'var(--cream)' }}>Want to book a new appointment?</h3>
-                  <p className="mb-4" style={{ color: 'var(--text-mid)' }}>
+                  <h3 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.25rem', fontWeight: 400, color: 'var(--cream)', marginBottom: '0.75rem' }}>
+                    Want to book a new appointment?
+                  </h3>
+                  <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
                     Start the booking process to schedule your next tattoo session with Robyn.
                   </p>
                   <Link href="/booking" className="btn-primary">
@@ -107,20 +121,20 @@ export default function ClientDashboardPage() {
                   </Link>
                 </div>
                 <div>
-                  <h3 className="text-lg font-serif font-bold mb-3" style={{ color: 'var(--cream)' }}>Request a consultation?</h3>
-                  <p className="mb-4" style={{ color: 'var(--text-mid)' }}>
+                  <h3 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.25rem', fontWeight: 400, color: 'var(--cream)', marginBottom: '0.75rem' }}>
+                    Want a consultation first?
+                  </h3>
+                  <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
                     Use the Consultations tab above to discuss your design ideas and get expert advice.
                   </p>
-                  <button
-                    onClick={() => setActiveTab('consultations')}
-                    className="btn-secondary"
-                  >
+                  <button onClick={() => setActiveTab('consultations')} className="btn-secondary">
                     View Consultations
                   </button>
                 </div>
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </ClientProtectedRoute>
