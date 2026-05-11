@@ -1,7 +1,7 @@
 # Hall of Mirrors Tattoo — Master Checkpoint
 
-**Last Updated:** May 11, 2026 — Phase 2 complete (commits `840ed93`, `2a827a1`, `54f8620`)
-**Status:** Production Live ✅ | Phase 0 done | Phase 2 (consent form) done | DB connection fixed
+**Last Updated:** May 11, 2026 — Sitewide design elevation complete (commit `cbbcea1`)
+**Status:** Production Live ✅ | Phase 0 done | Phase 2 (consent form) done | DB connection fixed | Design system applied uniformly sitewide
 
 ---
 
@@ -368,6 +368,14 @@ The full roadmap is documented in the plan file:
 - Design elevation (editorial services table, ghost-numeral credentials strip, dramatic CTA)
 - `frontend/PRODUCT.md` created (impeccable skill context file)
 - Production deployment on Vercel + Railway
+- **Sitewide design elevation (commit `cbbcea1`, 18 files, May 11 2026):**
+  - Root cause fixed: inner pages used `backgroundColor: '#2a2a2a'` (should be `var(--bg)` = `#0E0C09`) and `text-primary-dark` (#0E0C09) inside dark-surface cards — near-zero contrast everywhere
+  - Full rewrites: `services/page.tsx` (editorial numbered table), `about/page.tsx` (2-col split + credentials rows), `portfolio/page.tsx` (atmospheric placeholder), `testimonials/page.tsx` (editorial review rows)
+  - Auth page rewrites: `client/login`, `client/signup`, `artist/login` — all dark-theme with Cormorant headings outside cards, global CSS inputs (no Tailwind overrides)
+  - Dashboard surgical fixes: `client/dashboard/page.tsx`, `bookings.tsx`, `consultations.tsx`, `design-ideas.tsx`, `client/bookings/[id]/page.tsx`
+  - Status badge refactor: `getStatusColor()` → `getStatusStyle()` returning `React.CSSProperties` with dark-palette inline styles (gold tinted for confirmed, red tinted for cancelled)
+  - `btn-primary-icon` → `<span className="btn-icon">` throughout (the former never existed)
+  - Legal pages (`privacy`, `terms`, `cookies`): `#2a2a2a` → `var(--bg)`
 
 ---
 
@@ -423,12 +431,20 @@ Railway backend deploys separately — check Railway dashboard for backend deplo
 8. **Artist auth race condition** — auth context loads the token from localStorage in a `useEffect`, so `accessToken` is null on first render. Always check `isLoading` from `useAuth()` before treating null as "not logged in". Failing to do this causes immediate redirect to login (blank screen).
 9. **No gradient text** — `background-clip: text` with a gradient is banned. Use solid `var(--gold)` with font-weight for emphasis.
 10. **No identical card grids** — use the `.service-row` editorial table pattern instead.
+17. **Background is `var(--bg)` = `#0E0C09`, never `#2a2a2a`** — always use the CSS variable. Hard-coded `#2a2a2a` was the root of the sitewide contrast bug (May 2026).
+18. **`btn-primary-icon` does not exist** — use `<span className="btn-icon">` (not `<div>`, not `btn-primary-icon`).
+19. **`text-primary-dark` on dark surfaces = invisible** — `#0E0C09` on `#171410` is near-zero contrast. Inside `card-premium` or any `var(--surface)` element, headings use `var(--cream)`, body uses `var(--text)` or `var(--text-mid)`.
+20. **Status badges: never use Tailwind light-bg classes on dark surfaces** — use inline `React.CSSProperties` with gold tinted (`rgba(201,168,76,…)`) or red tinted (`rgba(239,68,68,…)`) backgrounds and matching text colors.
+21. **Global CSS owns form inputs** — `globals.css` defines styles for `input`, `textarea`, `select`, `label`. Never add `bg-white`, `border-primary-dark/10`, or `text-primary-dark` Tailwind classes to these elements — they override the dark theme.
 11. **No hard-coded artist IDs in new code** — `artist-robyn-001` exists in legacy code. New features must look up by DB ID or email to support multiple artists.
 12. **SendGrid sender verification** — `SENDGRID_FROM_EMAIL` must be verified in SendGrid before any email sends. A missing verification returns 403 silently.
 13. **setupDb.ts is the migration mechanism** — Prisma migrations don't run in production (Supabase pooling). New columns/tables go into `setupDb.ts` using `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` (idempotent). It runs on every backend startup.
 14. **Railway + Supabase = use session pooler URL** — Railway's infrastructure doesn't support IPv6 outbound. Supabase's direct connection (`db.[ref].supabase.co`) resolves to IPv6 and fails with `ENETUNREACH`. Always use the session pooler URL (`postgresql://postgres.[ref]:[pw]@aws-0-[region].pooler.supabase.com:5432/postgres`) in `DATABASE_URL`.
 15. **pdfkit `characterSpacing` not in @types/pdfkit** — the `characterSpacing()` method exists at runtime but is missing from the TypeScript type definitions. Don't use it — TypeScript build will fail. Omit it (letter-spacing in PDFs is cosmetic only).
 16. **ESM imports need `.js` extension** — all local imports in backend TypeScript files must end with `.js` (e.g. `from '../middleware/clientAuth.js'`). Missing extensions cause `ENOTFOUND` crashes at startup in both ts-node and compiled Node.js ESM.
+17. **Railway build: `tsc: not found`** — Railway sets `NODE_ENV=production` during build, so `npm ci` skips `devDependencies` and `tsc` is missing when `npm run build` runs. Fixed by `backend/nixpacks.toml` which overrides the install phase to `npm ci --include=dev`. Do not remove that file.
+18. **`uuid` v14 crashes with `crypto is not defined`** — uuid v14 requires `globalThis.crypto` (Web Crypto API) which isn't available on older Node.js. All UUID generation uses Node's built-in `crypto.randomUUID()` instead. Never add the `uuid` package back.
+19. **Backend artists route is `/api/artist` (singular)** — the route is mounted at `/api/artist`, not `/api/artists`. A `/api/artists` alias also exists now. Any new frontend code fetching artists should use `/api/artist`.
 
 ---
 
