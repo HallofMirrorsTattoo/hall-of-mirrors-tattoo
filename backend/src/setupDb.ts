@@ -233,10 +233,19 @@ export async function setupDatabase() {
         await client.query(
           `INSERT INTO "Artist" (id, studio_id, full_name, email, password_hash, specialties, years_experience, bio, instagram_handle, is_active, role, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())`,
-          ['artist-robyn-001', 'default-studio', 'Robyn', 'robyn@hallofmirrorstattoo.com', '$2b$10$Y4qE2Mzj8Y3ZH5L4KQ9sJewQqV9C4mZ2H8K6D2X9L5Y8O1P2Q3R4', 'Fine line, geometric, custom designs', 8, 'Experienced tattoo artist specializing in fine line and geometric designs.', 'robyn.tattoos', true, 'artist']
+          ['artist-robyn-001', 'default-studio', 'Robyn', 'robyn@hallofmirrorstattoo.com', '$2b$10$bwCLFm5mDzcPdPEdHxtpI.ImZAwxdzrpVl7xoymsE0vRObCPq1V7q', 'Neo-traditional, custom designs', 8, 'Bespoke neo-traditional tattoo artist at Hall of Mirrors, Liverpool.', 'hallofmirrorstattoo', true, 'artist']
         );
         console.log('✅ Default artist Robyn created');
       } else {
+        // Fix bad seed hash if it was created with the wrong hash (one-time migration)
+        await client.query(
+          `UPDATE "Artist" SET password_hash = $1 WHERE email = $2 AND password_hash = $3`,
+          [
+            '$2b$10$bwCLFm5mDzcPdPEdHxtpI.ImZAwxdzrpVl7xoymsE0vRObCPq1V7q',
+            'robyn@hallofmirrorstattoo.com',
+            '$2b$10$Y4qE2Mzj8Y3ZH5L4KQ9sJewQqV9C4mZ2H8K6D2X9L5Y8O1P2Q3R4',
+          ]
+        );
         console.log('✅ Default artist Robyn exists');
       }
 

@@ -59,7 +59,7 @@ function StatusBadge({ status }: { status: string }) {
 
 export default function ArtistDashboard() {
   const router = useRouter();
-  const { artist, accessToken, logout } = useAuth();
+  const { artist, accessToken, logout, isLoading: authLoading } = useAuth();
   const [tab, setTab] = useState<'bookings' | 'consultations'>('bookings');
 
   // Bookings state
@@ -79,13 +79,14 @@ export default function ArtistDashboard() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return; // wait for localStorage token to load
     if (!accessToken) {
       router.push('/artist/login');
       return;
     }
     fetchBookings();
     fetchConsultations();
-  }, [accessToken, router]);
+  }, [accessToken, authLoading, router]);
 
   const fetchBookings = async () => {
     try {
@@ -164,6 +165,14 @@ export default function ArtistDashboard() {
 
   const filteredBookings = bookings.filter((b) => statusFilter === 'all' || b.appointment_status === statusFilter);
   const pendingConsultations = consultations.filter((c) => c.status === 'pending').length;
+
+  if (authLoading) {
+    return (
+      <div className="min-h-[100dvh] flex items-center justify-center" style={{ background: 'var(--bg)' }}>
+        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-low)' }}>Loading</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[100dvh]" style={{ background: 'var(--bg)' }}>
