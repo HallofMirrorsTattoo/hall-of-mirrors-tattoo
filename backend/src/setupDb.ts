@@ -160,6 +160,57 @@ CREATE INDEX IF NOT EXISTS "Consultation_user_id_idx" ON "Consultation"(user_id)
 
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS password_reset_token TEXT;
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS password_reset_expires TIMESTAMP;
+
+CREATE TABLE IF NOT EXISTS "MedicalHistory" (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL UNIQUE,
+    pregnant_or_breastfeeding BOOLEAN NOT NULL DEFAULT false,
+    blood_borne_conditions BOOLEAN NOT NULL DEFAULT false,
+    diabetes BOOLEAN NOT NULL DEFAULT false,
+    heart_condition BOOLEAN NOT NULL DEFAULT false,
+    haemophilia_or_bleeding_disorder BOOLEAN NOT NULL DEFAULT false,
+    epilepsy_or_seizure BOOLEAN NOT NULL DEFAULT false,
+    skin_conditions TEXT,
+    autoimmune_conditions BOOLEAN NOT NULL DEFAULT false,
+    blood_thinners BOOLEAN NOT NULL DEFAULT false,
+    steroids_or_immunosuppressants BOOLEAN NOT NULL DEFAULT false,
+    alcohol_or_drugs_last_24h BOOLEAN NOT NULL DEFAULT false,
+    known_allergies TEXT,
+    allergies_latex BOOLEAN NOT NULL DEFAULT false,
+    allergies_ink BOOLEAN NOT NULL DEFAULT false,
+    allergies_topical_anaesthetics BOOLEAN NOT NULL DEFAULT false,
+    previous_tattoo_reaction BOOLEAN NOT NULL DEFAULT false,
+    previous_reaction_details TEXT,
+    chemotherapy_or_radiotherapy BOOLEAN NOT NULL DEFAULT false,
+    current_medications TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES "User"(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "ConsentForm" (
+    id TEXT PRIMARY KEY,
+    user_id TEXT,
+    booking_id TEXT NOT NULL UNIQUE,
+    form_reference_no TEXT NOT NULL UNIQUE,
+    full_name_signed TEXT NOT NULL,
+    date_signed TIMESTAMP NOT NULL,
+    age_confirmed BOOLEAN NOT NULL DEFAULT false,
+    health_accuracy_confirmed BOOLEAN NOT NULL DEFAULT false,
+    risks_understood_confirmed BOOLEAN NOT NULL DEFAULT false,
+    sobriety_confirmed BOOLEAN NOT NULL DEFAULT false,
+    suitability_confirmed BOOLEAN NOT NULL DEFAULT false,
+    voluntary_consent_confirmed BOOLEAN NOT NULL DEFAULT false,
+    design_approved_confirmed BOOLEAN NOT NULL DEFAULT false,
+    aftercare_responsibility_confirmed BOOLEAN NOT NULL DEFAULT false,
+    photography_permission BOOLEAN NOT NULL DEFAULT false,
+    gdpr_consent_confirmed BOOLEAN NOT NULL DEFAULT false,
+    form_status TEXT NOT NULL DEFAULT 'signed',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES "User"(id) ON DELETE SET NULL,
+    FOREIGN KEY (booking_id) REFERENCES "Booking"(id) ON DELETE CASCADE
+);
 `;
 
 export async function setupDatabase() {

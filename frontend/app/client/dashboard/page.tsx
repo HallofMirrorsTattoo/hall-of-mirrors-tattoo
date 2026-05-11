@@ -8,6 +8,7 @@ import { ClientProtectedRoute } from '@/lib/clientProtectedRoute';
 import BookingsTab from './bookings';
 import DesignIdeasTab from './design-ideas';
 import ConsultationsTab from './consultations';
+import ConsentFormsTab from './consent-forms';
 
 export default function ClientDashboardPage() {
   const router = useRouter();
@@ -71,6 +72,16 @@ export default function ClientDashboardPage() {
             >
               Consultations
             </button>
+            <button
+              onClick={() => setActiveTab('consent-forms')}
+              className={`pb-4 font-medium transition-colors ${
+                activeTab === 'consent-forms'
+                  ? 'text-accent-gold border-b-2 border-accent-gold'
+                  : 'text-primary-dark/70 hover:text-primary-dark'
+              }`}
+            >
+              Consent Forms
+            </button>
           </div>
 
           {/* Tab Content */}
@@ -78,6 +89,7 @@ export default function ClientDashboardPage() {
             {activeTab === 'bookings' && <BookingsTab />}
             {activeTab === 'design-ideas' && <DesignIdeasTab />}
             {activeTab === 'consultations' && <ConsultationsTab />}
+            {activeTab === 'consent-forms' && <ConsentFormsTab />}
           </div>
 
           {/* Quick Actions */}

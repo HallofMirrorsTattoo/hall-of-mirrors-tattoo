@@ -198,6 +198,75 @@ export async function sendPasswordResetEmail(data: {
   });
 }
 
+export async function sendConsentFormToClient(data: {
+  clientEmail: string;
+  clientName: string;
+  bookingReference: string;
+  formReference: string;
+  pdfBase64: string;
+}): Promise<void> {
+  const content = `
+    ${heading(`Your consent form is on record.`)}
+    ${body(`Hello ${data.clientName} — thank you for completing your consent form. A copy is attached to this email for your records.`)}
+    ${body(`Your booking is now confirmed. If you have any questions before your appointment, please don't hesitate to get in touch.`)}
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+      ${detail('Booking', data.bookingReference)}
+      ${detail('Form reference', data.formReference)}
+    </table>
+    ${ctaButton(`${FRONTEND_URL}/client/dashboard`, 'View Your Dashboard')}
+  `;
+
+  await send({
+    to: data.clientEmail,
+    from: { email: FROM_EMAIL, name: 'Hall of Mirrors Tattoo' },
+    subject: `Consent form confirmed — ${data.bookingReference}`,
+    html: baseTemplate(content),
+    attachments: [
+      {
+        content: data.pdfBase64,
+        filename: `consent-form-${data.formReference}.pdf`,
+        type: 'application/pdf',
+        disposition: 'attachment',
+      },
+    ],
+  });
+}
+
+export async function sendConsentFormToStudio(data: {
+  clientName: string;
+  clientEmail: string;
+  bookingReference: string;
+  formReference: string;
+  pdfBase64: string;
+}): Promise<void> {
+  const content = `
+    ${heading(`New consent form submitted.`)}
+    ${body(`A client has completed and signed their consent form. The signed document is attached.`)}
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+      ${detail('Client', data.clientName)}
+      ${detail('Email', data.clientEmail)}
+      ${detail('Booking', data.bookingReference)}
+      ${detail('Form reference', data.formReference)}
+    </table>
+    ${ctaButton(`${FRONTEND_URL}/artist/dashboard`, 'View in Dashboard')}
+  `;
+
+  await send({
+    to: STUDIO_EMAIL,
+    from: { email: FROM_EMAIL, name: 'Hall of Mirrors Booking System' },
+    subject: `Consent form signed: ${data.clientName} — ${data.bookingReference}`,
+    html: baseTemplate(content),
+    attachments: [
+      {
+        content: data.pdfBase64,
+        filename: `consent-form-${data.formReference}.pdf`,
+        type: 'application/pdf',
+        disposition: 'attachment',
+      },
+    ],
+  });
+}
+
 export async function sendConsultationResponseToClient(data: {
   clientEmail: string;
   clientName: string;
