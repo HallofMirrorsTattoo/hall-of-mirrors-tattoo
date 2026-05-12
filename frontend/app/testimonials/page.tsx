@@ -53,7 +53,7 @@ export default function Testimonials() {
             <span style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '2rem', fontWeight: 400, color: 'var(--gold)', lineHeight: 1 }}>
               {avgRating}
             </span>
-            <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.625rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+            <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
               out of 5 &nbsp;·&nbsp; {reviews.length} reviews
             </span>
           </div>
@@ -72,7 +72,7 @@ export default function Testimonials() {
                   <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.125rem', fontWeight: 400, color: 'var(--cream)', lineHeight: 1.3, marginBottom: '0.25rem', maxWidth: 'none' }}>
                     {review.name}
                   </p>
-                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)', maxWidth: 'none' }}>
+                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)', maxWidth: 'none' }}>
                     {review.style}
                   </p>
                 </div>
@@ -83,7 +83,7 @@ export default function Testimonials() {
               <p style={{ fontSize: '0.9375rem', lineHeight: 1.75, maxWidth: '56ch', marginBottom: '0.875rem' }}>
                 {review.text}
               </p>
-              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.1em', color: 'var(--text-low)', maxWidth: 'none' }}>
+              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.1em', color: 'var(--text-low)', maxWidth: 'none' }}>
                 {new Date(review.date).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
               </p>
             </AnimatedSection>

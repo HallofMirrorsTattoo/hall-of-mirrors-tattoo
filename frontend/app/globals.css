@@ -14,9 +14,9 @@
   --gold-muted:   rgba(201, 168, 76, 0.15);
   --cream:        #F2EDE0;
   --text:         #EDE8D8;
-  --text-mid:     #A89E94;
-  --text-low:     #7A7268;
-  --border:       #2A2520;
+  --text-mid:     #C4BAB0;
+  --text-low:     #9A9288;
+  --border:       #332E28;
   --border-light: rgba(201, 168, 76, 0.18);
   --cursor-x:     50%;
   --cursor-y:     50%;
@@ -94,7 +94,7 @@ h4 { font-size: 1.25rem; line-height: 1.3; }
 p {
   font-family: 'DM Sans', system-ui, sans-serif;
   line-height: 1.75;
-  color: var(--text-mid);
+  color: var(--text);
   max-width: 65ch;
 }
 
@@ -102,11 +102,11 @@ p {
 .eyebrow {
   display: inline-block;
   font-family: 'DM Mono', monospace;
-  font-size: 0.6875rem;
-  letter-spacing: 0.25em;
+  font-size: 0.75rem;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--gold);
-  opacity: 0.8;
+  opacity: 0.9;
   margin-bottom: 1rem;
 }
 
@@ -300,8 +300,8 @@ input:focus, textarea:focus, select:focus {
 label {
   display: block;
   font-family: 'DM Mono', monospace;
-  font-size: 0.6875rem;
-  letter-spacing: 0.15em;
+  font-size: 0.75rem;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--text-mid);
   margin-bottom: 0.5rem;

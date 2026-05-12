@@ -148,7 +148,7 @@ export default function Services() {
                 >
                   <p style={{
                     fontFamily: '"DM Mono", monospace',
-                    fontSize: '0.6rem',
+                    fontSize: '0.75rem',
                     letterSpacing: '0.2em',
                     textTransform: 'uppercase',
                     color: 'var(--text-low)',

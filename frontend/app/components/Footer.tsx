@@ -49,7 +49,7 @@ export default function Footer() {
           <div className="md:col-span-3 md:col-start-6">
             <h4 style={{
               fontFamily: '"DM Mono", monospace',
-              fontSize: '0.625rem',
+              fontSize: '0.75rem',
               letterSpacing: '0.25em',
               textTransform: 'uppercase',
               color: 'var(--gold)',
@@ -76,7 +76,7 @@ export default function Footer() {
           <div className="md:col-span-2">
             <h4 style={{
               fontFamily: '"DM Mono", monospace',
-              fontSize: '0.625rem',
+              fontSize: '0.75rem',
               letterSpacing: '0.25em',
               textTransform: 'uppercase',
               color: 'var(--gold)',
@@ -104,7 +104,7 @@ export default function Footer() {
           <div className="md:col-span-2">
             <h4 style={{
               fontFamily: '"DM Mono", monospace',
-              fontSize: '0.625rem',
+              fontSize: '0.75rem',
               letterSpacing: '0.25em',
               textTransform: 'uppercase',
               color: 'var(--gold)',
@@ -141,7 +141,7 @@ export default function Footer() {
         }}>
           <p style={{
             fontFamily: '"DM Mono", monospace',
-            fontSize: '0.6rem',
+            fontSize: '0.75rem',
             letterSpacing: '0.1em',
             color: 'var(--text-low)',
             opacity: 0.7,
@@ -150,7 +150,7 @@ export default function Footer() {
           </p>
           <p style={{
             fontFamily: '"DM Mono", monospace',
-            fontSize: '0.6rem',
+            fontSize: '0.75rem',
             letterSpacing: '0.1em',
             color: 'var(--text-low)',
             opacity: 0.4,

@@ -195,12 +195,12 @@ export default function MessagesTab({ onUnreadCountChange }: MessagesTabProps) {
                   {t.artist_name ?? 'Hall of Mirrors'}
                 </p>
                 {t.unread_count > 0 && (
-                  <span style={{ marginLeft: '0.5rem', padding: '0.1rem 0.45rem', background: 'var(--gold)', color: 'var(--bg)', borderRadius: '2rem', ...mono, fontSize: '0.5rem', fontWeight: 600, flexShrink: 0 }}>
+                  <span style={{ marginLeft: '0.5rem', padding: '0.1rem 0.45rem', background: 'var(--gold)', color: 'var(--bg)', borderRadius: '2rem', ...mono, fontSize: '0.7rem', fontWeight: 600, flexShrink: 0 }}>
                     {t.unread_count}
                   </span>
                 )}
               </div>
-              <p style={{ margin: '0 0 0.375rem', ...mono, fontSize: '0.5rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+              <p style={{ margin: '0 0 0.375rem', ...mono, fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
                 {t.booking_reference}
               </p>
               {t.last_message_body ? (
@@ -214,7 +214,7 @@ export default function MessagesTab({ onUnreadCountChange }: MessagesTabProps) {
                 </p>
               )}
               {t.last_message_at && (
-                <p style={{ margin: '0.25rem 0 0', ...mono, fontSize: '0.44rem', letterSpacing: '0.06em', color: 'var(--text-low)' }}>
+                <p style={{ margin: '0.25rem 0 0', ...mono, fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--text-low)' }}>
                   {fmtAgo(t.last_message_at)}
                 </p>
               )}
@@ -232,7 +232,7 @@ export default function MessagesTab({ onUnreadCountChange }: MessagesTabProps) {
               <p style={{ margin: 0, ...serif, fontStyle: 'italic', fontWeight: 300, fontSize: '1.125rem', color: 'var(--cream)' }}>
                 {selectedThread?.artist_name ?? 'Hall of Mirrors'}
               </p>
-              <p style={{ margin: '0.1rem 0 0', ...mono, fontSize: '0.48rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+              <p style={{ margin: '0.1rem 0 0', ...mono, fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
                 {selectedThread?.booking_reference} · {selectedThread?.appointment_date_time
                   ? new Date(selectedThread.appointment_date_time).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
                   : ''}
@@ -247,7 +247,7 @@ export default function MessagesTab({ onUnreadCountChange }: MessagesTabProps) {
           {/* Messages area */}
           <div ref={msgAreaRef} style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {messagesLoading && messages.length === 0 ? (
-              <p style={{ ...mono, fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)', textAlign: 'center', paddingTop: '4rem' }}>
+              <p style={{ ...mono, fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)', textAlign: 'center', paddingTop: '4rem' }}>
                 Loading...
               </p>
             ) : messages.length === 0 ? (
@@ -268,7 +268,7 @@ export default function MessagesTab({ onUnreadCountChange }: MessagesTabProps) {
                   return (
                     <div key={msg.id}>
                       {showDate && (
-                        <p style={{ textAlign: 'center', ...mono, fontSize: '0.44rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', margin: '0.75rem 0 0.5rem' }}>
+                        <p style={{ textAlign: 'center', ...mono, fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', margin: '0.75rem 0 0.5rem' }}>
                           {new Date(msg.created_at).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
                         </p>
                       )}
@@ -283,7 +283,7 @@ export default function MessagesTab({ onUnreadCountChange }: MessagesTabProps) {
                           <p style={{ margin: 0, fontSize: '0.875rem', color: isClient ? 'var(--cream)' : 'var(--text)', lineHeight: 1.6, wordBreak: 'break-word' }}>
                             {msg.body}
                           </p>
-                          <p style={{ margin: '0.25rem 0 0', ...mono, fontSize: '0.4rem', letterSpacing: '0.06em', color: isClient ? 'rgba(201,168,76,0.5)' : 'var(--text-low)', textAlign: isClient ? 'right' : 'left' }}>
+                          <p style={{ margin: '0.25rem 0 0', ...mono, fontSize: '0.65rem', letterSpacing: '0.06em', color: isClient ? 'rgba(201,168,76,0.5)' : 'var(--text-low)', textAlign: isClient ? 'right' : 'left' }}>
                             {fmtDate(msg.created_at)}
                           </p>
                         </div>

@@ -40,7 +40,7 @@ export default function TimeSlotPicker({ date, selectedSlot, onSlotSelect, slotD
       <p style={{
         margin: '0 0 0.875rem',
         fontFamily: '"DM Mono", monospace',
-        fontSize: '0.575rem',
+        fontSize: '0.72rem',
         letterSpacing: '0.16em',
         textTransform: 'uppercase',
         color: 'rgba(201,168,76,0.65)',
@@ -103,7 +103,7 @@ export default function TimeSlotPicker({ date, selectedSlot, onSlotSelect, slotD
                 <p style={{
                   margin: '0.15rem 0 0',
                   fontFamily: '"DM Mono", monospace',
-                  fontSize: '0.45rem',
+                  fontSize: '0.65rem',
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase',
                   color: 'var(--text-low)',

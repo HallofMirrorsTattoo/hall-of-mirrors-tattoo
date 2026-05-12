@@ -31,10 +31,10 @@ type BookingFormData = z.infer<typeof BookingSchema>;
 
 const eyebrow: React.CSSProperties = {
   fontFamily: '"DM Mono", monospace',
-  fontSize: '0.575rem',
-  letterSpacing: '0.2em',
+  fontSize: '0.75rem',
+  letterSpacing: '0.18em',
   textTransform: 'uppercase',
-  color: 'rgba(201,168,76,0.65)',
+  color: 'rgba(201,168,76,0.85)',
   display: 'block',
   marginBottom: '1.25rem',
 };
@@ -202,7 +202,7 @@ export default function BookingPage() {
             We&apos;ll confirm your booking within 24 hours.
           </p>
           {user && (
-            <p style={{ marginTop: '1rem', fontFamily: '"DM Mono", monospace', fontSize: '0.575rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.5)' }}>
+            <p style={{ marginTop: '1rem', fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.5)' }}>
               Booking as {user.first_name} {user.last_name}
             </p>
           )}
@@ -275,10 +275,10 @@ export default function BookingPage() {
                     ))}
                   </select>
                   {loadingArtists && (
-                    <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.55rem', letterSpacing: '0.1em', color: 'var(--text-low)', marginTop: '0.375rem' }}>Loading artists…</p>
+                    <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.1em', color: 'var(--text-low)', marginTop: '0.375rem' }}>Loading artists…</p>
                   )}
                   {hasArtist && (
-                    <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.55rem', letterSpacing: '0.08em', color: 'rgba(201,168,76,0.55)', marginTop: '0.5rem' }}>
+                    <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.08em', color: 'rgba(201,168,76,0.55)', marginTop: '0.5rem' }}>
                       Showing live availability for this artist
                     </p>
                   )}
@@ -344,7 +344,7 @@ export default function BookingPage() {
                       />
                     </div>
                     {dateError && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginTop: '0.375rem' }}>{dateError}</p>}
-                    <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.55rem', letterSpacing: '0.08em', color: 'var(--text-low)', marginTop: '0.5rem' }}>
+                    <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.08em', color: 'var(--text-low)', marginTop: '0.5rem' }}>
                       Select an artist above to choose from available time slots.
                     </p>
                   </>
@@ -410,7 +410,7 @@ export default function BookingPage() {
                     borderRadius: '0.5rem',
                     marginBottom: '1.25rem',
                   }}>
-                    <p style={{ margin: 0, fontFamily: '"DM Mono", monospace', fontSize: '0.575rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.65)' }}>
+                    <p style={{ margin: 0, fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.65)' }}>
                       Your selected appointment
                     </p>
                     {selectedDate && (

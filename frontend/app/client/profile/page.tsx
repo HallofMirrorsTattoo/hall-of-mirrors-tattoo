@@ -33,7 +33,7 @@ const inputStyle: React.CSSProperties = {
 const labelStyle: React.CSSProperties = {
   display: 'block',
   fontFamily: '"DM Mono", monospace',
-  fontSize: '0.6rem',
+  fontSize: '0.75rem',
   letterSpacing: '0.2em',
   textTransform: 'uppercase',
   color: 'var(--gold)',
@@ -174,7 +174,7 @@ export default function ClientProfilePage() {
     <div className="min-h-[100dvh]" style={{ background: 'var(--bg)', paddingTop: '7rem', paddingBottom: '5rem' }}>
       <div style={{ maxWidth: '680px', margin: '0 auto', padding: '0 1.5rem' }}>
         <div style={{ marginBottom: '3rem' }}>
-          <Link href="/client/dashboard" style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--gold)', opacity: 0.5, textDecoration: 'none', display: 'inline-block', marginBottom: '1.5rem' }}>
+          <Link href="/client/dashboard" style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--gold)', opacity: 0.5, textDecoration: 'none', display: 'inline-block', marginBottom: '1.5rem' }}>
             ← Dashboard
           </Link>
           <p className="eyebrow" style={{ marginBottom: '0.75rem' }}>Your account</p>
@@ -204,7 +204,7 @@ export default function ClientProfilePage() {
           )}
 
           <section style={{ marginBottom: '3rem' }}>
-            <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'var(--text-low)', marginBottom: '1.5rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>
+            <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'var(--text-low)', marginBottom: '1.5rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>
               Personal details
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -218,7 +218,7 @@ export default function ClientProfilePage() {
           </section>
 
           <section style={{ marginBottom: '3rem' }}>
-            <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'var(--text-low)', marginBottom: '1.5rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>
+            <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'var(--text-low)', marginBottom: '1.5rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>
               Address
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -231,7 +231,7 @@ export default function ClientProfilePage() {
           </section>
 
           <section style={{ marginBottom: '3rem' }}>
-            <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'var(--text-low)', marginBottom: '0.5rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>
+            <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'var(--text-low)', marginBottom: '0.5rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>
               Emergency contact
             </p>
             <p style={{ fontSize: '0.8125rem', color: 'var(--text-low)', marginBottom: '1.5rem', lineHeight: 1.6 }}>

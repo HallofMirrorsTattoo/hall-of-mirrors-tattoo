@@ -99,7 +99,7 @@ export default function ClientDashboardPage() {
                 >
                   {tab.label}
                   {badge > 0 && (
-                    <span style={{ padding: '0.1rem 0.4rem', background: 'var(--gold)', color: 'var(--bg)', borderRadius: '2rem', fontFamily: '"DM Mono", monospace', fontSize: '0.5rem', fontWeight: 600 }}>
+                    <span style={{ padding: '0.1rem 0.4rem', background: 'var(--gold)', color: 'var(--bg)', borderRadius: '2rem', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', fontWeight: 600 }}>
                       {badge}
                     </span>
                   )}

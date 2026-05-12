@@ -92,7 +92,7 @@ export default function BookingsTab() {
                     <p className="text-sm" style={{ color: 'var(--text-low)' }}>Ref: {booking.booking_reference}</p>
                   </div>
                   <span
-                    style={{ ...getStatusStyle(booking.appointment_status), padding: '0.25rem 0.75rem', borderRadius: '9999px', fontFamily: '"DM Mono", monospace', fontSize: '0.625rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}
+                    style={{ ...getStatusStyle(booking.appointment_status), padding: '0.25rem 0.75rem', borderRadius: '9999px', fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}
                   >
                     {booking.appointment_status.replace(/_/g, ' ')}
                   </span>

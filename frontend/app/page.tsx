@@ -108,7 +108,7 @@ export default function Home() {
           <div className="flex flex-col items-center gap-2" style={{ animation: 'float 6s ease-in-out 1.5s infinite' }}>
             <span style={{
               fontFamily: '"DM Mono", monospace',
-              fontSize: '0.625rem',
+              fontSize: '0.75rem',
               letterSpacing: '0.3em',
               textTransform: 'uppercase',
               color: 'rgba(242,237,224,0.35)',
@@ -170,7 +170,7 @@ export default function Home() {
                   </p>
                   <p style={{
                     fontFamily: '"DM Mono", monospace',
-                    fontSize: '0.625rem',
+                    fontSize: '0.75rem',
                     letterSpacing: '0.12em',
                     color: 'var(--text-low)',
                     maxWidth: 'none',
@@ -274,7 +274,7 @@ export default function Home() {
         {/* HOM Divider */}
         <div className="max-w-5xl mx-auto px-6">
           <div className="section-divider">
-            <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.35em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.35)' }}>HOM</span>
+            <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.35em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.35)' }}>HOM</span>
           </div>
         </div>
 
@@ -319,7 +319,7 @@ export default function Home() {
                       <p style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1.75rem', fontWeight: 400, color: 'var(--gold)', lineHeight: 1, marginBottom: '0.25rem' }}>
                         {s.num}
                       </p>
-                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)', maxWidth: 'none' }}>
+                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)', maxWidth: 'none' }}>
                         {s.label}
                       </p>
                     </div>
@@ -371,7 +371,7 @@ export default function Home() {
         {/* HOM Divider */}
         <div className="max-w-5xl mx-auto px-6">
           <div className="section-divider">
-            <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.35em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.35)' }}>HOM</span>
+            <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.35em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.35)' }}>HOM</span>
           </div>
         </div>
 
@@ -476,7 +476,7 @@ export default function Home() {
             <AnimatedSection>
               <p style={{
                 fontFamily: '"DM Mono", monospace',
-                fontSize: '0.6rem',
+                fontSize: '0.75rem',
                 letterSpacing: '0.35em',
                 textTransform: 'uppercase',
                 color: 'var(--gold)',

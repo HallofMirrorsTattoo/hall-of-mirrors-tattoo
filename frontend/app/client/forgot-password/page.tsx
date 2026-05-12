@@ -76,7 +76,7 @@ export default function ForgotPasswordPage() {
             )}
 
             <div>
-              <label style={{ display: 'block', fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--gold)', opacity: 0.55, marginBottom: '0.5rem' }}>
+              <label style={{ display: 'block', fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--gold)', opacity: 0.55, marginBottom: '0.5rem' }}>
                 Email address
               </label>
               <input

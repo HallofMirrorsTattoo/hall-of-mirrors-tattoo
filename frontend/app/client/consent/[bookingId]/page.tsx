@@ -20,7 +20,7 @@ const inputStyle: React.CSSProperties = {
 const labelStyle: React.CSSProperties = {
   display: 'block',
   fontFamily: '"DM Mono", monospace',
-  fontSize: '0.6rem',
+  fontSize: '0.75rem',
   letterSpacing: '0.2em',
   textTransform: 'uppercase',
   color: 'var(--gold)',
@@ -30,7 +30,7 @@ const labelStyle: React.CSSProperties = {
 
 const sectionHeadingStyle: React.CSSProperties = {
   fontFamily: '"DM Mono", monospace',
-  fontSize: '0.6rem',
+  fontSize: '0.75rem',
   letterSpacing: '0.25em',
   textTransform: 'uppercase',
   color: 'var(--text-low)',
@@ -280,7 +280,7 @@ export default function ConsentFormPage() {
 
         {/* Back link + heading */}
         <div style={{ marginBottom: '3rem' }}>
-          <Link href="/client/dashboard" style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--gold)', opacity: 0.5, textDecoration: 'none', display: 'inline-block', marginBottom: '1.5rem' }}>
+          <Link href="/client/dashboard" style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--gold)', opacity: 0.5, textDecoration: 'none', display: 'inline-block', marginBottom: '1.5rem' }}>
             ← Dashboard
           </Link>
           <p className="eyebrow" style={{ marginBottom: '0.75rem' }}>Before your appointment</p>

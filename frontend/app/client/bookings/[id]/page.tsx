@@ -71,7 +71,7 @@ function statusStyle(status: string): React.CSSProperties {
 
 const label: React.CSSProperties = {
   fontFamily: '"DM Mono", monospace',
-  fontSize: '0.575rem',
+  fontSize: '0.72rem',
   letterSpacing: '0.14em',
   textTransform: 'uppercase',
   color: 'rgba(201,168,76,0.55)',
@@ -213,7 +213,7 @@ export default function BookingDetailPage() {
 
           {/* Back */}
           <Link href="/client/dashboard" style={{
-            fontFamily: '"DM Mono", monospace', fontSize: '0.625rem', letterSpacing: '0.12em',
+            fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.12em',
             textTransform: 'uppercase', color: 'var(--gold)', textDecoration: 'none',
             display: 'inline-block', marginBottom: '2.5rem',
           }}>
@@ -229,7 +229,7 @@ export default function BookingDetailPage() {
             }}>
               Booking Details
             </h1>
-            <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.5)', margin: 0 }}>
+            <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.5)', margin: 0 }}>
               Ref: {booking.booking_reference}
             </p>
           </div>
@@ -252,7 +252,7 @@ export default function BookingDetailPage() {
                         padding: '0.3rem 0.875rem',
                         borderRadius: '9999px',
                         fontFamily: '"DM Mono", monospace',
-                        fontSize: '0.6rem',
+                        fontSize: '0.75rem',
                         letterSpacing: '0.1em',
                         textTransform: 'uppercase',
                       }}>
@@ -299,7 +299,7 @@ export default function BookingDetailPage() {
                         marginBottom: '1.25rem',
                       }}>
                         <p style={{
-                          fontFamily: '"DM Mono", monospace', fontSize: '0.6rem',
+                          fontFamily: '"DM Mono", monospace', fontSize: '0.75rem',
                           letterSpacing: '0.12em', textTransform: 'uppercase',
                           color: '#fca5a5', margin: '0 0 0.5rem',
                         }}>
@@ -589,7 +589,7 @@ export default function BookingDetailPage() {
                         href={`https://instagram.com/${booking.artist.instagram_handle}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.625rem', letterSpacing: '0.1em', color: 'var(--gold)', textDecoration: 'none' }}
+                        style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.1em', color: 'var(--gold)', textDecoration: 'none' }}
                       >
                         @{booking.artist.instagram_handle}
                       </a>
@@ -608,7 +608,7 @@ export default function BookingDetailPage() {
                       <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', fontWeight: 500, color: booking.appointment_status === 'cancelled' ? 'rgba(252,165,165,0.7)' : 'var(--cream)' }}>
                         {booking.deposit_price ? `£${booking.deposit_price}` : '—'}
                         {booking.appointment_status === 'cancelled' && (
-                          <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.55rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#fca5a5', marginLeft: '0.4rem' }}>
+                          <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#fca5a5', marginLeft: '0.4rem' }}>
                             forfeited
                           </span>
                         )}

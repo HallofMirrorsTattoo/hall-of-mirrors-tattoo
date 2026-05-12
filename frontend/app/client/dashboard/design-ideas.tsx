@@ -155,7 +155,7 @@ export default function DesignIdeasTab() {
                     Click to choose a photo
                   </p>
                 )}
-                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.1em', color: 'var(--text-low)' }}>
+                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.1em', color: 'var(--text-low)' }}>
                   {selectedFile ? selectedFile.name : 'JPG, PNG, WEBP — max 10 MB'}
                 </p>
               </div>
@@ -219,7 +219,7 @@ export default function DesignIdeasTab() {
                       {idea.description}
                     </p>
                   )}
-                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.1em', color: 'var(--text-low)', marginBottom: '0.875rem' }}>
+                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.1em', color: 'var(--text-low)', marginBottom: '0.875rem' }}>
                     {new Date(idea.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </p>
                   <button onClick={() => handleDelete(idea.design_idea_id)} className="btn-secondary" style={{ width: '100%', fontSize: '0.8125rem', padding: '0.5rem 0' }}>

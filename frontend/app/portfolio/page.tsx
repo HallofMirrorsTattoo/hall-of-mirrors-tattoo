@@ -131,7 +131,7 @@ export default function Portfolio() {
       {/* HOM Divider */}
       <div className="max-w-5xl mx-auto px-6">
         <div className="section-divider">
-          <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.35em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.35)' }}>HOM</span>
+          <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.35em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.35)' }}>HOM</span>
         </div>
       </div>
 

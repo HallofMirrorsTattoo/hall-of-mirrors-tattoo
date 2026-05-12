@@ -94,12 +94,12 @@ interface Consultation {
 
 const labelStyle: React.CSSProperties = {
   fontFamily: '"DM Mono", monospace',
-  fontSize: '0.6rem',
-  letterSpacing: '0.2em',
+  fontSize: '0.75rem',
+  letterSpacing: '0.15em',
   textTransform: 'uppercase' as const,
-  color: 'rgba(201,168,76,0.5)',
+  color: 'rgba(201,168,76,0.75)',
   display: 'block',
-  marginBottom: '0.25rem',
+  marginBottom: '0.375rem',
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -464,7 +464,7 @@ export default function ArtistDashboard() {
               const startH = parseInt(selectedBooking.appointment_time.substring(0, 2), 10);
               const endH = startH + Math.round(selectedBooking.estimated_duration_minutes / 60);
               return (
-                <p style={{ margin: '0.25rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.575rem', letterSpacing: '0.1em', color: 'rgba(201,168,76,0.5)' }}>
+                <p style={{ margin: '0.25rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.1em', color: 'rgba(201,168,76,0.5)' }}>
                   Confirmed session: {fmtH(startH)} → {fmtH(endH)} ({Math.round(selectedBooking.estimated_duration_minutes / 60)}h)
                   {selectedBooking.notify_end_time === false && ' · finish time hidden from client'}
                 </p>
@@ -490,7 +490,7 @@ export default function ArtistDashboard() {
         {selectedBooking.appointment_status !== 'confirmed' && selectedBooking.appointment_status !== 'completed' && selectedBooking.appointment_status !== 'cancelled' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
             <div>
-              <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.575rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', display: 'block', marginBottom: '0.5rem' }}>
+              <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', display: 'block', marginBottom: '0.5rem' }}>
                 Session duration
               </span>
               <select
@@ -507,7 +507,7 @@ export default function ArtistDashboard() {
                   const startH = parseInt(selectedBooking.appointment_time.substring(0, 2), 10);
                   const endH = startH + confirmDurationHours;
                   return (
-                    <p style={{ margin: '0.5rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.55rem', letterSpacing: '0.1em', color: 'rgba(201,168,76,0.55)' }}>
+                    <p style={{ margin: '0.5rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.1em', color: 'rgba(201,168,76,0.55)' }}>
                       Session: {fmtH(startH)} → {fmtH(endH)}
                     </p>
                   );
@@ -527,7 +527,7 @@ export default function ArtistDashboard() {
               </span>
             </label>
             {!confirmNotifyEnd && (
-              <p style={{ margin: '-0.375rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.5rem', letterSpacing: '0.08em', color: 'var(--text-low)' }}>
+              <p style={{ margin: '-0.375rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-low)' }}>
                 Client sees start time only. Calendar still blocks the full session.
               </p>
             )}
@@ -582,13 +582,13 @@ export default function ArtistDashboard() {
           <p style={{ margin: 0, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.25rem', fontWeight: 300, color: 'var(--cream)' }}>
             Hall of Mirrors
           </p>
-          <p style={{ margin: '2px 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+          <p style={{ margin: '2px 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
             {artist?.full_name}
           </p>
         </div>
         <button
           onClick={() => { logout(); router.push('/artist/login'); }}
-          style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-mid)', background: 'none', border: '1px solid var(--border)', padding: '0.5rem 0.875rem', borderRadius: '2rem', cursor: 'pointer', transition: 'border-color 0.3s ease' }}
+          style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-mid)', background: 'none', border: '1px solid var(--border)', padding: '0.5rem 0.875rem', borderRadius: '2rem', cursor: 'pointer', transition: 'border-color 0.3s ease' }}
           onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
           onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
         >
@@ -628,7 +628,7 @@ export default function ArtistDashboard() {
               flexWrap: 'wrap',
             }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', minWidth: 0 }}>
-                <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: isToday ? 'var(--gold)' : 'rgba(201,168,76,0.5)' }}>
+                <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: isToday ? 'var(--gold)' : 'rgba(201,168,76,0.5)' }}>
                   {isToday ? `Today · ${todayCount} session${todayCount > 1 ? 's' : ''}` : 'Next session'}
                 </span>
                 <span style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1.25rem', color: 'var(--cream)', lineHeight: 1.2 }}>
@@ -637,14 +637,14 @@ export default function ArtistDashboard() {
               </div>
               <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', flex: 1 }}>
                 <div>
-                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', display: 'block' }}>Date</span>
+                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', display: 'block' }}>Date</span>
                   <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)', fontWeight: isToday ? 500 : 400 }}>
                     {isToday ? 'Today' : new Date(nextDate + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
                   </span>
                 </div>
                 {startHour !== null && (
                   <div>
-                    <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', display: 'block' }}>Time</span>
+                    <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', display: 'block' }}>Time</span>
                     <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)' }}>
                       {fmtHour(startHour)}{endHour ? ` → ${fmtHour(endHour)}` : ''}
                     </span>
@@ -652,13 +652,13 @@ export default function ArtistDashboard() {
                 )}
                 {next.placement && (
                   <div>
-                    <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', display: 'block' }}>Placement</span>
+                    <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', display: 'block' }}>Placement</span>
                     <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)' }}>{next.placement}</span>
                   </div>
                 )}
                 {next.estimated_duration_minutes && (
                   <div>
-                    <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', display: 'block' }}>Duration</span>
+                    <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', display: 'block' }}>Duration</span>
                     <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)' }}>
                       {Math.round(next.estimated_duration_minutes / 60)}h
                     </span>
@@ -668,7 +668,7 @@ export default function ArtistDashboard() {
               <button
                 type="button"
                 onClick={() => { setTab('bookings'); setSelectedBooking(next); }}
-                style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--gold)', background: 'none', border: '1px solid rgba(201,168,76,0.3)', padding: '0.5rem 0.875rem', borderRadius: '2rem', cursor: 'pointer', transition: 'border-color 0.25s ease', flexShrink: 0 }}
+                style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--gold)', background: 'none', border: '1px solid rgba(201,168,76,0.3)', padding: '0.5rem 0.875rem', borderRadius: '2rem', cursor: 'pointer', transition: 'border-color 0.25s ease', flexShrink: 0 }}
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.3)')}
               >
@@ -708,7 +708,7 @@ export default function ArtistDashboard() {
             >
               {label}
               {badge > 0 && (
-                <span style={{ marginLeft: '0.5rem', padding: '0.1rem 0.4rem', background: 'var(--gold)', color: 'var(--bg)', borderRadius: '2rem', fontSize: '0.55rem' }}>
+                <span style={{ marginLeft: '0.5rem', padding: '0.1rem 0.4rem', background: 'var(--gold)', color: 'var(--bg)', borderRadius: '2rem', fontSize: '0.72rem' }}>
                   {badge}
                 </span>
               )}
@@ -733,7 +733,7 @@ export default function ArtistDashboard() {
                       background: statusFilter === s ? 'rgba(201,168,76,0.1)' : 'none',
                       color: statusFilter === s ? 'var(--gold)' : 'var(--text-mid)',
                       fontFamily: '"DM Mono", monospace',
-                      fontSize: '0.6rem',
+                      fontSize: '0.75rem',
                       letterSpacing: '0.1em',
                       textTransform: 'uppercase',
                       cursor: 'pointer',
@@ -784,7 +784,7 @@ export default function ArtistDashboard() {
                           <p style={{ margin: '0 0 0.25rem', fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.1rem', fontWeight: 300, color: isCancelled ? 'var(--text-mid)' : 'var(--cream)', textDecoration: isCancelled ? 'line-through' : 'none' }}>
                             {booking.first_name} {booking.last_name}
                           </p>
-                          <p style={{ margin: '0 0 0.375rem', fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.1em', color: 'var(--text-low)' }}>
+                          <p style={{ margin: '0 0 0.375rem', fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.1em', color: 'var(--text-low)' }}>
                             {booking.booking_reference}
                           </p>
                           <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--text-mid)' }}>
@@ -834,7 +834,7 @@ export default function ArtistDashboard() {
                 <button
                   type="button"
                   onClick={calGoToday}
-                  style={{ padding: '0.3rem 0.875rem', borderRadius: '2rem', border: '1px solid var(--border)', background: 'none', color: 'var(--text-mid)', fontFamily: '"DM Mono", monospace', fontSize: '0.55rem', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.25s ease' }}
+                  style={{ padding: '0.3rem 0.875rem', borderRadius: '2rem', border: '1px solid var(--border)', background: 'none', color: 'var(--text-mid)', fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.25s ease' }}
                   onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--gold)'; e.currentTarget.style.color = 'var(--gold)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-mid)'; }}
                 >Today</button>
@@ -866,7 +866,7 @@ export default function ArtistDashboard() {
                         padding: '0.5rem',
                         background: isToday ? 'rgba(201,168,76,0.04)' : 'transparent',
                       }}>
-                        <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.48rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: isToday ? 'var(--gold)' : 'var(--text-low)' }}>
+                        <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: isToday ? 'var(--gold)' : 'var(--text-low)' }}>
                           {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][di]}
                         </span>
                         <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', fontWeight: isToday ? 600 : 400, color: isToday ? 'var(--gold)' : 'var(--text)', marginTop: '0.125rem' }}>
@@ -885,7 +885,7 @@ export default function ArtistDashboard() {
                       borderRight: '1px solid var(--border)',
                       borderBottom: hi < CAL_HOURS.length - 1 ? '1px solid rgba(42,37,32,0.6)' : 'none',
                     }}>
-                      <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.44rem', letterSpacing: '0.06em', color: 'var(--text-low)', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--text-low)', whiteSpace: 'nowrap' }}>
                         {fmtH(hour)}
                       </span>
                     </div>,
@@ -938,11 +938,11 @@ export default function ArtistDashboard() {
                         <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.6875rem', fontWeight: 500, color: st.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.3 }}>
                           {booking.first_name} {booking.last_name}
                         </p>
-                        <p style={{ margin: '0.1rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.44rem', letterSpacing: '0.05em', color: st.color, opacity: 0.7, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <p style={{ margin: '0.1rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.05em', color: st.color, opacity: 0.7, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {fmtH(startHour)}{booking.estimated_duration_minutes ? ` → ${fmtH(startHour + Math.round(booking.estimated_duration_minutes / 60))}` : ''}
                         </p>
                         {durationH >= 2 && booking.placement && (
-                          <p style={{ margin: '0.125rem 0 0', fontFamily: '"DM Sans", sans-serif', fontSize: '0.5625rem', color: 'var(--text-mid)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <p style={{ margin: '0.125rem 0 0', fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem', color: 'var(--text-mid)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {booking.placement}
                           </p>
                         )}
@@ -997,12 +997,12 @@ export default function ArtistDashboard() {
                             {t.first_name} {t.last_name}
                           </p>
                           {t.unread_count > 0 && (
-                            <span style={{ padding: '0.1rem 0.45rem', background: 'var(--gold)', color: 'var(--bg)', borderRadius: '2rem', fontFamily: '"DM Mono", monospace', fontSize: '0.5rem', fontWeight: 600, flexShrink: 0, marginLeft: '0.5rem' }}>
+                            <span style={{ padding: '0.1rem 0.45rem', background: 'var(--gold)', color: 'var(--bg)', borderRadius: '2rem', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', fontWeight: 600, flexShrink: 0, marginLeft: '0.5rem' }}>
                               {t.unread_count}
                             </span>
                           )}
                         </div>
-                        <p style={{ margin: '0 0 0.3rem', fontFamily: '"DM Mono", monospace', fontSize: '0.48rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+                        <p style={{ margin: '0 0 0.3rem', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
                           {t.booking_reference}
                         </p>
                         {t.last_message_body ? (
@@ -1027,7 +1027,7 @@ export default function ArtistDashboard() {
                       <p style={{ margin: 0, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1.125rem', color: 'var(--cream)' }}>
                         {selectedThread?.first_name} {selectedThread?.last_name}
                       </p>
-                      <p style={{ margin: '0.1rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.48rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+                      <p style={{ margin: '0.1rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
                         {selectedThread?.booking_reference}
                         {selectedThread?.appointment_date_time && ` · ${new Date(selectedThread.appointment_date_time).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`}
                       </p>
@@ -1051,14 +1051,14 @@ export default function ArtistDashboard() {
                           return (
                             <div key={msg.id}>
                               {showDate && (
-                                <p style={{ textAlign: 'center', fontFamily: '"DM Mono", monospace', fontSize: '0.44rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', margin: '0.75rem 0 0.5rem' }}>
+                                <p style={{ textAlign: 'center', fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', margin: '0.75rem 0 0.5rem' }}>
                                   {new Date(msg.created_at).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
                                 </p>
                               )}
                               <div style={{ display: 'flex', justifyContent: isArtist ? 'flex-end' : 'flex-start' }}>
                                 <div style={{ maxWidth: '72%', padding: '0.625rem 0.875rem', borderRadius: isArtist ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem', background: isArtist ? 'rgba(201,168,76,0.14)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isArtist ? 'rgba(201,168,76,0.3)' : 'var(--border)'}` }}>
                                   <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.6, wordBreak: 'break-word' }}>{msg.body}</p>
-                                  <p style={{ margin: '0.25rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.4rem', letterSpacing: '0.06em', color: isArtist ? 'rgba(201,168,76,0.5)' : 'var(--text-low)', textAlign: isArtist ? 'right' : 'left' }}>
+                                  <p style={{ margin: '0.25rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.06em', color: isArtist ? 'rgba(201,168,76,0.5)' : 'var(--text-low)', textAlign: isArtist ? 'right' : 'left' }}>
                                     {new Date(msg.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                                   </p>
                                 </div>
@@ -1144,7 +1144,7 @@ export default function ArtistDashboard() {
                         <p style={{ margin: '0 0 0.375rem', fontSize: '0.8125rem', color: 'var(--text-mid)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '400px' }}>
                           {c.message}
                         </p>
-                        <p style={{ margin: 0, fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.1em', color: 'var(--text-low)' }}>
+                        <p style={{ margin: 0, fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.1em', color: 'var(--text-low)' }}>
                           {new Date(c.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </p>
                       </div>
@@ -1235,12 +1235,13 @@ export default function ArtistDashboard() {
 
         {/* ── Availability tab ─────────────────────────────────────────────── */}
         {tab === 'availability' && (
-          <div style={{ display: 'grid', gridTemplateColumns: selectedDay ? '1fr 320px' : '1fr', gap: '1.5rem', alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: selectedDay ? 'minmax(0,480px) 320px' : '1fr', gap: '1.5rem', alignItems: 'start' }}>
 
             {/* Calendar panel */}
-            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '1.75rem' }}>
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '1.5rem', maxWidth: '480px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                 <button
+                  type="button"
                   onClick={avPrevMonth}
                   style={{ width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid var(--border)', borderRadius: '50%', cursor: 'pointer', color: 'var(--text-mid)', fontSize: '0.875rem', transition: 'border-color 0.25s ease' }}
                   onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
@@ -1252,12 +1253,13 @@ export default function ArtistDashboard() {
                   <p style={{ margin: 0, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1.25rem', color: 'var(--cream)', lineHeight: 1.1 }}>
                     {MONTHS[avMonth]}
                   </p>
-                  <p style={{ margin: '0.1rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.55rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+                  <p style={{ margin: '0.1rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
                     {avYear}
                   </p>
                 </div>
 
                 <button
+                  type="button"
                   onClick={avNextMonth}
                   style={{ width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid var(--border)', borderRadius: '50%', cursor: 'pointer', color: 'var(--text-mid)', fontSize: '0.875rem', transition: 'border-color 0.25s ease' }}
                   onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
@@ -1269,7 +1271,7 @@ export default function ArtistDashboard() {
               {/* Day headers */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.125rem', marginBottom: '0.375rem' }}>
                 {DAYS_SHORT.map((d) => (
-                  <div key={d} style={{ textAlign: 'center', fontFamily: '"DM Mono", monospace', fontSize: '0.5rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-low)', padding: '0.25rem 0' }}>
+                  <div key={d} style={{ textAlign: 'center', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-low)', padding: '0.25rem 0' }}>
                     {d}
                   </div>
                 ))}
@@ -1360,7 +1362,7 @@ export default function ArtistDashboard() {
                           onMouseLeave={(e) => { if (inMonth && !isPast && !isSelected && !isFullBlocked) { e.currentTarget.style.background = bg; e.currentTarget.style.borderColor = isFullBlocked ? 'rgba(239,68,68,0.2)' : hasPartialBlock ? 'rgba(234,179,8,0.25)' : isToday ? 'rgba(201,168,76,0.35)' : 'transparent'; } }}
                         >
                           {inMonth ? dayNum : ''}
-                          {inMonth && isFullBlocked && <span style={{ fontSize: '0.45rem', lineHeight: 1 }}>✕</span>}
+                          {inMonth && isFullBlocked && <span style={{ fontSize: '0.65rem', lineHeight: 1 }}>✕</span>}
                           {inMonth && hasPartialBlock && !isFullBlocked && <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#EAB308', display: 'block' }} />}
                         </button>
                       );
@@ -1382,7 +1384,7 @@ export default function ArtistDashboard() {
                 ].map(({ dot, label }) => (
                   <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                     <span style={{ width: '0.75rem', height: '0.75rem', borderRadius: '0.2rem', display: 'block', ...dot }} />
-                    <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.5rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-low)' }}>{label}</span>
+                    <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-low)' }}>{label}</span>
                   </div>
                 ))}
               </div>
@@ -1396,7 +1398,7 @@ export default function ArtistDashboard() {
                     <p style={{ margin: 0, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1.125rem', color: 'var(--cream)' }}>
                       {new Date(`${selectedDay}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
                     </p>
-                    <p style={{ margin: '0.2rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.5rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+                    <p style={{ margin: '0.2rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
                       Manage availability
                     </p>
                   </div>
@@ -1415,7 +1417,7 @@ export default function ArtistDashboard() {
                         <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: isFullBlocked ? '#f87171' : 'var(--text)' }}>
                           {isFullBlocked ? 'Day blocked' : 'Block entire day'}
                         </p>
-                        <p style={{ margin: '0.15rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.5rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+                        <p style={{ margin: '0.15rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
                           {isFullBlocked ? 'Clients cannot book this day' : 'Closes all time slots'}
                         </p>
                       </div>
@@ -1429,7 +1431,7 @@ export default function ArtistDashboard() {
                           background: 'none',
                           color: isFullBlocked ? '#f87171' : 'var(--text-mid)',
                           fontFamily: '"DM Mono", monospace',
-                          fontSize: '0.55rem',
+                          fontSize: '0.72rem',
                           letterSpacing: '0.1em',
                           textTransform: 'uppercase',
                           cursor: isBlocking ? 'default' : 'pointer',
@@ -1453,7 +1455,7 @@ export default function ArtistDashboard() {
 
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      <p style={{ margin: '0 0 0.625rem', fontFamily: '"DM Mono", monospace', fontSize: '0.5rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+                      <p style={{ margin: '0 0 0.625rem', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
                         Individual slots
                       </p>
                       {TIME_SLOTS.map((slot) => {
@@ -1485,7 +1487,7 @@ export default function ArtistDashboard() {
                           >
                             <div>
                               <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: statusColor }}>{slot.label}</p>
-                              <p style={{ margin: '0.1rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.48rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-low)' }}>{statusLabel}</p>
+                              <p style={{ margin: '0.1rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-low)' }}>{statusLabel}</p>
                             </div>
                             {!isSlotBooked && (
                               <button
@@ -1498,7 +1500,7 @@ export default function ArtistDashboard() {
                                   background: 'none',
                                   color: isSlotBlocked ? '#f87171' : 'var(--text-mid)',
                                   fontFamily: '"DM Mono", monospace',
-                                  fontSize: '0.5rem',
+                                  fontSize: '0.7rem',
                                   letterSpacing: '0.1em',
                                   textTransform: 'uppercase',
                                   cursor: isBlocking ? 'default' : 'pointer',

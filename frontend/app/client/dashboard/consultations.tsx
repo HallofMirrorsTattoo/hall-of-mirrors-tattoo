@@ -142,7 +142,7 @@ export default function ConsultationsTab() {
                     padding: '0.25rem 0.75rem',
                     borderRadius: '9999px',
                     fontFamily: '"DM Mono", monospace',
-                    fontSize: '0.625rem',
+                    fontSize: '0.75rem',
                     letterSpacing: '0.1em',
                     textTransform: 'uppercase' as const,
                   }}>

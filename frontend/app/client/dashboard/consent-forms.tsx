@@ -100,7 +100,7 @@ export default function ConsentFormsTab() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
       {needsSigning.length > 0 && (
         <section>
-          <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'var(--text-low)', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>
+          <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'var(--text-low)', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>
             Action required
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -131,7 +131,7 @@ export default function ConsentFormsTab() {
 
       {signed.length > 0 && (
         <section>
-          <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'var(--text-low)', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>
+          <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'var(--text-low)', marginBottom: '1rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border)' }}>
             Signed forms
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>

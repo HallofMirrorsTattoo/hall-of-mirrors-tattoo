@@ -108,7 +108,7 @@ export default function ArtistLogin() {
               </button>
             </form>
 
-            <p style={{ marginTop: '1.5rem', textAlign: 'center', fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+            <p style={{ marginTop: '1.5rem', textAlign: 'center', fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
               For artist access only
             </p>
           </div>

@@ -141,7 +141,7 @@ export default function AvailabilityCalendar({ artistId, selectedDate, onDateSel
           <p style={{
             margin: '0.125rem 0 0',
             fontFamily: '"DM Mono", monospace',
-            fontSize: '0.55rem',
+            fontSize: '0.72rem',
             letterSpacing: '0.18em',
             textTransform: 'uppercase',
             color: 'var(--text-low)',
@@ -168,10 +168,10 @@ export default function AvailabilityCalendar({ artistId, selectedDate, onDateSel
           <div key={d} style={{
             textAlign: 'center',
             fontFamily: '"DM Mono", monospace',
-            fontSize: '0.5rem',
-            letterSpacing: '0.12em',
+            fontSize: '0.72rem',
+            letterSpacing: '0.1em',
             textTransform: 'uppercase',
-            color: 'var(--text-low)',
+            color: 'var(--text-mid)',
             padding: '0.25rem 0',
           }}>
             {d}
@@ -188,7 +188,7 @@ export default function AvailabilityCalendar({ artistId, selectedDate, onDateSel
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             borderRadius: '0.5rem',
           }}>
-            <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.55rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+            <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
               Loading
             </span>
           </div>
@@ -279,7 +279,7 @@ export default function AvailabilityCalendar({ artistId, selectedDate, onDateSel
         ].map(({ swatch, label }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
             <span style={{ width: '0.75rem', height: '0.75rem', borderRadius: '0.2rem', display: 'block', ...swatch }} />
-            <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.5rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+            <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
               {label}
             </span>
           </div>
