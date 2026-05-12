@@ -25,13 +25,17 @@ router.get('/', async (req: Request, res: Response) => {
     await client.connect();
 
     const result = await client.query(
-      `SELECT b.id, b.booking_reference, b.appointment_date, b.appointment_time,
-              b.appointment_status, b.deposit_price, b.final_price, b.created_at,
+      `SELECT b.id, b.booking_reference,
+              b.appointment_date_time as appointment_date,
+              b.appointment_time, b.appointment_status,
+              b.deposit_amount as deposit_price,
+              b.final_price_estimate as final_price,
+              b.created_at,
               a.full_name as artist_name, a.instagram_handle
        FROM "Booking" b
        LEFT JOIN "Artist" a ON b.artist_id = a.id
        WHERE b.user_id = $1
-       ORDER BY b.appointment_date DESC`,
+       ORDER BY b.appointment_date_time DESC`,
       [req.user.id]
     );
 
@@ -83,9 +87,15 @@ router.get('/:id', async (req: Request, res: Response) => {
 
     // Get full booking details
     const result = await client.query(
-      `SELECT b.id, b.booking_reference, b.appointment_date, b.appointment_time,
-              b.appointment_status, b.deposit_price, b.final_price, b.design_notes,
-              b.tattoo_placement, b.estimated_duration, b.created_at, b.updated_at,
+      `SELECT b.id, b.booking_reference,
+              b.appointment_date_time as appointment_date,
+              b.appointment_time, b.appointment_status,
+              b.deposit_amount as deposit_price,
+              b.final_price_estimate as final_price,
+              b.tattoo_description as design_notes,
+              b.placement as tattoo_placement,
+              b.estimated_duration_minutes as estimated_duration,
+              b.created_at, b.updated_at,
               a.id as artist_id, a.full_name as artist_name, a.specialties, a.bio, a.instagram_handle,
               di.id as design_idea_id, di.image_url, di.description
        FROM "Booking" b
