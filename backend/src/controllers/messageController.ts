@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { randomUUID } from 'crypto';
 import pkg from 'pg';
 
 const { Client } = pkg;
@@ -102,7 +103,7 @@ export async function sendClientMessage(req: Request, res: Response) {
       return res.status(404).json({ success: false, error: 'Booking not found' });
     }
 
-    const id = crypto.randomUUID();
+    const id = randomUUID();
     const result = await db.query(
       `INSERT INTO "Message" (id, booking_id, sender_type, sender_id, body, created_at)
        VALUES ($1, $2, 'client', $3, $4, NOW())
@@ -210,7 +211,7 @@ export async function sendArtistMessage(req: Request, res: Response) {
       return res.status(404).json({ success: false, error: 'Booking not found' });
     }
 
-    const id = crypto.randomUUID();
+    const id = randomUUID();
     const result = await db.query(
       `INSERT INTO "Message" (id, booking_id, sender_type, sender_id, body, created_at)
        VALUES ($1, $2, 'artist', $3, $4, NOW())
