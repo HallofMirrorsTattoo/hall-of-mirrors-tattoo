@@ -238,6 +238,18 @@ CREATE TABLE IF NOT EXISTS "ConsentForm" (
     FOREIGN KEY (user_id) REFERENCES "User"(id) ON DELETE SET NULL,
     FOREIGN KEY (booking_id) REFERENCES "Booking"(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS "Message" (
+    id TEXT PRIMARY KEY,
+    booking_id TEXT NOT NULL,
+    sender_type TEXT NOT NULL,
+    sender_id TEXT NOT NULL,
+    body TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    read_at TIMESTAMP,
+    FOREIGN KEY (booking_id) REFERENCES "Booking"(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS "Message_booking_id_idx" ON "Message"(booking_id);
 `;
 
 export async function setupDatabase() {

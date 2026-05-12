@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
 
@@ -123,7 +123,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function ArtistDashboard() {
   const router = useRouter();
   const { artist, accessToken, logout, isLoading: authLoading } = useAuth();
-  const [tab, setTab] = useState<'bookings' | 'calendar' | 'consultations' | 'availability'>('bookings');
+  const [tab, setTab] = useState<'bookings' | 'calendar' | 'consultations' | 'availability' | 'messages'>('bookings');
 
   // Bookings state
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -144,6 +144,20 @@ export default function ArtistDashboard() {
   const [consultationError, setConsultationError] = useState('');
 
   const [isLoading, setIsLoading] = useState(true);
+
+  // Messages state
+  interface MsgThread { id: string; booking_reference: string; appointment_date_time: string; appointment_status: string; first_name: string; last_name: string; client_email: string; total_messages: number; unread_count: number; last_message_body: string | null; last_message_sender: string | null; last_message_at: string | null; }
+  interface Msg { id: string; booking_id: string; sender_type: 'client' | 'artist'; body: string; created_at: string; }
+  const [msgThreads, setMsgThreads] = useState<MsgThread[]>([]);
+  const [msgThreadsLoading, setMsgThreadsLoading] = useState(false);
+  const [selectedMsgBooking, setSelectedMsgBooking] = useState<string | null>(null);
+  const [msgs, setMsgs] = useState<Msg[]>([]);
+  const [msgDraft, setMsgDraft] = useState('');
+  const [msgSending, setMsgSending] = useState(false);
+  const [msgError, setMsgError] = useState('');
+  const msgPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const msgBottomRef = useRef<HTMLDivElement>(null);
+  const msgUnreadTotal = msgThreads.reduce((s, t) => s + (t.unread_count || 0), 0);
 
   // Calendar state
   const [calWeekStart, setCalWeekStart] = useState<Date>(() => getMonday(new Date()));
@@ -275,6 +289,68 @@ export default function ArtistDashboard() {
       if (res.ok) setConsultations(data.consultations || []);
     } catch {
       // non-critical
+    }
+  };
+
+  const fetchMsgThreads = useCallback(async () => {
+    if (!accessToken) return;
+    setMsgThreadsLoading(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/messages`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const data = await res.json();
+      if (res.ok) setMsgThreads(data.threads || []);
+    } catch { /* non-critical */ }
+    finally { setMsgThreadsLoading(false); }
+  }, [accessToken]);
+
+  const fetchMsgs = useCallback(async (bookingId: string) => {
+    if (!accessToken) return;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/messages/${bookingId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const data = await res.json();
+      if (res.ok) { setMsgs(data.messages || []); fetchMsgThreads(); }
+    } catch { /* non-critical */ }
+  }, [accessToken, fetchMsgThreads]);
+
+  useEffect(() => {
+    if (tab === 'messages' && accessToken) fetchMsgThreads();
+  }, [tab, fetchMsgThreads, accessToken]);
+
+  useEffect(() => {
+    if (msgPollRef.current) clearInterval(msgPollRef.current);
+    if (!selectedMsgBooking) return;
+    fetchMsgs(selectedMsgBooking);
+    msgPollRef.current = setInterval(() => fetchMsgs(selectedMsgBooking), 30_000);
+    return () => { if (msgPollRef.current) clearInterval(msgPollRef.current); };
+  }, [selectedMsgBooking, fetchMsgs]);
+
+  useEffect(() => {
+    msgBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [msgs]);
+
+  const sendArtistMsg = async () => {
+    if (!msgDraft.trim() || !selectedMsgBooking || msgSending) return;
+    setMsgSending(true);
+    setMsgError('');
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/messages/${selectedMsgBooking}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ body: msgDraft.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send');
+      setMsgs((prev) => [...prev, data.message]);
+      setMsgDraft('');
+      fetchMsgThreads();
+    } catch (e) {
+      setMsgError(e instanceof Error ? e.message : 'Failed to send');
+    } finally {
+      setMsgSending(false);
     }
   };
 
@@ -525,6 +601,7 @@ export default function ArtistDashboard() {
           {([
             { key: 'bookings', label: 'Bookings', badge: 0 },
             { key: 'calendar', label: 'Calendar', badge: 0 },
+            { key: 'messages', label: 'Messages', badge: msgUnreadTotal },
             { key: 'consultations', label: 'Consultations', badge: pendingConsultations },
             { key: 'availability', label: 'Availability', badge: 0 },
           ] as const).map(({ key, label, badge }) => (
@@ -801,6 +878,143 @@ export default function ArtistDashboard() {
             {renderBookingDetailPanel({ width: '380px', flexShrink: 0 })}
           </div>
         )}
+
+        {/* ── Messages tab ─────────────────────────────────────────────────── */}
+        {tab === 'messages' && (() => {
+          const selectedThread = msgThreads.find((t) => t.id === selectedMsgBooking) ?? null;
+          return (
+            <div style={{ display: 'grid', gridTemplateColumns: selectedMsgBooking ? '280px 1fr' : '1fr', gap: '1.5rem', alignItems: 'start', minHeight: '28rem' }}>
+              {/* Thread list */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {msgThreadsLoading && msgThreads.length === 0 ? (
+                  <p style={{ ...labelStyle, opacity: 0.4, padding: '2rem 0' }}>Loading...</p>
+                ) : msgThreads.length === 0 ? (
+                  <p style={{ color: 'var(--text-low)', fontSize: '0.875rem', padding: '2rem 0' }}>No active booking conversations yet.</p>
+                ) : (
+                  msgThreads.map((t) => {
+                    const isSelected = selectedMsgBooking === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => { setSelectedMsgBooking(isSelected ? null : t.id); setMsgs([]); setMsgError(''); }}
+                        style={{
+                          padding: '1rem 1.125rem',
+                          background: isSelected ? 'rgba(201,168,76,0.08)' : 'var(--surface)',
+                          border: `1px solid ${isSelected ? 'rgba(201,168,76,0.35)' : 'var(--border)'}`,
+                          borderRadius: '0.625rem',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.2rem' }}>
+                          <p style={{ margin: 0, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1rem', color: isSelected ? 'var(--gold)' : 'var(--cream)' }}>
+                            {t.first_name} {t.last_name}
+                          </p>
+                          {t.unread_count > 0 && (
+                            <span style={{ padding: '0.1rem 0.45rem', background: 'var(--gold)', color: 'var(--bg)', borderRadius: '2rem', fontFamily: '"DM Mono", monospace', fontSize: '0.5rem', fontWeight: 600, flexShrink: 0, marginLeft: '0.5rem' }}>
+                              {t.unread_count}
+                            </span>
+                          )}
+                        </div>
+                        <p style={{ margin: '0 0 0.3rem', fontFamily: '"DM Mono", monospace', fontSize: '0.48rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+                          {t.booking_reference}
+                        </p>
+                        {t.last_message_body ? (
+                          <p style={{ margin: 0, fontSize: '0.75rem', color: t.unread_count > 0 ? 'var(--text)' : 'var(--text-low)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: t.unread_count > 0 ? 500 : 400 }}>
+                            {t.last_message_sender === 'artist' ? 'You: ' : `${t.first_name}: `}{t.last_message_body}
+                          </p>
+                        ) : (
+                          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-low)', fontStyle: 'italic' }}>No messages yet</p>
+                        )}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Thread panel */}
+              {selectedMsgBooking && (
+                <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', display: 'flex', flexDirection: 'column', height: '32rem' }}>
+                  {/* Header */}
+                  <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+                    <div>
+                      <p style={{ margin: 0, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1.125rem', color: 'var(--cream)' }}>
+                        {selectedThread?.first_name} {selectedThread?.last_name}
+                      </p>
+                      <p style={{ margin: '0.1rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.48rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+                        {selectedThread?.booking_reference}
+                        {selectedThread?.appointment_date_time && ` · ${new Date(selectedThread.appointment_date_time).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`}
+                      </p>
+                    </div>
+                    <button onClick={() => { setSelectedMsgBooking(null); setMsgs([]); }} style={{ background: 'none', border: 'none', color: 'var(--text-low)', cursor: 'pointer', fontSize: '1.25rem', lineHeight: 1 }}>×</button>
+                  </div>
+
+                  {/* Messages */}
+                  <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {msgs.length === 0 ? (
+                      <div style={{ textAlign: 'center', paddingTop: '4rem' }}>
+                        <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.125rem', color: 'var(--text-mid)', marginBottom: '0.5rem' }}>Start the conversation</p>
+                        <p style={{ fontSize: '0.8125rem', color: 'var(--text-low)' }}>Send a message to {selectedThread?.first_name} about their booking.</p>
+                      </div>
+                    ) : (
+                      <>
+                        {msgs.map((msg, i) => {
+                          const isArtist = msg.sender_type === 'artist';
+                          const prev = msgs[i - 1];
+                          const showDate = !prev || new Date(msg.created_at).toDateString() !== new Date(prev.created_at).toDateString();
+                          return (
+                            <div key={msg.id}>
+                              {showDate && (
+                                <p style={{ textAlign: 'center', fontFamily: '"DM Mono", monospace', fontSize: '0.44rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', margin: '0.75rem 0 0.5rem' }}>
+                                  {new Date(msg.created_at).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                </p>
+                              )}
+                              <div style={{ display: 'flex', justifyContent: isArtist ? 'flex-end' : 'flex-start' }}>
+                                <div style={{ maxWidth: '72%', padding: '0.625rem 0.875rem', borderRadius: isArtist ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem', background: isArtist ? 'rgba(201,168,76,0.14)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isArtist ? 'rgba(201,168,76,0.3)' : 'var(--border)'}` }}>
+                                  <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.6, wordBreak: 'break-word' }}>{msg.body}</p>
+                                  <p style={{ margin: '0.25rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.4rem', letterSpacing: '0.06em', color: isArtist ? 'rgba(201,168,76,0.5)' : 'var(--text-low)', textAlign: isArtist ? 'right' : 'left' }}>
+                                    {new Date(msg.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        <div ref={msgBottomRef} />
+                      </>
+                    )}
+                  </div>
+
+                  {/* Input */}
+                  <div style={{ padding: '0.875rem 1.25rem', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+                    {msgError && <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', color: '#f87171' }}>{msgError}</p>}
+                    <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'flex-end' }}>
+                      <textarea
+                        value={msgDraft}
+                        onChange={(e) => setMsgDraft(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendArtistMsg(); } }}
+                        placeholder="Write a message… (Enter to send)"
+                        rows={2}
+                        style={{ flex: 1, padding: '0.625rem 0.875rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--cream)', fontSize: '0.875rem', lineHeight: 1.5, resize: 'none', outline: 'none', fontFamily: '"DM Sans", sans-serif', transition: 'border-color 0.2s ease' }}
+                        onFocus={(e) => (e.target.style.borderColor = 'rgba(201,168,76,0.5)')}
+                        onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+                      />
+                      <button
+                        onClick={sendArtistMsg}
+                        disabled={!msgDraft.trim() || msgSending}
+                        className="btn-primary"
+                        style={{ padding: '0.625rem 1.125rem', flexShrink: 0, opacity: (!msgDraft.trim() || msgSending) ? 0.5 : 1, cursor: (!msgDraft.trim() || msgSending) ? 'default' : 'pointer' }}
+                      >
+                        {msgSending ? '…' : '→'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Consultations tab */}
         {tab === 'consultations' && (

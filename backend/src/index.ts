@@ -12,6 +12,7 @@ import clientDesignRouter from './routes/clientDesign.js';
 import clientConsultationRouter from './routes/clientConsultation.js';
 import consentRouter from './routes/consent.js';
 import availabilityRouter from './routes/availability.js';
+import { clientMessagesRouter, artistMessagesRouter } from './routes/messages.js';
 import { setupDatabase } from './setupDb.js';
 
 const app: Express = express();
@@ -71,6 +72,8 @@ app.use('/api/client/consent', consentRouter);
 app.use('/api/bookings', bookingsRouter);
 app.use('/api/consultations', consultationsRouter);
 app.use('/api/availability', availabilityRouter);
+app.use('/api/client/messages', clientMessagesRouter);
+app.use('/api/artist/messages', artistMessagesRouter);
 
 // Error handler middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
