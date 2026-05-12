@@ -1,7 +1,7 @@
 # Hall of Mirrors Tattoo — Master Checkpoint
 
-**Last Updated:** May 12, 2026 — Phase 1 availability calendar system
-**Status:** Production Live ✅ | Phase 0 done | Phase 2 done | Booking form working | File uploads live | Railway build fixed | Availability calendar live
+**Last Updated:** May 12, 2026 — 1-hour slots + artist duration scheduling
+**Status:** Production Live ✅ | Phase 0 done | Phase 2 done | Booking form working | File uploads live | Availability calendar live | Duration-aware scheduling live
 
 ---
 
@@ -380,6 +380,16 @@ The full roadmap is documented in the plan file:
   - `TimeSlotPicker.tsx` — 6 slots (9am-11am, 11am-1pm, 1pm-3pm, 3pm-5pm, 5pm-7pm, 7pm-9pm) in 3×2 grid; shows booked/blocked/available states
   - Booking form (`/booking`) rewritten: artist selector first → calendar → slot picker → design details; 4 labelled sections; appointment summary before submit; slot validation on submit
   - Artist dashboard: 3rd "Availability" tab with management calendar (colour-coded days) + slot management side panel (block whole day or individual slots; shows booked-by-client as read-only)
+- **1-hour slots + artist duration scheduling (May 12 2026, commit `378b90a`):**
+  - Slots changed from 6×2hr (`09:00-11:00` format) to 12×1hr (`09:00` start-hour format), 9am–8pm
+  - `notify_end_time BOOLEAN DEFAULT true` column added to Booking via setupDb.ts
+  - `availabilityController.ts → expandBookingSlots()` — pending bookings block 1hr, confirmed/completed block start + duration hours
+  - Booking slot overlap validation updated to duration-aware SQL (checks confirmed sessions' full time range)
+  - `PATCH /api/artist/bookings/:id` extended: accepts `duration_hours` (1–8) + `notify_end_time`; writes `estimated_duration_minutes`, triggers `sendBookingConfirmedToClient`
+  - `sendBookingConfirmationToClient` reworded to "request received"; new `sendBookingConfirmedToClient` email with conditional end-time display; `formatHour()` helper added to emailService.ts
+  - `TimeSlotPicker.tsx` rewritten: 12×1hr slots in 4-col grid
+  - Artist dashboard accept flow: duration dropdown (1–8h) + live session preview ("2pm → 6pm") + "tell client finish time" checkbox + "Confirm & Schedule" CTA
+  - Booking detail panel: requested date/time shown prominently; confirmed bookings show full session range + notify status
 - **Fix: Railway ESM crash** — three route files were importing `clientAuth` without `.js` extension; fixed all three
 - **Fix: DB connection** — Railway was pointing to old IPv6 Supabase hostname; updated to session pooler URL (`aws-0-*.pooler.supabase.com`)
 - **Fix: RLS enabled** on all Supabase tables (User, Artist, Booking, Consultation, ConsultationRequest, ContactFormSubmission, Studio, ConsentForm, MedicalHistory, DesignIdea, Review, MedicalHistory, Payment, TattooPortfolio)
@@ -477,9 +487,13 @@ Railway backend deploys separately — check Railway dashboard for backend deplo
 18. **`uuid` v14 crashes with `crypto is not defined`** — uuid v14 requires `globalThis.crypto` (Web Crypto API) which isn't available on older Node.js. All UUID generation uses Node's built-in `crypto.randomUUID()` instead. Never add the `uuid` package back.
 19. **Backend artists route is `/api/artist` (singular)** — the route is mounted at `/api/artist`, not `/api/artists`. A `/api/artists` alias also exists now. Any new frontend code fetching artists should use `/api/artist`.
 20. **Availability route ordering** — `POST /api/availability/block` and `DELETE /api/availability/block/:id` are registered before `GET /api/availability/:artistId` in `routes/availability.ts`. This prevents "block" being swallowed as an artistId. Do not reorder these.
-21. **Time slots are 2-hour blocks, 9am–9pm** — `['09:00-11:00','11:00-13:00','13:00-15:00','15:00-17:00','17:00-19:00','19:00-21:00']`. Both backend (availabilityController.ts) and frontend (TimeSlotPicker.tsx) define these identically. Keep them in sync.
-22. **`appointment_time` column on Booking** — stores the selected slot string (e.g., `"09:00-11:00"`). If not provided (no-preference bookings), it is NULL. The `appointment_date_time` TIMESTAMP is set to the slot start time (or noon if no slot). Always query both when displaying booking details.
-23. **Availability calendar fetches per month** — `AvailabilityCalendar` calls `/api/availability/:artistId?month=YYYY-MM` every time the visible month changes. The response includes `slotData` which `TimeSlotPicker` reads to show blocked/booked slots. Pass the latest `AvailabilityData` via `onAvailabilityLoad` callback to the parent so `TimeSlotPicker` always shows current data.
+21. **Time slots are 1-hour blocks, 9am–8pm** — `['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00']`. Format is start hour only (`HH:MM`), not a range. Both backend (availabilityController.ts) and frontend (TimeSlotPicker.tsx) use this. Keep in sync.
+22. **`appointment_time` column on Booking** — stores the start hour only (e.g., `"14:00"`). Duration comes from `estimated_duration_minutes`. If not provided, it is NULL and `appointment_date_time` is set to noon. Always query both when displaying booking details.
+23. **Availability calendar fetches per month** — `AvailabilityCalendar` calls `/api/availability/:artistId?month=YYYY-MM` every time the visible month changes. The response includes `slotData` which `TimeSlotPicker` reads to show blocked/booked slots. Pass the latest `AvailabilityData` via `onAvailabilityLoad` callback to the parent.
+24. **Duration-aware slot blocking** — pending bookings block only their start hour (60 min). Confirmed/completed bookings block start + N subsequent hours based on `estimated_duration_minutes`. This logic lives in `availabilityController.ts → expandBookingSlots()` and in the slot-overlap SQL in `bookingController.ts`.
+25. **Artist confirm requires `duration_hours`** — `PATCH /api/artist/bookings/:id` with `status: 'confirmed'` should always include `duration_hours` (1–8) and `notify_end_time` (boolean). Without `duration_hours`, the booking confirms but stays at the 120-min default, which may under-block the calendar.
+26. **`notify_end_time` column on Booking** — BOOLEAN DEFAULT true. If false, the artist-confirmed email shows start time only; the calendar still blocks the full session. The artist dashboard shows "finish time hidden from client" in the booking detail when this is false.
+27. **Two booking emails** — (1) `sendBookingConfirmationToClient` fires immediately on POST /api/bookings — wording is "request received", not confirmed. (2) `sendBookingConfirmedToClient` fires when artist confirms via PATCH — contains start time and optionally end time. Do not confuse these two functions.
 
 ---
 
