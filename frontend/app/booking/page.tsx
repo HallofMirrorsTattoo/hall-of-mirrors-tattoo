@@ -418,9 +418,11 @@ export default function BookingPage() {
                         {new Date(`${selectedDate}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                         {selectedSlot && (
                           <span style={{ color: 'var(--gold)', marginLeft: '0.5rem' }}>
-                            · {selectedSlot.replace('-', ' – ').replace(/(\d{2}):00/g, (_, h) => {
-                              const hr = parseInt(h); return hr < 12 ? `${hr}am` : hr === 12 ? '12pm' : `${hr - 12}pm`;
-                            })}
+                            {(() => {
+                              const h = parseInt(selectedSlot.substring(0, 2), 10);
+                              const lbl = h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h - 12}pm`;
+                              return `· starting ${lbl}`;
+                            })()}
                           </span>
                         )}
                       </p>

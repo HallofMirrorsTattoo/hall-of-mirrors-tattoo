@@ -84,35 +84,91 @@ export async function sendBookingConfirmationToClient(data: {
   clientName: string;
   bookingReference: string;
   appointmentDate: Date;
+  startTime?: string;
   placement: string;
   estimatedSize: string;
   artistName?: string;
 }): Promise<void> {
   const dateStr = new Intl.DateTimeFormat('en-GB', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-    hour: '2-digit', minute: '2-digit',
   }).format(data.appointmentDate);
 
+  const timeDisplay = data.startTime ? formatHour(data.startTime) : '';
+
   const content = `
-    ${heading(`Your appointment is confirmed.`)}
-    ${body(`Thank you, ${data.clientName}. We have your booking on record and will be in touch to complete the consultation process.`)}
+    ${heading(`Booking request received.`)}
+    ${body(`Thank you, ${data.clientName}. We have your booking request on record and will confirm your appointment shortly.`)}
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
       ${detail('Reference', data.bookingReference)}
-      ${detail('Date &amp; Time', dateStr)}
+      ${detail('Requested date', dateStr + (timeDisplay ? ` at ${timeDisplay}` : ''))}
       ${detail('Placement', data.placement)}
       ${detail('Size', data.estimatedSize)}
       ${data.artistName ? detail('Artist', data.artistName) : ''}
     </table>
-    ${body(`We will contact you to go through a consent form before your appointment. In the meantime, please avoid alcohol, blood thinners, and heavy sun exposure in the days before.`)}
+    ${body(`Your artist will review your request and confirm the session. You&apos;ll receive a separate email once your appointment is locked in.`)}
     ${ctaButton(`${FRONTEND_URL}/client/dashboard`, 'View Your Dashboard')}
   `;
 
   await send({
     to: data.clientEmail,
     from: { email: FROM_EMAIL, name: 'Hall of Mirrors Tattoo' },
-    subject: `Booking confirmed — ${data.bookingReference}`,
+    subject: `Booking request received — ${data.bookingReference}`,
     html: baseTemplate(content),
   });
+}
+
+export async function sendBookingConfirmedToClient(data: {
+  clientEmail: string;
+  clientName: string;
+  bookingReference: string;
+  appointmentDate: Date;
+  startTime: string;
+  endTime: string;
+  notifyEndTime: boolean;
+  artistName?: string;
+}): Promise<void> {
+  const dateStr = new Intl.DateTimeFormat('en-GB', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+  }).format(data.appointmentDate);
+
+  const startDisplay = formatHour(data.startTime);
+  const endDisplay = formatHour(data.endTime);
+
+  const sessionLine = data.notifyEndTime
+    ? `${dateStr} from ${startDisplay} until ${endDisplay}`
+    : `${dateStr} starting at ${startDisplay}`;
+
+  const finishNote = data.notifyEndTime
+    ? ''
+    : body(`Your artist will let you know on the day when to expect to finish.`);
+
+  const content = `
+    ${heading(`Your appointment is confirmed.`)}
+    ${body(`Great news, ${data.clientName} — your tattoo session has been scheduled.`)}
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+      ${detail('Reference', data.bookingReference)}
+      ${detail('Session', sessionLine)}
+      ${data.artistName ? detail('Artist', data.artistName) : ''}
+    </table>
+    ${finishNote}
+    ${body(`You&apos;ll need to complete a consent form before your session if you haven&apos;t already. You can find it in your dashboard.`)}
+    ${ctaButton(`${FRONTEND_URL}/client/dashboard`, 'View Your Dashboard')}
+  `;
+
+  await send({
+    to: data.clientEmail,
+    from: { email: FROM_EMAIL, name: 'Hall of Mirrors Tattoo' },
+    subject: `Appointment confirmed — ${data.bookingReference}`,
+    html: baseTemplate(content),
+  });
+}
+
+function formatHour(time: string): string {
+  const hour = parseInt(time.substring(0, 2), 10);
+  if (hour === 0) return '12am';
+  if (hour < 12) return `${hour}am`;
+  if (hour === 12) return '12pm';
+  return `${hour - 12}pm`;
 }
 
 export async function sendBookingNotificationToStudio(data: {

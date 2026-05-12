@@ -1,13 +1,16 @@
 'use client';
 
-export const TIME_SLOTS = [
-  { id: '09:00-11:00', label: '9am – 11am', short: '09:00' },
-  { id: '11:00-13:00', label: '11am – 1pm', short: '11:00' },
-  { id: '13:00-15:00', label: '1pm – 3pm', short: '13:00' },
-  { id: '15:00-17:00', label: '3pm – 5pm', short: '15:00' },
-  { id: '17:00-19:00', label: '5pm – 7pm', short: '17:00' },
-  { id: '19:00-21:00', label: '7pm – 9pm', short: '19:00' },
-];
+function fmt(hour: number): string {
+  if (hour === 0) return '12am';
+  if (hour < 12) return `${hour}am`;
+  if (hour === 12) return '12pm';
+  return `${hour - 12}pm`;
+}
+
+export const TIME_SLOTS = Array.from({ length: 12 }, (_, i) => {
+  const hour = 9 + i;
+  return { id: `${String(hour).padStart(2, '0')}:00`, label: fmt(hour) };
+});
 
 interface Props {
   date: string;
@@ -29,9 +32,7 @@ export default function TimeSlotPicker({ date, selectedSlot, onSlotSelect, slotD
   }
 
   const formattedDate = new Date(`${date}T12:00:00`).toLocaleDateString('en-GB', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
+    weekday: 'long', day: 'numeric', month: 'long',
   });
 
   return (
@@ -44,10 +45,11 @@ export default function TimeSlotPicker({ date, selectedSlot, onSlotSelect, slotD
         textTransform: 'uppercase',
         color: 'rgba(201,168,76,0.65)',
       }}>
-        {formattedDate}
+        {formattedDate} — choose a start time
       </p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+      {/* 4 columns × 3 rows */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
         {TIME_SLOTS.map((slot) => {
           const status = getStatus(slot.id);
           const available = status === 'available';
@@ -59,7 +61,7 @@ export default function TimeSlotPicker({ date, selectedSlot, onSlotSelect, slotD
               onClick={() => available && onSlotSelect(slot.id)}
               disabled={!available}
               style={{
-                padding: '0.75rem 0.5rem',
+                padding: '0.625rem 0.25rem',
                 border: selected
                   ? '1px solid var(--gold)'
                   : available
@@ -69,7 +71,7 @@ export default function TimeSlotPicker({ date, selectedSlot, onSlotSelect, slotD
                 background: selected ? 'rgba(201,168,76,0.13)' : 'transparent',
                 cursor: available ? 'pointer' : 'not-allowed',
                 textAlign: 'center',
-                opacity: available ? 1 : 0.3,
+                opacity: available ? 1 : 0.28,
                 transition: 'all 0.18s ease',
               }}
               onMouseEnter={(e) => {
@@ -93,20 +95,19 @@ export default function TimeSlotPicker({ date, selectedSlot, onSlotSelect, slotD
                 color: selected ? 'var(--gold)' : available ? 'var(--text)' : 'var(--text-low)',
                 textDecoration: !available ? 'line-through' : 'none',
                 textDecorationColor: 'var(--text-low)',
-                lineHeight: 1.2,
               }}>
                 {slot.label}
               </p>
               {!available && (
                 <p style={{
-                  margin: '0.2rem 0 0',
+                  margin: '0.15rem 0 0',
                   fontFamily: '"DM Mono", monospace',
-                  fontSize: '0.48rem',
+                  fontSize: '0.45rem',
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase',
                   color: 'var(--text-low)',
                 }}>
-                  {status === 'booked' ? 'Booked' : 'Unavail.'}
+                  {status === 'booked' ? 'Taken' : 'Unavail.'}
                 </p>
               )}
             </button>

@@ -5,6 +5,7 @@ import { randomUUID } from 'crypto';
 import {
   sendBookingConfirmationToClient,
   sendBookingNotificationToStudio,
+  sendBookingConfirmedToClient,
 } from '../services/emailService.js';
 
 const { Client } = pkg;
@@ -13,9 +14,9 @@ const CreateBookingSchema = z.object({
   clientName: z.string().min(2, 'Name must be at least 2 characters'),
   clientEmail: z.string().email('Invalid email address'),
   clientPhone: z.string().min(10, 'Phone number must be at least 10 digits'),
-  // New format: separate date + time slot
+  // New format: separate date + time slot (HH:MM start hour)
   appointmentDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format').optional(),
-  appointmentTime: z.string().regex(/^\d{2}:\d{2}-\d{2}:\d{2}$/, 'Invalid time slot').optional(),
+  appointmentTime: z.string().regex(/^\d{2}:\d{2}$/, 'Invalid time slot').optional(),
   // Legacy format: kept for backward compat
   preferredDate: z.string().optional(),
   tattooDesignDescription: z.string().min(10, 'Please describe your tattoo design'),
@@ -56,6 +57,7 @@ export async function createBooking(req: Request, res: Response) {
 
     // Validate slot availability when artist + slot both specified
     if (validatedData.artistId && appointmentTime && validatedData.appointmentDate) {
+      // Check artist's manual blocks (whole day or specific hour)
       const blockCheck = await client.query(
         `SELECT id FROM "AvailabilityBlock"
          WHERE artist_id = $1 AND blocked_date = $2
@@ -70,19 +72,31 @@ export async function createBooking(req: Request, res: Response) {
         });
       }
 
+      // Duration-aware overlap check:
+      // A pending booking blocks its exact start hour (60 min).
+      // A confirmed/completed booking blocks start + duration range.
       const bookingCheck = await client.query(
         `SELECT id FROM "Booking"
          WHERE artist_id = $1
            AND appointment_date_time::date = $2
-           AND appointment_time = $3
            AND appointment_status != 'cancelled'
+           AND appointment_time IS NOT NULL
+           AND (
+             appointment_time = $3
+             OR (
+               appointment_status IN ('confirmed', 'completed')
+               AND appointment_time::time <= $3::time
+               AND (appointment_time::time
+                    + (estimated_duration_minutes || ' minutes')::interval) > $3::time
+             )
+           )
          LIMIT 1`,
         [validatedData.artistId, validatedData.appointmentDate, appointmentTime]
       );
       if (bookingCheck.rows.length > 0) {
         return res.status(409).json({
           success: false,
-          error: 'This slot was just booked. Please choose another time.',
+          error: 'This slot is not available. Please choose another time.',
         });
       }
     }
@@ -165,6 +179,7 @@ export async function createBooking(req: Request, res: Response) {
       clientName: validatedData.clientName,
       bookingReference,
       appointmentDate,
+      startTime: appointmentTime ?? undefined,
       placement: validatedData.estimatedPlacement,
       estimatedSize: validatedData.estimatedSize,
       artistName: artistData?.full_name,
@@ -488,7 +503,7 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
     }
 
     const { id } = req.params;
-    const { status, notes } = req.body;
+    const { status, notes, duration_hours, notify_end_time } = req.body;
 
     // Validate status
     const validStatuses = ['pending_consent', 'confirmed', 'completed', 'cancelled'];
@@ -499,47 +514,81 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
       });
     }
 
+    // duration_hours must be 1–8 if provided
+    if (duration_hours !== undefined) {
+      const dh = Number(duration_hours);
+      if (!Number.isInteger(dh) || dh < 1 || dh > 8) {
+        return res.status(400).json({ success: false, error: 'duration_hours must be 1–8.' });
+      }
+    }
+
     await client.connect();
 
-    // Get booking
+    // Get booking with client info
     const bookingResult = await client.query(
-      `SELECT b.*, u.id as user_id, u.first_name, u.last_name, u.email, u.phone
+      `SELECT b.*, u.first_name, u.last_name, u.email, u.phone,
+              a.full_name as artist_name
        FROM "Booking" b
        JOIN "User" u ON b.user_id = u.id
+       LEFT JOIN "Artist" a ON b.artist_id = a.id
        WHERE b.id = $1`,
       [id]
     );
 
     if (bookingResult.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: 'Booking not found',
-      });
+      return res.status(404).json({ success: false, error: 'Booking not found' });
     }
 
     const booking = bookingResult.rows[0];
 
-    // Check if this booking belongs to the artist
     if (booking.artist_id !== req.artist.id) {
-      return res.status(403).json({
-        success: false,
-        error: 'You do not have access to this booking',
-      });
+      return res.status(403).json({ success: false, error: 'You do not have access to this booking' });
     }
 
-    // Update booking status
+    // Build update fields
+    const setClauses: string[] = ['appointment_status = $1', 'artist_notes = $2', 'updated_at = NOW()'];
+    const params: unknown[] = [status, notes ?? booking.artist_notes, id];
+
+    if (status === 'confirmed' && duration_hours !== undefined) {
+      setClauses.push(`estimated_duration_minutes = $${params.length}`);
+      params.splice(params.length - 1, 0, Number(duration_hours) * 60);
+    }
+
+    if (notify_end_time !== undefined) {
+      setClauses.push(`notify_end_time = $${params.length}`);
+      params.splice(params.length - 1, 0, Boolean(notify_end_time));
+    }
+
     const updateResult = await client.query(
-      `UPDATE "Booking" SET appointment_status = $1, artist_notes = $2, updated_at = NOW()
-       WHERE id = $3
-       RETURNING *`,
-      [status, notes || booking.artist_notes, id]
+      `UPDATE "Booking" SET ${setClauses.join(', ')} WHERE id = $${params.length} RETURNING *`,
+      params
     );
 
+    const updated = updateResult.rows[0];
+
+    // Send artist-confirmed email when booking is confirmed with duration
+    if (status === 'confirmed' && duration_hours !== undefined && booking.email && booking.appointment_time) {
+      const startHour = parseInt(booking.appointment_time.substring(0, 2), 10);
+      const endHour = startHour + Number(duration_hours);
+      const appointmentDate = new Date(booking.appointment_date_time);
+      const notifyEnd = notify_end_time !== undefined ? Boolean(notify_end_time) : true;
+
+      sendBookingConfirmedToClient({
+        clientEmail: booking.email,
+        clientName: `${booking.first_name} ${booking.last_name}`,
+        bookingReference: booking.booking_reference,
+        appointmentDate,
+        startTime: booking.appointment_time,
+        endTime: `${String(endHour).padStart(2, '0')}:00`,
+        notifyEndTime: notifyEnd,
+        artistName: booking.artist_name ?? undefined,
+      }).catch((e) => console.error('[email] booking confirmed failed:', e));
+    }
 
     res.json({
       success: true,
       message: 'Booking status updated',
-      booking: updateResult.rows[0],
+      booking: updated,
     });
   } catch (error) {
     console.error('Update booking status error:', error);

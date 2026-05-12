@@ -38,6 +38,9 @@ interface Booking {
   id: string;
   booking_reference: string;
   appointment_date_time: string;
+  appointment_time?: string;
+  estimated_duration_minutes?: number;
+  notify_end_time?: boolean;
   tattoo_description: string;
   placement: string;
   estimated_size: string;
@@ -98,6 +101,10 @@ export default function ArtistDashboard() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [isUpdating, setIsUpdating] = useState(false);
   const [bookingError, setBookingError] = useState('');
+
+  // Confirm-booking form state (duration + notify)
+  const [confirmDurationHours, setConfirmDurationHours] = useState(2);
+  const [confirmNotifyEnd, setConfirmNotifyEnd] = useState(true);
 
   // Consultations state
   const [consultations, setConsultations] = useState<Consultation[]>([]);
@@ -235,18 +242,28 @@ export default function ArtistDashboard() {
     }
   };
 
-  const handleStatusUpdate = async (bookingId: string, status: string, notes: string) => {
+  const handleStatusUpdate = async (
+    bookingId: string,
+    status: string,
+    notes: string,
+    opts?: { duration_hours?: number; notify_end_time?: boolean }
+  ) => {
     try {
       setIsUpdating(true);
       setBookingError('');
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/bookings/${bookingId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ status, notes }),
+        body: JSON.stringify({ status, notes, ...opts }),
       });
-      if (!res.ok) throw new Error('Failed to update booking');
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || 'Failed to update booking');
+      }
       await fetchBookings();
       setSelectedBooking(null);
+      setConfirmDurationHours(2);
+      setConfirmNotifyEnd(true);
     } catch (err) {
       setBookingError(err instanceof Error ? err.message : 'Failed to update booking');
     } finally {
@@ -447,11 +464,39 @@ export default function ArtistDashboard() {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '1.75rem' }}>
+                  {/* Requested date + time slot — shown prominently */}
+                  <div>
+                    <span style={labelStyle}>Requested date</span>
+                    <p style={{ margin: 0, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.0625rem', fontWeight: 300, color: 'var(--cream)', lineHeight: 1.4 }}>
+                      {new Date(selectedBooking.appointment_date_time).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                    </p>
+                    {selectedBooking.appointment_time && (() => {
+                      const h = parseInt(selectedBooking.appointment_time.substring(0, 2), 10);
+                      const lbl = h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h - 12}pm`;
+                      return (
+                        <p style={{ margin: '0.25rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--gold)' }}>
+                          Starting {lbl}
+                        </p>
+                      );
+                    })()}
+                    {/* Confirmed session summary (when status is confirmed) */}
+                    {selectedBooking.appointment_status === 'confirmed' && selectedBooking.appointment_time && selectedBooking.estimated_duration_minutes && (() => {
+                      const startH = parseInt(selectedBooking.appointment_time.substring(0, 2), 10);
+                      const endH = startH + Math.round(selectedBooking.estimated_duration_minutes / 60);
+                      const fmtH = (h: number) => h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h - 12}pm`;
+                      return (
+                        <p style={{ margin: '0.25rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.575rem', letterSpacing: '0.1em', color: 'rgba(201,168,76,0.5)' }}>
+                          Confirmed session: {fmtH(startH)} → {fmtH(endH)} ({Math.round(selectedBooking.estimated_duration_minutes / 60)}h)
+                          {selectedBooking.notify_end_time === false && ' · finish time hidden from client'}
+                        </p>
+                      );
+                    })()}
+                  </div>
+
                   {[
                     { label: 'Client', value: `${selectedBooking.first_name} ${selectedBooking.last_name}` },
                     { label: 'Email', value: selectedBooking.email || '—' },
                     { label: 'Phone', value: selectedBooking.phone || '—' },
-                    { label: 'Date', value: new Date(selectedBooking.appointment_date_time).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) },
                     { label: 'Placement', value: selectedBooking.placement },
                     { label: 'Size', value: selectedBooking.estimated_size },
                     { label: 'Description', value: selectedBooking.tattoo_description },
@@ -464,14 +509,67 @@ export default function ArtistDashboard() {
                 </div>
 
                 {selectedBooking.appointment_status !== 'confirmed' && selectedBooking.appointment_status !== 'completed' && selectedBooking.appointment_status !== 'cancelled' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+
+                    {/* Duration selector */}
+                    <div>
+                      <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.575rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', display: 'block', marginBottom: '0.5rem' }}>
+                        Session duration
+                      </span>
+                      <select
+                        value={confirmDurationHours}
+                        onChange={(e) => setConfirmDurationHours(Number(e.target.value))}
+                        style={{ width: '100%' }}
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map((h) => (
+                          <option key={h} value={h}>{h} hour{h > 1 ? 's' : ''}</option>
+                        ))}
+                      </select>
+
+                      {/* Live end-time preview */}
+                      {selectedBooking.appointment_time && (
+                        (() => {
+                          const startH = parseInt(selectedBooking.appointment_time.substring(0, 2), 10);
+                          const endH = startH + confirmDurationHours;
+                          const fmtH = (h: number) => h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h - 12}pm`;
+                          return (
+                            <p style={{ margin: '0.5rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.55rem', letterSpacing: '0.1em', color: 'rgba(201,168,76,0.55)' }}>
+                              Session: {fmtH(startH)} → {fmtH(endH)}
+                            </p>
+                          );
+                        })()
+                      )}
+                    </div>
+
+                    {/* Notify end time toggle */}
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={confirmNotifyEnd}
+                        onChange={(e) => setConfirmNotifyEnd(e.target.checked)}
+                        style={{ accentColor: 'var(--gold)', width: '0.875rem', height: '0.875rem', cursor: 'pointer' }}
+                      />
+                      <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-mid)' }}>
+                        Tell client the finish time
+                      </span>
+                    </label>
+                    {!confirmNotifyEnd && (
+                      <p style={{ margin: '-0.375rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.5rem', letterSpacing: '0.08em', color: 'var(--text-low)' }}>
+                        Client sees start time only. Calendar still blocks the full session.
+                      </p>
+                    )}
+
+                    {/* Actions */}
                     <button
-                      onClick={() => handleStatusUpdate(selectedBooking.id, 'confirmed', '')}
+                      onClick={() => handleStatusUpdate(selectedBooking.id, 'confirmed', '', {
+                        duration_hours: confirmDurationHours,
+                        notify_end_time: confirmNotifyEnd,
+                      })}
                       disabled={isUpdating}
                       className="btn-primary"
                       style={{ width: '100%', padding: '0.75rem', opacity: isUpdating ? 0.6 : 1, cursor: isUpdating ? 'default' : 'pointer' }}
                     >
-                      {isUpdating ? 'Updating...' : 'Accept booking'}
+                      {isUpdating ? 'Confirming…' : 'Confirm & Schedule'}
                     </button>
                     <button
                       onClick={() => handleStatusUpdate(selectedBooking.id, 'cancelled', '')}
