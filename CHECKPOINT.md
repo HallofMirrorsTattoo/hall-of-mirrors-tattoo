@@ -1,7 +1,7 @@
 # Hall of Mirrors Tattoo — Master Checkpoint
 
-**Last Updated:** May 12, 2026 — 1-hour slots + artist duration scheduling
-**Status:** Production Live ✅ | Phase 0 done | Phase 2 done | Booking form working | File uploads live | Availability calendar live | Duration-aware scheduling live
+**Last Updated:** May 12, 2026 — Client booking detail + consent form fixes
+**Status:** Production Live ✅ | Phase 0 done | Phase 2 done | Booking form working | File uploads live | Availability calendar live | Duration-aware scheduling live | Client booking detail + reschedule/cancel flow live
 
 ---
 
@@ -260,7 +260,7 @@ Base URL production: `https://hall-of-mirrors-tattoo-production.up.railway.app`
 | PATCH | `/api/auth/client/me` | Update client profile (auth required) |
 | GET | `/api/client/bookings` | Client's own bookings |
 | GET | `/api/client/bookings/:id` | Single booking detail |
-| PATCH | `/api/client/bookings/:id` | Cancel a booking |
+| PATCH | `/api/client/bookings/:id` | Cancel (`{ appointment_status: 'cancelled' }`) or reschedule (`{ appointment_status: 'rescheduled', new_appointment_date: 'YYYY-MM-DD', new_appointment_time: 'HH:MM' }`) |
 | POST | `/api/client/design-ideas` | Upload design idea (URL-based) |
 | GET | `/api/client/design-ideas` | Client's design ideas |
 | DELETE | `/api/client/design-ideas/:id` | Delete design idea |
@@ -409,6 +409,18 @@ The full roadmap is documented in the plan file:
   - File uploads to Supabase Storage via backend multipart endpoint (requires `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` in Railway)
   - Client dashboard tabs and booking detail page: all remaining `text-primary-dark` / `bg-primary-dark` contrast issues fixed
 
+- **Client booking detail + cancel/reschedule flow (May 12 2026, commits `29aba6b`–`bd3de80`):**
+  - **Root causes fixed:** `clientBookings.ts` list query used non-existent column names (`appointment_date`, `deposit_price`, `final_price`) — now aliased from real columns (`appointment_date_time`, `deposit_amount`, `final_price_estimate`). Detail query used `di.id` (wrong PK) → fixed to `di.design_idea_id`. `consentController.ts getConsentForm` used unqualified `SELECT id` across a Booking+Artist JOIN — PostgreSQL threw "column 'id' is ambiguous" → fixed to `SELECT b.id`.
+  - **Stub-user ownership bug fixed:** Booking form creates a stub User by email if no account exists. If the client later signs up, they get a different UUID. All ownership checks now accept `user_id = $2 OR u.email = $3` so bookings, consent forms, and cancel/reschedule all work regardless of which UUID path created the booking.
+  - **`DesignIdea` table added to `setupDb.ts`** — ensures it exists in DB on every deploy; was missing from schema definition but referenced by `clientDesign.ts` routes. Detail query now fetches DesignIdeas as a separate optional query so any DesignIdea table issue can never block the main booking response.
+  - **Booking detail page (`/client/bookings/[id]`) fully rebuilt:**
+    - Two-column layout with appointment, design details, design references (left) + artist card + payment card + booked-on date (right)
+    - Time displayed as human-readable ("2pm" not "14:00"); duration formatted ("3 hours")
+    - Cancel flow: status card expands with a red warning panel — "cancelling forfeits your deposit entirely" — requires explicit confirmation before firing. Buttons: "Yes, cancel & forfeit deposit" (red) / "Keep my booking"
+    - Reschedule flow: opens inline panel below appointment card with 48hr policy notice (gold if deposit honoured, red if forfeited). If booking has a specific artist: `AvailabilityCalendar` + `TimeSlotPicker` for new date selection. If no artist: native date input + slot grid. "Confirm reschedule" button disabled until date + slot both chosen.
+    - After reschedule: status shows "rescheduled" with a note "Your reschedule request is with the studio"
+    - Error messages now forward the actual API error text (not a hardcoded string) — easier to diagnose future issues
+
 - **Sitewide design elevation (commit `cbbcea1`, 18 files, May 11 2026):**
   - Root cause fixed: inner pages used `backgroundColor: '#2a2a2a'` (should be `var(--bg)` = `#0E0C09`) and `text-primary-dark` (#0E0C09) inside dark-surface cards — near-zero contrast everywhere
   - Full rewrites: `services/page.tsx` (editorial numbered table), `about/page.tsx` (2-col split + credentials rows), `portfolio/page.tsx` (atmospheric placeholder), `testimonials/page.tsx` (editorial review rows)
@@ -494,6 +506,10 @@ Railway backend deploys separately — check Railway dashboard for backend deplo
 25. **Artist confirm requires `duration_hours`** — `PATCH /api/artist/bookings/:id` with `status: 'confirmed'` should always include `duration_hours` (1–8) and `notify_end_time` (boolean). Without `duration_hours`, the booking confirms but stays at the 120-min default, which may under-block the calendar.
 26. **`notify_end_time` column on Booking** — BOOLEAN DEFAULT true. If false, the artist-confirmed email shows start time only; the calendar still blocks the full session. The artist dashboard shows "finish time hidden from client" in the booking detail when this is false.
 27. **Two booking emails** — (1) `sendBookingConfirmationToClient` fires immediately on POST /api/bookings — wording is "request received", not confirmed. (2) `sendBookingConfirmedToClient` fires when artist confirms via PATCH — contains start time and optionally end time. Do not confuse these two functions.
+28. **Stub-user vs. signup UUID mismatch** — the booking form creates a User stub by email (`password_hash = ''`). If the client later signs up or activates, they may get a different UUID. All client-facing ownership checks (bookings, consent, cancel/reschedule) use `b.user_id = $userId OR u.email = $email` — not just user_id alone. Any new endpoint that checks booking ownership must include the email fallback.
+29. **`DesignIdea` primary key is `design_idea_id`, not `id`** — any SQL selecting from this table must use `di.design_idea_id`, not `di.id`. The DesignIdea lookup in the booking detail route is a separate try/catch query so a schema issue there never blocks the main booking response.
+30. **Ambiguous column in JOIN queries** — when JOINing tables that both have an `id` column (e.g. Booking + Artist), always prefix with the table alias (`b.id`, `a.id`). An unqualified `SELECT id` across such a JOIN will throw "column reference 'id' is ambiguous" at runtime even though TypeScript compiles fine.
+31. **Client booking PATCH accepts reschedule with new date/time** — `{ appointment_status: 'rescheduled', new_appointment_date: 'YYYY-MM-DD', new_appointment_time: 'HH:MM' }` updates both the status and `appointment_date_time`/`appointment_time` columns. Plain `{ appointment_status: 'cancelled' }` just sets status. The artist dashboard should show rescheduled bookings as needing re-confirmation.
 
 ---
 
