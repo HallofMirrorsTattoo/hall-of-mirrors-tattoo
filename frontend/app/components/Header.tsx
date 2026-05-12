@@ -57,7 +57,7 @@ export default function Header() {
             aria-label="Hall of Mirrors — Home"
           >
             <Image
-              src="/assets/logos/HOMLOGO.png"
+              src="/assets/logos/White Logo.png"
               alt="Hall of Mirrors"
               width={48}
               height={48}
