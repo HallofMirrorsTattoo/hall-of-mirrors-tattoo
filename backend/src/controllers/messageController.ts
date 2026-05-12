@@ -239,13 +239,19 @@ export async function getConsultationMessages(req: Request, res: Response) {
     // Works for both client and artist — one of req.user or req.artist will be set
     let ownerCheck;
     if (req.user) {
+      // Client can read messages if: approved, OR artist has already sent a message (dialogue opened)
       ownerCheck = await db.query(
-        `SELECT consultation_id FROM "Consultation" WHERE consultation_id = $1 AND user_id = $2 AND status = 'approved'`,
+        `SELECT consultation_id FROM "Consultation"
+         WHERE consultation_id = $1 AND user_id = $2 AND status != 'declined'
+         AND (status = 'approved' OR EXISTS (
+           SELECT 1 FROM "Message" WHERE consultation_id = $1 AND sender_type = 'artist'
+         ))`,
         [consultationId, req.user.id]
       );
     } else if (req.artist) {
+      // Artist can read messages on any non-declined consultation they own
       ownerCheck = await db.query(
-        `SELECT consultation_id FROM "Consultation" WHERE consultation_id = $1 AND artist_id = $2 AND status = 'approved'`,
+        `SELECT consultation_id FROM "Consultation" WHERE consultation_id = $1 AND artist_id = $2 AND status != 'declined'`,
         [consultationId, req.artist.id]
       );
     } else {
@@ -253,7 +259,7 @@ export async function getConsultationMessages(req: Request, res: Response) {
     }
 
     if (ownerCheck.rows.length === 0) {
-      return res.status(404).json({ success: false, error: 'Consultation not found or not yet approved' });
+      return res.status(404).json({ success: false, error: 'Consultation not found or messaging not yet available' });
     }
 
     // Mark artist messages as read when client fetches
@@ -303,15 +309,21 @@ export async function sendConsultationMessage(req: Request, res: Response) {
     if (req.user) {
       senderType = 'client';
       senderId = req.user.id;
+      // Client can send if: approved, OR artist has already opened dialogue
       ownerCheck = await db.query(
-        `SELECT consultation_id FROM "Consultation" WHERE consultation_id = $1 AND user_id = $2 AND status = 'approved'`,
+        `SELECT consultation_id FROM "Consultation"
+         WHERE consultation_id = $1 AND user_id = $2 AND status != 'declined'
+         AND (status = 'approved' OR EXISTS (
+           SELECT 1 FROM "Message" WHERE consultation_id = $1 AND sender_type = 'artist'
+         ))`,
         [consultationId, req.user.id]
       );
     } else if (req.artist) {
       senderType = 'artist';
       senderId = req.artist.id;
+      // Artist can send on any non-declined consultation they own
       ownerCheck = await db.query(
-        `SELECT consultation_id FROM "Consultation" WHERE consultation_id = $1 AND artist_id = $2 AND status = 'approved'`,
+        `SELECT consultation_id FROM "Consultation" WHERE consultation_id = $1 AND artist_id = $2 AND status != 'declined'`,
         [consultationId, req.artist.id]
       );
     } else {
@@ -319,7 +331,7 @@ export async function sendConsultationMessage(req: Request, res: Response) {
     }
 
     if (ownerCheck.rows.length === 0) {
-      return res.status(404).json({ success: false, error: 'Consultation not found or not yet approved' });
+      return res.status(404).json({ success: false, error: 'Consultation not found or messaging not yet available' });
     }
 
     const id = randomUUID();

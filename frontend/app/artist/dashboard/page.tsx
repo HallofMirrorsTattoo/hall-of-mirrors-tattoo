@@ -173,6 +173,16 @@ export default function ArtistDashboard() {
   const consultMsgPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const consultMsgAreaRef = useRef<HTMLDivElement>(null);
 
+  // Booking chat state (in Consultations tab — for confirmed booking threads)
+  interface BookingMsg { id: string; booking_id: string; sender_type: 'client' | 'artist'; body: string; created_at: string; }
+  const [openBookingChatId, setOpenBookingChatId] = useState<string | null>(null);
+  const [bookingChatMsgs, setBookingChatMsgs] = useState<BookingMsg[]>([]);
+  const [bookingChatDraft, setBookingChatDraft] = useState('');
+  const [bookingChatSending, setBookingChatSending] = useState(false);
+  const [bookingChatError, setBookingChatError] = useState('');
+  const bookingChatPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const bookingChatAreaRef = useRef<HTMLDivElement>(null);
+
   // Calendar state
   const [calWeekStart, setCalWeekStart] = useState<Date>(() => getMonday(new Date()));
   const calPrevWeek = () => setCalWeekStart((d) => { const n = new Date(d); n.setDate(n.getDate() - 7); return n; });
@@ -397,6 +407,51 @@ export default function ArtistDashboard() {
       else setRebookSent('idle');
     } catch {
       setRebookSent('idle');
+    }
+  };
+
+  const fetchBookingChatMsgs = useCallback(async (bookingId: string) => {
+    if (!accessToken) return;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/messages/${bookingId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const data = await res.json();
+      if (res.ok) setBookingChatMsgs(data.messages || []);
+    } catch { /* non-critical */ }
+  }, [accessToken]);
+
+  useEffect(() => {
+    if (bookingChatPollRef.current) clearInterval(bookingChatPollRef.current);
+    if (!openBookingChatId) { setBookingChatMsgs([]); return; }
+    fetchBookingChatMsgs(openBookingChatId);
+    bookingChatPollRef.current = setInterval(() => fetchBookingChatMsgs(openBookingChatId), 30_000);
+    return () => { if (bookingChatPollRef.current) clearInterval(bookingChatPollRef.current); };
+  }, [openBookingChatId, fetchBookingChatMsgs]);
+
+  useEffect(() => {
+    const el = bookingChatAreaRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [bookingChatMsgs]);
+
+  const sendBookingChatMsg = async () => {
+    if (!bookingChatDraft.trim() || !openBookingChatId || bookingChatSending) return;
+    setBookingChatSending(true);
+    setBookingChatError('');
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/messages/${openBookingChatId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ body: bookingChatDraft.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send');
+      setBookingChatMsgs((prev) => [...prev, data.message]);
+      setBookingChatDraft('');
+    } catch (e) {
+      setBookingChatError(e instanceof Error ? e.message : 'Failed to send');
+    } finally {
+      setBookingChatSending(false);
     }
   };
 
@@ -1309,8 +1364,8 @@ export default function ArtistDashboard() {
                       </div>
                     )}
 
-                    {/* Approved — chat toggle */}
-                    {c.status === 'approved' && (
+                    {/* Chat toggle — available for any non-declined consultation (pending = open dialogue) */}
+                    {c.status !== 'declined' && (
                       <div style={{ borderTop: '1px solid var(--border)' }}>
                         <button
                           type="button"
@@ -1321,7 +1376,7 @@ export default function ArtistDashboard() {
                           }}
                           style={{ width: '100%', padding: '0.875rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', color: isChatOpen ? 'var(--gold)' : 'var(--text-mid)', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', transition: 'color 0.2s ease' }}
                         >
-                          <span>{isChatOpen ? 'Close chat' : 'Open chat with client'}</span>
+                          <span>{isChatOpen ? 'Close chat' : c.status === 'pending' ? 'Ask client for more info' : 'Open chat with client'}</span>
                           <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', opacity: 0.7 }}>{isChatOpen ? '↑' : '↓'}</span>
                         </button>
 
@@ -1403,6 +1458,109 @@ export default function ArtistDashboard() {
             )}
           </div>
         )}
+
+        {/* ── Confirmed booking conversations (within Consultations tab) ───── */}
+        {tab === 'consultations' && (() => {
+          const confirmedBookings = bookings.filter(
+            (b) => b.appointment_status === 'confirmed' || b.appointment_status === 'completed'
+          );
+          if (confirmedBookings.length === 0) return null;
+          return (
+            <div style={{ marginTop: '1.5rem' }}>
+              <span style={{ ...labelStyle, display: 'block', marginBottom: '0.875rem' }}>Booking conversations</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+                {confirmedBookings.map((b) => {
+                  const isOpen = openBookingChatId === b.id;
+                  const dateStr = new Date(b.appointment_date_time).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+                  return (
+                    <div key={b.id} style={{ background: 'var(--surface)', border: `1px solid ${isOpen ? 'rgba(201,168,76,0.3)' : 'var(--border)'}`, borderRadius: '0.75rem', overflow: 'hidden', transition: 'border-color 0.2s ease' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center', gap: '1rem', padding: '1.125rem 1.5rem' }}>
+                        <div>
+                          <p style={{ margin: '0 0 0.2rem', fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1.0625rem', color: 'var(--cream)' }}>
+                            {b.first_name} {b.last_name} · {dateStr}
+                          </p>
+                          <p style={{ margin: 0, fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-low)' }}>
+                            {b.booking_reference}
+                          </p>
+                        </div>
+                        <StatusBadge status={b.appointment_status} />
+                      </div>
+                      <div style={{ borderTop: '1px solid var(--border)' }}>
+                        <button
+                          type="button"
+                          onClick={() => { setOpenBookingChatId(isOpen ? null : b.id); setBookingChatDraft(''); setBookingChatError(''); }}
+                          style={{ width: '100%', padding: '0.875rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', color: isOpen ? 'var(--gold)' : 'var(--text-mid)', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', transition: 'color 0.2s ease' }}
+                        >
+                          <span>{isOpen ? 'Close chat' : 'Message client'}</span>
+                          <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', opacity: 0.7 }}>{isOpen ? '↑' : '↓'}</span>
+                        </button>
+                        {isOpen && (
+                          <div style={{ borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', height: '22rem' }}>
+                            <div ref={bookingChatAreaRef} style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                              {bookingChatMsgs.length === 0 ? (
+                                <div style={{ textAlign: 'center', paddingTop: '3rem' }}>
+                                  <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.0625rem', color: 'var(--text-mid)', marginBottom: '0.375rem' }}>Start the conversation</p>
+                                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-low)' }}>Send {b.first_name} a message about their booking.</p>
+                                </div>
+                              ) : (
+                                bookingChatMsgs.map((msg, i) => {
+                                  const isArtist = msg.sender_type === 'artist';
+                                  const prev = bookingChatMsgs[i - 1];
+                                  const showDate = !prev || new Date(msg.created_at).toDateString() !== new Date(prev.created_at).toDateString();
+                                  return (
+                                    <div key={msg.id}>
+                                      {showDate && (
+                                        <p style={{ textAlign: 'center', fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', margin: '0.75rem 0 0.5rem' }}>
+                                          {new Date(msg.created_at).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                        </p>
+                                      )}
+                                      <div style={{ display: 'flex', justifyContent: isArtist ? 'flex-end' : 'flex-start' }}>
+                                        <div style={{ maxWidth: '72%', padding: '0.625rem 0.875rem', borderRadius: isArtist ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem', background: isArtist ? 'rgba(201,168,76,0.14)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isArtist ? 'rgba(201,168,76,0.3)' : 'var(--border)'}` }}>
+                                          <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.6, wordBreak: 'break-word' }}>{msg.body}</p>
+                                          <p style={{ margin: '0.25rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.06em', color: isArtist ? 'rgba(201,168,76,0.5)' : 'var(--text-low)', textAlign: isArtist ? 'right' : 'left' }}>
+                                            {new Date(msg.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                            <div style={{ padding: '0.875rem 1.5rem', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+                              {bookingChatError && <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', color: '#f87171' }}>{bookingChatError}</p>}
+                              <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'flex-end' }}>
+                                <textarea
+                                  value={bookingChatDraft}
+                                  onChange={(e) => setBookingChatDraft(e.target.value)}
+                                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBookingChatMsg(); } }}
+                                  placeholder="Write a message… (Enter to send)"
+                                  rows={2}
+                                  style={{ flex: 1, padding: '0.625rem 0.875rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--cream)', fontSize: '0.875rem', lineHeight: 1.5, resize: 'none', outline: 'none', fontFamily: '"DM Sans", sans-serif', transition: 'border-color 0.2s ease' }}
+                                  onFocus={(e) => (e.target.style.borderColor = 'rgba(201,168,76,0.5)')}
+                                  onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={sendBookingChatMsg}
+                                  disabled={!bookingChatDraft.trim() || bookingChatSending}
+                                  className="btn-primary"
+                                  style={{ padding: '0.625rem 1.125rem', flexShrink: 0, opacity: (!bookingChatDraft.trim() || bookingChatSending) ? 0.5 : 1, cursor: (!bookingChatDraft.trim() || bookingChatSending) ? 'default' : 'pointer' }}
+                                >
+                                  {bookingChatSending ? '…' : '→'}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ── Availability tab ─────────────────────────────────────────────── */}
         {tab === 'availability' && (

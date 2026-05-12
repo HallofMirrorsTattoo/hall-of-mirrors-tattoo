@@ -46,7 +46,8 @@ const divider: React.CSSProperties = {
 };
 
 export default function BookingPage() {
-  const { user } = useClientAuth();
+  const { user, accessToken } = useClientAuth();
+  const [formMode, setFormMode] = useState<'booking' | 'consultation'>('booking');
   const [isSubmitting, setIsSubmitting]   = useState(false);
   const [submitStatus, setSubmitStatus]   = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage]   = useState('');
@@ -121,49 +122,64 @@ export default function BookingPage() {
   };
 
   const onSubmit = async (data: BookingFormData) => {
-    // Validate date + slot selection
-    let valid = true;
-    if (!selectedDate) {
-      setDateError('Please select a date.');
-      valid = false;
+    // Date validation only required for booking mode
+    if (formMode === 'booking') {
+      let valid = true;
+      if (!selectedDate) { setDateError('Please select a date.'); valid = false; }
+      if (selectedArtistId && !selectedSlot) { setSlotError('Please select a time slot.'); valid = false; }
+      if (!valid) return;
     }
-    if (selectedArtistId && !selectedSlot) {
-      setSlotError('Please select a time slot.');
-      valid = false;
-    }
-    if (!valid) return;
 
     setIsSubmitting(true);
     setSubmitStatus('idle');
     setErrorMessage('');
 
     try {
-      const payload: Record<string, unknown> = {
-        ...data,
-        artistId: data.artistId || undefined,
-      };
-
-      if (selectedDate) {
-        payload.appointmentDate = selectedDate;
-        if (selectedSlot) payload.appointmentTime = selectedSlot;
+      if (formMode === 'consultation') {
+        // Consultation mode: requires login for messaging capability
+        if (!user) {
+          throw new Error('Please log in or create an account to request a consultation — this enables direct messaging with Robyn.');
+        }
+        const artistId = data.artistId || artists[0]?.id;
+        if (!artistId) throw new Error('No artist found — please try again.');
+        const message = data.tattooDesignDescription + (data.notes ? `\n\nAdditional notes: ${data.notes}` : '');
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/client/consultations`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken || ''}` },
+          body: JSON.stringify({ artist_id: artistId, message }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Failed to submit consultation request');
+        }
+        setConfirmedRef('');
+        setConfirmedDate(null);
+        setConfirmedSlot(null);
+        setConfirmedArtist(artists.find((a) => a.id === artistId)?.full_name ?? '');
+      } else {
+        const payload: Record<string, unknown> = {
+          ...data,
+          artistId: data.artistId || undefined,
+        };
+        if (selectedDate) {
+          payload.appointmentDate = selectedDate;
+          if (selectedSlot) payload.appointmentTime = selectedSlot;
+        }
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bookings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.message || err.error || 'Failed to submit booking');
+        }
+        const json = await res.json();
+        setConfirmedRef(json.booking?.booking_reference ?? '');
+        setConfirmedDate(selectedDate);
+        setConfirmedSlot(selectedSlot);
+        setConfirmedArtist(artists.find((a) => a.id === data.artistId)?.full_name ?? '');
       }
-
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bookings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || err.error || 'Failed to submit booking');
-      }
-
-      const json = await res.json();
-      setConfirmedRef(json.booking?.booking_reference ?? '');
-      setConfirmedDate(selectedDate);
-      setConfirmedSlot(selectedSlot);
-      setConfirmedArtist(artists.find((a) => a.id === data.artistId)?.full_name ?? '');
       setSubmitStatus('success');
       reset();
       setSelectedDate(null);
@@ -230,10 +246,12 @@ export default function BookingPage() {
                   ✓
                 </div>
                 <h2 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '2.25rem', color: 'var(--cream)', letterSpacing: '-0.02em', lineHeight: 1.1, margin: '0 0 0.75rem' }}>
-                  Request submitted.
+                  {formMode === 'consultation' ? 'Consultation requested.' : 'Request submitted.'}
                 </h2>
                 <p style={{ color: 'var(--text-mid)', fontSize: '0.9375rem', lineHeight: 1.7, maxWidth: '30ch', margin: '0 auto 2rem' }}>
-                  We&apos;ll review and confirm within 24 hours. Check your email for a copy of this request.
+                  {formMode === 'consultation'
+                    ? 'Robyn will be in touch. You can message her directly from your dashboard once she responds.'
+                    : 'We\'ll review and confirm within 24 hours. Check your email for a copy of this request.'}
                 </p>
 
                 {/* Detail summary */}
@@ -297,6 +315,28 @@ export default function BookingPage() {
                 </div>
               )}
 
+              {/* ── Mode toggle ── */}
+              <div style={{ display: 'flex', gap: '0.375rem', marginBottom: '2rem', padding: '0.3rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '2rem' }}>
+                {(['booking', 'consultation'] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setFormMode(m)}
+                    style={{ flex: 1, padding: '0.625rem 1rem', background: formMode === m ? 'var(--gold)' : 'transparent', color: formMode === m ? '#0E0C09' : 'var(--text-mid)', border: 'none', borderRadius: '2rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', fontWeight: formMode === m ? 600 : 400, cursor: 'pointer', transition: 'all 0.2s ease' }}
+                  >
+                    {m === 'booking' ? 'Book a session' : 'Request a consultation'}
+                  </button>
+                ))}
+              </div>
+              {formMode === 'consultation' && (
+                <div style={{ padding: '0.875rem 1rem', background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: '0.5rem', marginBottom: '1.5rem' }}>
+                  <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-mid)', lineHeight: 1.6 }}>
+                    No date needed — just describe your idea. Robyn will get back to you and you&apos;ll be able to message directly from your dashboard.
+                    {!user && <><br /><span style={{ color: 'rgba(201,168,76,0.8)' }}> Please <a href="/client/login" style={{ color: 'var(--gold)' }}>log in</a> first to enable messaging.</span></>}
+                  </p>
+                </div>
+              )}
+
               <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
 
                 {/* ── Section 1: Personal info ── */}
@@ -352,8 +392,8 @@ export default function BookingPage() {
 
                 <hr style={divider} />
 
-                {/* ── Section 3: Date ── */}
-                <span style={eyebrow}>03 — Select a date</span>
+                {/* ── Section 3: Date (booking mode only) ── */}
+                {formMode === 'booking' && <><span style={eyebrow}>03 — Select a date</span>
 
                 {hasArtist ? (
                   <>
@@ -416,7 +456,7 @@ export default function BookingPage() {
                   </>
                 )}
 
-                <hr style={divider} />
+                <hr style={divider} /></>}
 
                 {/* ── Section 4: Design info ── */}
                 <span style={eyebrow}>04 — Your tattoo</span>
@@ -467,8 +507,8 @@ export default function BookingPage() {
 
                 <hr style={divider} />
 
-                {/* Selected summary */}
-                {(selectedDate || selectedSlot) && (
+                {/* Selected summary — booking mode only */}
+                {formMode === 'booking' && (selectedDate || selectedSlot) && (
                   <div style={{
                     padding: '0.875rem 1rem',
                     background: 'rgba(201,168,76,0.06)',
@@ -502,7 +542,7 @@ export default function BookingPage() {
                   className="btn-primary"
                   style={{ width: '100%', justifyContent: 'center', opacity: isSubmitting ? 0.7 : 1 }}
                 >
-                  <span>{isSubmitting ? 'Submitting…' : 'Request Booking'}</span>
+                  <span>{isSubmitting ? 'Submitting…' : formMode === 'consultation' ? 'Request Consultation' : 'Request Booking'}</span>
                   <span className="btn-icon" aria-hidden="true">↗</span>
                 </button>
 
