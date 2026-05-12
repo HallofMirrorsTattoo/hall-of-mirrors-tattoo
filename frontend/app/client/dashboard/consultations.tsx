@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type React from 'react';
 import { useClientAuth } from '@/lib/clientAuthContext';
 
 interface Consultation {
@@ -69,6 +70,83 @@ function StatusBadge({ status, inDialogue = false }: { status: string; inDialogu
     <span style={{ padding: '0.2rem 0.6rem', borderRadius: '2rem', background: s.bg, color: s.color, ...mono, fontSize: '0.65rem', letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
       {s.label}
     </span>
+  );
+}
+
+interface ChatPanelProps {
+  chatKey: OpenChat;
+  openChat: OpenChat;
+  msgs: Msg[];
+  msgsLoading: boolean;
+  msgAreaRef: React.RefObject<HTMLDivElement>;
+  draft: string;
+  setDraft: React.Dispatch<React.SetStateAction<string>>;
+  sending: boolean;
+  sendError: string;
+  sendMessage: () => void;
+}
+
+function ChatPanel({ chatKey, openChat, msgs, msgsLoading, msgAreaRef, draft, setDraft, sending, sendError, sendMessage }: ChatPanelProps) {
+  const isOpen = openChat && chatKey && openChat.type === chatKey.type && openChat.id === chatKey.id;
+  if (!isOpen) return null;
+  return (
+    <div style={{ borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', height: '22rem' }}>
+      <div ref={msgAreaRef} style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        {msgsLoading && msgs.length === 0 ? (
+          <p style={{ ...mono, fontSize: '0.72rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)', textAlign: 'center', paddingTop: '3rem' }}>Loading…</p>
+        ) : msgs.length === 0 ? (
+          <div style={{ textAlign: 'center', paddingTop: '3rem' }}>
+            <p style={{ ...serif, fontStyle: 'italic', fontSize: '1rem', color: 'var(--text-mid)', marginBottom: '0.375rem' }}>Start the conversation</p>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-low)' }}>Send a message to get things started.</p>
+          </div>
+        ) : (
+          msgs.map((msg, i) => {
+            const isClient = msg.sender_type === 'client';
+            const prev = msgs[i - 1];
+            const showDate = !prev || new Date(msg.created_at).toDateString() !== new Date(prev.created_at).toDateString();
+            return (
+              <div key={msg.id}>
+                {showDate && (
+                  <p style={{ textAlign: 'center', ...mono, fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', margin: '0.75rem 0 0.5rem' }}>
+                    {new Date(msg.created_at).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  </p>
+                )}
+                <div style={{ display: 'flex', justifyContent: isClient ? 'flex-end' : 'flex-start' }}>
+                  <div style={{ maxWidth: '72%', padding: '0.625rem 0.875rem', borderRadius: isClient ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem', background: isClient ? 'rgba(201,168,76,0.14)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isClient ? 'rgba(201,168,76,0.3)' : 'var(--border)'}` }}>
+                    <p style={{ margin: 0, fontSize: '0.875rem', color: isClient ? 'var(--cream)' : 'var(--text)', lineHeight: 1.6, wordBreak: 'break-word' }}>{msg.body}</p>
+                    <p style={{ margin: '0.25rem 0 0', ...mono, fontSize: '0.65rem', letterSpacing: '0.06em', color: isClient ? 'rgba(201,168,76,0.5)' : 'var(--text-low)', textAlign: isClient ? 'right' : 'left' }}>{fmtDate(msg.created_at)}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+      <div style={{ padding: '0.875rem 1.5rem', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+        {sendError && <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', color: '#f87171' }}>{sendError}</p>}
+        <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'flex-end' }}>
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+            placeholder="Write a message… (Enter to send)"
+            rows={2}
+            style={{ flex: 1, padding: '0.625rem 0.875rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--cream)', fontSize: '0.875rem', lineHeight: 1.5, resize: 'none', outline: 'none', fontFamily: '"DM Sans", sans-serif', transition: 'border-color 0.2s ease' }}
+            onFocus={(e) => (e.target.style.borderColor = 'rgba(201,168,76,0.5)')}
+            onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+          />
+          <button
+            type="button"
+            onClick={sendMessage}
+            disabled={!draft.trim() || sending}
+            className="btn-primary"
+            style={{ padding: '0.625rem 1.125rem', flexShrink: 0, opacity: (!draft.trim() || sending) ? 0.5 : 1, cursor: (!draft.trim() || sending) ? 'default' : 'pointer' }}
+          >
+            {sending ? '…' : '→'}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -216,70 +294,6 @@ export default function ConsultationsTab() {
     return <p style={{ ...mono, fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-low)', padding: '2rem 0' }}>Loading...</p>;
   }
 
-  const ChatPanel = ({ chatKey }: { chatKey: OpenChat }) => {
-    const isOpen = openChat && chatKey && openChat.type === chatKey.type && openChat.id === chatKey.id;
-    if (!isOpen) return null;
-    return (
-      <div style={{ borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', height: '22rem' }}>
-        <div ref={msgAreaRef} style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {msgsLoading && msgs.length === 0 ? (
-            <p style={{ ...mono, fontSize: '0.72rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)', textAlign: 'center', paddingTop: '3rem' }}>Loading…</p>
-          ) : msgs.length === 0 ? (
-            <div style={{ textAlign: 'center', paddingTop: '3rem' }}>
-              <p style={{ ...serif, fontStyle: 'italic', fontSize: '1rem', color: 'var(--text-mid)', marginBottom: '0.375rem' }}>Start the conversation</p>
-              <p style={{ fontSize: '0.8125rem', color: 'var(--text-low)' }}>Send a message to get things started.</p>
-            </div>
-          ) : (
-            msgs.map((msg, i) => {
-              const isClient = msg.sender_type === 'client';
-              const prev = msgs[i - 1];
-              const showDate = !prev || new Date(msg.created_at).toDateString() !== new Date(prev.created_at).toDateString();
-              return (
-                <div key={msg.id}>
-                  {showDate && (
-                    <p style={{ textAlign: 'center', ...mono, fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', margin: '0.75rem 0 0.5rem' }}>
-                      {new Date(msg.created_at).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
-                    </p>
-                  )}
-                  <div style={{ display: 'flex', justifyContent: isClient ? 'flex-end' : 'flex-start' }}>
-                    <div style={{ maxWidth: '72%', padding: '0.625rem 0.875rem', borderRadius: isClient ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem', background: isClient ? 'rgba(201,168,76,0.14)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isClient ? 'rgba(201,168,76,0.3)' : 'var(--border)'}` }}>
-                      <p style={{ margin: 0, fontSize: '0.875rem', color: isClient ? 'var(--cream)' : 'var(--text)', lineHeight: 1.6, wordBreak: 'break-word' }}>{msg.body}</p>
-                      <p style={{ margin: '0.25rem 0 0', ...mono, fontSize: '0.65rem', letterSpacing: '0.06em', color: isClient ? 'rgba(201,168,76,0.5)' : 'var(--text-low)', textAlign: isClient ? 'right' : 'left' }}>{fmtDate(msg.created_at)}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-        <div style={{ padding: '0.875rem 1.5rem', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
-          {sendError && <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', color: '#f87171' }}>{sendError}</p>}
-          <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'flex-end' }}>
-            <textarea
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-              placeholder="Write a message… (Enter to send)"
-              rows={2}
-              style={{ flex: 1, padding: '0.625rem 0.875rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--cream)', fontSize: '0.875rem', lineHeight: 1.5, resize: 'none', outline: 'none', fontFamily: '"DM Sans", sans-serif', transition: 'border-color 0.2s ease' }}
-              onFocus={(e) => (e.target.style.borderColor = 'rgba(201,168,76,0.5)')}
-              onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
-            />
-            <button
-              type="button"
-              onClick={sendMessage}
-              disabled={!draft.trim() || sending}
-              className="btn-primary"
-              style={{ padding: '0.625rem 1.125rem', flexShrink: 0, opacity: (!draft.trim() || sending) ? 0.5 : 1, cursor: (!draft.trim() || sending) ? 'default' : 'pointer' }}
-            >
-              {sending ? '…' : '→'}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div>
       {/* Request new consultation */}
@@ -351,7 +365,7 @@ export default function ConsultationsTab() {
                       <span>{isOpen ? 'Close chat' : 'Message your artist'}</span>
                       <span style={{ ...mono, fontSize: '0.75rem', opacity: 0.7 }}>{isOpen ? '↑' : '↓'}</span>
                     </button>
-                    <ChatPanel chatKey={chatKey} />
+                    <ChatPanel chatKey={chatKey} openChat={openChat} msgs={msgs} msgsLoading={msgsLoading} msgAreaRef={msgAreaRef} draft={draft} setDraft={setDraft} sending={sending} sendError={sendError} sendMessage={sendMessage} />
                   </div>
                 </div>
               );
@@ -417,7 +431,7 @@ export default function ConsultationsTab() {
                         <span>{isOpen ? 'Close chat' : inDialogue ? 'Robyn has a question — open chat' : 'Open chat →'}</span>
                         <span style={{ ...mono, fontSize: '0.75rem', opacity: 0.7 }}>{isOpen ? '↑' : '↓'}</span>
                       </button>
-                      <ChatPanel chatKey={chatKey} />
+                      <ChatPanel chatKey={chatKey} openChat={openChat} msgs={msgs} msgsLoading={msgsLoading} msgAreaRef={msgAreaRef} draft={draft} setDraft={setDraft} sending={sending} sendError={sendError} sendMessage={sendMessage} />
                     </div>
                   )}
                 </div>
