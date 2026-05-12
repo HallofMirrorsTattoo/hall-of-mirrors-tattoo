@@ -105,11 +105,12 @@ const labelStyle: React.CSSProperties = {
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { bg: string; color: string; label: string }> = {
     pending_consent: { bg: 'rgba(234,179,8,0.12)', color: '#CA8A04', label: 'Pending consent' },
-    confirmed: { bg: 'rgba(34,197,94,0.12)', color: '#16A34A', label: 'Confirmed' },
-    completed: { bg: 'rgba(201,168,76,0.12)', color: 'var(--gold)', label: 'Completed' },
-    cancelled: { bg: 'rgba(239,68,68,0.12)', color: '#DC2626', label: 'Cancelled' },
-    pending: { bg: 'rgba(234,179,8,0.12)', color: '#CA8A04', label: 'Pending' },
-    responded: { bg: 'rgba(34,197,94,0.12)', color: '#16A34A', label: 'Responded' },
+    confirmed:       { bg: 'rgba(34,197,94,0.12)',  color: '#16A34A', label: 'Confirmed' },
+    completed:       { bg: 'rgba(201,168,76,0.12)', color: 'var(--gold)', label: 'Completed' },
+    cancelled:       { bg: 'rgba(239,68,68,0.12)',  color: '#DC2626', label: 'Cancelled' },
+    rescheduled:     { bg: 'rgba(99,102,241,0.12)', color: '#818CF8', label: 'Rescheduled' },
+    pending:         { bg: 'rgba(234,179,8,0.12)',  color: '#CA8A04', label: 'Pending' },
+    responded:       { bg: 'rgba(34,197,94,0.12)',  color: '#16A34A', label: 'Responded' },
   };
   const s = map[status] || { bg: 'rgba(155,155,155,0.12)', color: 'var(--text-mid)', label: status };
   return (
@@ -562,7 +563,7 @@ export default function ArtistDashboard() {
             <div>
               {/* Status filter */}
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-                {['all', 'pending_consent', 'confirmed', 'completed'].map((s) => (
+                {['all', 'pending_consent', 'confirmed', 'rescheduled', 'completed', 'cancelled'].map((s) => (
                   <button
                     key={s}
                     onClick={() => setStatusFilter(s)}
@@ -580,7 +581,7 @@ export default function ArtistDashboard() {
                       transition: 'all 0.3s ease',
                     }}
                   >
-                    {s === 'all' ? 'All' : s.replace('_', ' ')}
+                    {s === 'all' ? 'All' : s.replace(/_/g, ' ')}
                   </button>
                 ))}
               </div>
@@ -597,40 +598,45 @@ export default function ArtistDashboard() {
                 <p style={{ color: 'var(--text-low)', fontSize: '0.9rem', padding: '2rem 0' }}>No bookings found.</p>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {filteredBookings.map((booking) => (
-                    <button
-                      key={booking.id}
-                      onClick={() => setSelectedBooking(selectedBooking?.id === booking.id ? null : booking)}
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr auto',
-                        alignItems: 'center',
-                        gap: '1rem',
-                        width: '100%',
-                        padding: '1.25rem 1.5rem',
-                        background: selectedBooking?.id === booking.id ? 'rgba(201,168,76,0.06)' : 'var(--surface)',
-                        border: `1px solid ${selectedBooking?.id === booking.id ? 'rgba(201,168,76,0.3)' : 'var(--border)'}`,
-                        borderRadius: '0.75rem',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        transition: 'all 0.3s ease',
-                      }}
-                    >
-                      <div>
-                        <p style={{ margin: '0 0 0.25rem', fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.1rem', fontWeight: 300, color: 'var(--cream)' }}>
-                          {booking.first_name} {booking.last_name}
-                        </p>
-                        <p style={{ margin: '0 0 0.375rem', fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.1em', color: 'var(--text-low)' }}>
-                          {booking.booking_reference}
-                        </p>
-                        <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--text-mid)' }}>
-                          {new Date(booking.appointment_date_time).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
-                          {' · '}{booking.placement}
-                        </p>
-                      </div>
-                      <StatusBadge status={booking.appointment_status} />
-                    </button>
-                  ))}
+                  {filteredBookings.map((booking) => {
+                    const isCancelled = booking.appointment_status === 'cancelled';
+                    const isSelected = selectedBooking?.id === booking.id;
+                    return (
+                      <button
+                        key={booking.id}
+                        onClick={() => setSelectedBooking(isSelected ? null : booking)}
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: '1fr auto',
+                          alignItems: 'center',
+                          gap: '1rem',
+                          width: '100%',
+                          padding: '1.25rem 1.5rem',
+                          background: isSelected ? 'rgba(201,168,76,0.06)' : 'var(--surface)',
+                          border: `1px solid ${isSelected ? 'rgba(201,168,76,0.3)' : 'var(--border)'}`,
+                          borderRadius: '0.75rem',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          transition: 'all 0.3s ease',
+                          opacity: isCancelled ? 0.5 : 1,
+                        }}
+                      >
+                        <div>
+                          <p style={{ margin: '0 0 0.25rem', fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.1rem', fontWeight: 300, color: isCancelled ? 'var(--text-mid)' : 'var(--cream)', textDecoration: isCancelled ? 'line-through' : 'none' }}>
+                            {booking.first_name} {booking.last_name}
+                          </p>
+                          <p style={{ margin: '0 0 0.375rem', fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.1em', color: 'var(--text-low)' }}>
+                            {booking.booking_reference}
+                          </p>
+                          <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--text-mid)' }}>
+                            {new Date(booking.appointment_date_time).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                            {' · '}{booking.placement}
+                          </p>
+                        </div>
+                        <StatusBadge status={booking.appointment_status} />
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>

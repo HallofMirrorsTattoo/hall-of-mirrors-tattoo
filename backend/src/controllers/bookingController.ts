@@ -411,7 +411,7 @@ export async function getArtistBookings(req: Request, res: Response) {
        FROM "Booking" b
        JOIN "User" u ON b.user_id = u.id
        LEFT JOIN "Artist" a ON b.artist_id = a.id
-       WHERE b.artist_id = $1 AND b.appointment_status != 'cancelled'
+       WHERE b.artist_id = $1
        ORDER BY b.appointment_date_time ASC`,
       [req.artist.id]
     );
