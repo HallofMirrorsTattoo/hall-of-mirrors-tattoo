@@ -6,14 +6,43 @@ import { useAuth } from '@/lib/authContext';
 
 // ── Availability types ────────────────────────────────────────────────────────
 
+// Must match 1-hour slot format used by availabilityController.ts
 const TIME_SLOTS = [
-  { id: '09:00-11:00', label: '9am – 11am' },
-  { id: '11:00-13:00', label: '11am – 1pm' },
-  { id: '13:00-15:00', label: '1pm – 3pm' },
-  { id: '15:00-17:00', label: '3pm – 5pm' },
-  { id: '17:00-19:00', label: '5pm – 7pm' },
-  { id: '19:00-21:00', label: '7pm – 9pm' },
+  { id: '09:00', label: '9am' },
+  { id: '10:00', label: '10am' },
+  { id: '11:00', label: '11am' },
+  { id: '12:00', label: '12pm' },
+  { id: '13:00', label: '1pm' },
+  { id: '14:00', label: '2pm' },
+  { id: '15:00', label: '3pm' },
+  { id: '16:00', label: '4pm' },
+  { id: '17:00', label: '5pm' },
+  { id: '18:00', label: '6pm' },
+  { id: '19:00', label: '7pm' },
+  { id: '20:00', label: '8pm' },
 ];
+
+// ── Calendar constants ─────────────────────────────────────────────────────────
+
+const CAL_HOURS = Array.from({ length: 12 }, (_, i) => 9 + i); // 9 to 20
+const HOUR_PX = 64;
+
+function toDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function fmtH(h: number): string {
+  if (h < 12) return `${h}am`;
+  if (h === 12) return '12pm';
+  return `${h - 12}pm`;
+}
+function getMonday(d: Date): Date {
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  const mon = new Date(d);
+  mon.setDate(d.getDate() + diff);
+  mon.setHours(0, 0, 0, 0);
+  return mon;
+}
 
 interface AvailabilityBlock {
   id: string;
@@ -93,7 +122,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function ArtistDashboard() {
   const router = useRouter();
   const { artist, accessToken, logout, isLoading: authLoading } = useAuth();
-  const [tab, setTab] = useState<'bookings' | 'consultations' | 'availability'>('bookings');
+  const [tab, setTab] = useState<'bookings' | 'calendar' | 'consultations' | 'availability'>('bookings');
 
   // Bookings state
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -114,6 +143,12 @@ export default function ArtistDashboard() {
   const [consultationError, setConsultationError] = useState('');
 
   const [isLoading, setIsLoading] = useState(true);
+
+  // Calendar state
+  const [calWeekStart, setCalWeekStart] = useState<Date>(() => getMonday(new Date()));
+  const calPrevWeek = () => setCalWeekStart((d) => { const n = new Date(d); n.setDate(n.getDate() - 7); return n; });
+  const calNextWeek = () => setCalWeekStart((d) => { const n = new Date(d); n.setDate(n.getDate() + 7); return n; });
+  const calGoToday = () => setCalWeekStart(getMonday(new Date()));
 
   // Availability state
   const today = new Date();
@@ -302,6 +337,152 @@ export default function ArtistDashboard() {
   const filteredBookings = bookings.filter((b) => statusFilter === 'all' || b.appointment_status === statusFilter);
   const pendingConsultations = consultations.filter((c) => c.status === 'pending').length;
 
+  // ── Calendar derived data ───────────────────────────────────────────────────
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(calWeekStart);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+  const weekDayStrs = weekDays.map(toDateStr);
+  const weekBookings = bookings.filter((b) => {
+    const ds = b.appointment_date_time.substring(0, 10);
+    return weekDayStrs.includes(ds) && b.appointment_status !== 'cancelled';
+  });
+
+  const CAL_STATUS: Record<string, { bg: string; border: string; color: string }> = {
+    pending_consent: { bg: 'rgba(234,179,8,0.18)', border: 'rgba(234,179,8,0.45)', color: '#EAB308' },
+    confirmed:       { bg: 'rgba(34,197,94,0.15)',  border: 'rgba(34,197,94,0.4)',  color: '#16A34A' },
+    completed:       { bg: 'rgba(201,168,76,0.15)', border: 'rgba(201,168,76,0.4)', color: 'var(--gold)' },
+    rescheduled:     { bg: 'rgba(99,102,241,0.15)', border: 'rgba(99,102,241,0.4)', color: '#818CF8' },
+  };
+
+  // ── Booking detail panel (shared between Bookings + Calendar tabs) ──────────
+  const renderBookingDetailPanel = (extraStyle?: React.CSSProperties) => {
+    if (!selectedBooking) return null;
+    return (
+      <div style={{ position: 'sticky', top: '5rem', alignSelf: 'start', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '1.75rem', ...extraStyle }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+          <h3 style={{ margin: 0, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.375rem', fontWeight: 300, color: 'var(--cream)' }}>
+            Booking details
+          </h3>
+          <button onClick={() => setSelectedBooking(null)} style={{ background: 'none', border: 'none', color: 'var(--text-low)', cursor: 'pointer', fontSize: '1.25rem', lineHeight: 1 }}>×</button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '1.75rem' }}>
+          <div>
+            <span style={labelStyle}>Requested date</span>
+            <p style={{ margin: 0, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.0625rem', fontWeight: 300, color: 'var(--cream)', lineHeight: 1.4 }}>
+              {new Date(selectedBooking.appointment_date_time).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
+            {selectedBooking.appointment_time && (() => {
+              const h = parseInt(selectedBooking.appointment_time.substring(0, 2), 10);
+              return (
+                <p style={{ margin: '0.25rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--gold)' }}>
+                  Starting {fmtH(h)}
+                </p>
+              );
+            })()}
+            {selectedBooking.appointment_status === 'confirmed' && selectedBooking.appointment_time && selectedBooking.estimated_duration_minutes && (() => {
+              const startH = parseInt(selectedBooking.appointment_time.substring(0, 2), 10);
+              const endH = startH + Math.round(selectedBooking.estimated_duration_minutes / 60);
+              return (
+                <p style={{ margin: '0.25rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.575rem', letterSpacing: '0.1em', color: 'rgba(201,168,76,0.5)' }}>
+                  Confirmed session: {fmtH(startH)} → {fmtH(endH)} ({Math.round(selectedBooking.estimated_duration_minutes / 60)}h)
+                  {selectedBooking.notify_end_time === false && ' · finish time hidden from client'}
+                </p>
+              );
+            })()}
+          </div>
+
+          {[
+            { label: 'Client', value: `${selectedBooking.first_name} ${selectedBooking.last_name}` },
+            { label: 'Email', value: selectedBooking.email || '—' },
+            { label: 'Phone', value: selectedBooking.phone || '—' },
+            { label: 'Placement', value: selectedBooking.placement },
+            { label: 'Size', value: selectedBooking.estimated_size },
+            { label: 'Description', value: selectedBooking.tattoo_description },
+          ].map(({ label, value }) => (
+            <div key={label}>
+              <span style={labelStyle}>{label}</span>
+              <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.6 }}>{value}</p>
+            </div>
+          ))}
+        </div>
+
+        {selectedBooking.appointment_status !== 'confirmed' && selectedBooking.appointment_status !== 'completed' && selectedBooking.appointment_status !== 'cancelled' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+            <div>
+              <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.575rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', display: 'block', marginBottom: '0.5rem' }}>
+                Session duration
+              </span>
+              <select
+                value={confirmDurationHours}
+                onChange={(e) => setConfirmDurationHours(Number(e.target.value))}
+                style={{ width: '100%' }}
+              >
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((h) => (
+                  <option key={h} value={h}>{h} hour{h > 1 ? 's' : ''}</option>
+                ))}
+              </select>
+              {selectedBooking.appointment_time && (
+                (() => {
+                  const startH = parseInt(selectedBooking.appointment_time.substring(0, 2), 10);
+                  const endH = startH + confirmDurationHours;
+                  return (
+                    <p style={{ margin: '0.5rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.55rem', letterSpacing: '0.1em', color: 'rgba(201,168,76,0.55)' }}>
+                      Session: {fmtH(startH)} → {fmtH(endH)}
+                    </p>
+                  );
+                })()
+              )}
+            </div>
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={confirmNotifyEnd}
+                onChange={(e) => setConfirmNotifyEnd(e.target.checked)}
+                style={{ accentColor: 'var(--gold)', width: '0.875rem', height: '0.875rem', cursor: 'pointer' }}
+              />
+              <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-mid)' }}>
+                Tell client the finish time
+              </span>
+            </label>
+            {!confirmNotifyEnd && (
+              <p style={{ margin: '-0.375rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.5rem', letterSpacing: '0.08em', color: 'var(--text-low)' }}>
+                Client sees start time only. Calendar still blocks the full session.
+              </p>
+            )}
+
+            {bookingError && (
+              <p style={{ margin: 0, fontSize: '0.8125rem', color: '#f87171' }}>{bookingError}</p>
+            )}
+
+            <button
+              onClick={() => handleStatusUpdate(selectedBooking.id, 'confirmed', '', {
+                duration_hours: confirmDurationHours,
+                notify_end_time: confirmNotifyEnd,
+              })}
+              disabled={isUpdating}
+              className="btn-primary"
+              style={{ width: '100%', padding: '0.75rem', opacity: isUpdating ? 0.6 : 1, cursor: isUpdating ? 'default' : 'pointer' }}
+            >
+              {isUpdating ? 'Confirming…' : 'Confirm & Schedule'}
+            </button>
+            <button
+              onClick={() => handleStatusUpdate(selectedBooking.id, 'cancelled', '')}
+              disabled={isUpdating}
+              className="btn-secondary"
+              style={{ width: '100%', padding: '0.75rem', color: '#f87171', borderColor: 'rgba(239,68,68,0.3)', opacity: isUpdating ? 0.6 : 1, cursor: isUpdating ? 'default' : 'pointer' }}
+            >
+              Decline
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center" style={{ background: 'var(--bg)' }}>
@@ -342,6 +523,7 @@ export default function ArtistDashboard() {
         <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border)', marginBottom: '2.5rem' }}>
           {([
             { key: 'bookings', label: 'Bookings', badge: 0 },
+            { key: 'calendar', label: 'Calendar', badge: 0 },
             { key: 'consultations', label: 'Consultations', badge: pendingConsultations },
             { key: 'availability', label: 'Availability', badge: 0 },
           ] as const).map(({ key, label, badge }) => (
@@ -454,135 +636,163 @@ export default function ArtistDashboard() {
             </div>
 
             {/* Booking detail panel */}
-            {selectedBooking && (
-              <div style={{ position: 'sticky', top: '5rem', alignSelf: 'start', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '1.75rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                  <h3 style={{ margin: 0, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.375rem', fontWeight: 300, color: 'var(--cream)' }}>
-                    Booking details
-                  </h3>
-                  <button onClick={() => setSelectedBooking(null)} style={{ background: 'none', border: 'none', color: 'var(--text-low)', cursor: 'pointer', fontSize: '1.25rem', lineHeight: 1 }}>×</button>
-                </div>
+            {renderBookingDetailPanel()}
+          </div>
+        )}
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '1.75rem' }}>
-                  {/* Requested date + time slot — shown prominently */}
-                  <div>
-                    <span style={labelStyle}>Requested date</span>
-                    <p style={{ margin: 0, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.0625rem', fontWeight: 300, color: 'var(--cream)', lineHeight: 1.4 }}>
-                      {new Date(selectedBooking.appointment_date_time).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                    </p>
-                    {selectedBooking.appointment_time && (() => {
-                      const h = parseInt(selectedBooking.appointment_time.substring(0, 2), 10);
-                      const lbl = h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h - 12}pm`;
-                      return (
-                        <p style={{ margin: '0.25rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--gold)' }}>
-                          Starting {lbl}
-                        </p>
-                      );
-                    })()}
-                    {/* Confirmed session summary (when status is confirmed) */}
-                    {selectedBooking.appointment_status === 'confirmed' && selectedBooking.appointment_time && selectedBooking.estimated_duration_minutes && (() => {
-                      const startH = parseInt(selectedBooking.appointment_time.substring(0, 2), 10);
-                      const endH = startH + Math.round(selectedBooking.estimated_duration_minutes / 60);
-                      const fmtH = (h: number) => h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h - 12}pm`;
-                      return (
-                        <p style={{ margin: '0.25rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.575rem', letterSpacing: '0.1em', color: 'rgba(201,168,76,0.5)' }}>
-                          Confirmed session: {fmtH(startH)} → {fmtH(endH)} ({Math.round(selectedBooking.estimated_duration_minutes / 60)}h)
-                          {selectedBooking.notify_end_time === false && ' · finish time hidden from client'}
-                        </p>
-                      );
-                    })()}
-                  </div>
-
-                  {[
-                    { label: 'Client', value: `${selectedBooking.first_name} ${selectedBooking.last_name}` },
-                    { label: 'Email', value: selectedBooking.email || '—' },
-                    { label: 'Phone', value: selectedBooking.phone || '—' },
-                    { label: 'Placement', value: selectedBooking.placement },
-                    { label: 'Size', value: selectedBooking.estimated_size },
-                    { label: 'Description', value: selectedBooking.tattoo_description },
-                  ].map(({ label, value }) => (
-                    <div key={label}>
-                      <span style={labelStyle}>{label}</span>
-                      <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.6 }}>{value}</p>
-                    </div>
+        {/* ── Calendar tab ─────────────────────────────────────────────────── */}
+        {tab === 'calendar' && (
+          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+            {/* Calendar column */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {/* Week navigation */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '0.25rem' }}>
+                  {[{ fn: calPrevWeek, icon: '←' }, { fn: calNextWeek, icon: '→' }].map(({ fn, icon }) => (
+                    <button
+                      key={icon}
+                      onClick={fn}
+                      style={{ width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid var(--border)', borderRadius: '50%', cursor: 'pointer', color: 'var(--text-mid)', fontSize: '0.875rem', transition: 'border-color 0.25s ease' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+                    >{icon}</button>
                   ))}
                 </div>
-
-                {selectedBooking.appointment_status !== 'confirmed' && selectedBooking.appointment_status !== 'completed' && selectedBooking.appointment_status !== 'cancelled' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-
-                    {/* Duration selector */}
-                    <div>
-                      <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.575rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', display: 'block', marginBottom: '0.5rem' }}>
-                        Session duration
-                      </span>
-                      <select
-                        value={confirmDurationHours}
-                        onChange={(e) => setConfirmDurationHours(Number(e.target.value))}
-                        style={{ width: '100%' }}
-                      >
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map((h) => (
-                          <option key={h} value={h}>{h} hour{h > 1 ? 's' : ''}</option>
-                        ))}
-                      </select>
-
-                      {/* Live end-time preview */}
-                      {selectedBooking.appointment_time && (
-                        (() => {
-                          const startH = parseInt(selectedBooking.appointment_time.substring(0, 2), 10);
-                          const endH = startH + confirmDurationHours;
-                          const fmtH = (h: number) => h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h - 12}pm`;
-                          return (
-                            <p style={{ margin: '0.5rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.55rem', letterSpacing: '0.1em', color: 'rgba(201,168,76,0.55)' }}>
-                              Session: {fmtH(startH)} → {fmtH(endH)}
-                            </p>
-                          );
-                        })()
-                      )}
-                    </div>
-
-                    {/* Notify end time toggle */}
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={confirmNotifyEnd}
-                        onChange={(e) => setConfirmNotifyEnd(e.target.checked)}
-                        style={{ accentColor: 'var(--gold)', width: '0.875rem', height: '0.875rem', cursor: 'pointer' }}
-                      />
-                      <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-mid)' }}>
-                        Tell client the finish time
-                      </span>
-                    </label>
-                    {!confirmNotifyEnd && (
-                      <p style={{ margin: '-0.375rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.5rem', letterSpacing: '0.08em', color: 'var(--text-low)' }}>
-                        Client sees start time only. Calendar still blocks the full session.
-                      </p>
-                    )}
-
-                    {/* Actions */}
-                    <button
-                      onClick={() => handleStatusUpdate(selectedBooking.id, 'confirmed', '', {
-                        duration_hours: confirmDurationHours,
-                        notify_end_time: confirmNotifyEnd,
-                      })}
-                      disabled={isUpdating}
-                      className="btn-primary"
-                      style={{ width: '100%', padding: '0.75rem', opacity: isUpdating ? 0.6 : 1, cursor: isUpdating ? 'default' : 'pointer' }}
-                    >
-                      {isUpdating ? 'Confirming…' : 'Confirm & Schedule'}
-                    </button>
-                    <button
-                      onClick={() => handleStatusUpdate(selectedBooking.id, 'cancelled', '')}
-                      disabled={isUpdating}
-                      className="btn-secondary"
-                      style={{ width: '100%', padding: '0.75rem', color: '#f87171', borderColor: 'rgba(239,68,68,0.3)', opacity: isUpdating ? 0.6 : 1, cursor: isUpdating ? 'default' : 'pointer' }}
-                    >
-                      Decline
-                    </button>
-                  </div>
-                )}
+                <span style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1.125rem', color: 'var(--cream)', flex: 1 }}>
+                  {(() => {
+                    const end = new Date(calWeekStart);
+                    end.setDate(end.getDate() + 6);
+                    return `${calWeekStart.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })} – ${end.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+                  })()}
+                </span>
+                <button
+                  onClick={calGoToday}
+                  style={{ padding: '0.3rem 0.875rem', borderRadius: '2rem', border: '1px solid var(--border)', background: 'none', color: 'var(--text-mid)', fontFamily: '"DM Mono", monospace', fontSize: '0.55rem', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.25s ease' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--gold)'; e.currentTarget.style.color = 'var(--gold)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-mid)'; }}
+                >Today</button>
               </div>
-            )}
+
+              {/* Calendar grid */}
+              <div style={{ overflowX: 'auto', borderRadius: '0.75rem', border: '1px solid var(--border)' }}>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: `52px repeat(7, minmax(80px, 1fr))`,
+                  gridTemplateRows: `48px repeat(${CAL_HOURS.length}, ${HOUR_PX}px)`,
+                  background: 'var(--surface)',
+                  minWidth: '560px',
+                  position: 'relative',
+                }}>
+                  {/* Top-left corner */}
+                  <div style={{ gridColumn: 1, gridRow: 1, borderRight: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }} />
+
+                  {/* Day headers */}
+                  {weekDays.map((day, di) => {
+                    const ds = toDateStr(day);
+                    const isToday = ds === toDateStr(new Date());
+                    return (
+                      <div key={ds} style={{
+                        gridColumn: di + 2, gridRow: 1,
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        borderBottom: '1px solid var(--border)',
+                        borderRight: di < 6 ? '1px solid var(--border)' : 'none',
+                        padding: '0.5rem',
+                        background: isToday ? 'rgba(201,168,76,0.04)' : 'transparent',
+                      }}>
+                        <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.48rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: isToday ? 'var(--gold)' : 'var(--text-low)' }}>
+                          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][di]}
+                        </span>
+                        <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', fontWeight: isToday ? 600 : 400, color: isToday ? 'var(--gold)' : 'var(--text)', marginTop: '0.125rem' }}>
+                          {day.getDate()}
+                        </span>
+                      </div>
+                    );
+                  })}
+
+                  {/* Hour labels + background cells */}
+                  {CAL_HOURS.map((hour, hi) => [
+                    <div key={`lbl-${hour}`} style={{
+                      gridColumn: 1, gridRow: hi + 2,
+                      display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end',
+                      paddingTop: '0.3rem', paddingRight: '0.5rem',
+                      borderRight: '1px solid var(--border)',
+                      borderBottom: hi < CAL_HOURS.length - 1 ? '1px solid rgba(42,37,32,0.6)' : 'none',
+                    }}>
+                      <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.44rem', letterSpacing: '0.06em', color: 'var(--text-low)', whiteSpace: 'nowrap' }}>
+                        {fmtH(hour)}
+                      </span>
+                    </div>,
+                    ...weekDays.map((day, di) => (
+                      <div key={`cell-${hour}-${di}`} style={{
+                        gridColumn: di + 2, gridRow: hi + 2,
+                        borderRight: di < 6 ? '1px solid var(--border)' : 'none',
+                        borderBottom: hi < CAL_HOURS.length - 1 ? '1px solid rgba(42,37,32,0.6)' : 'none',
+                        background: toDateStr(day) === toDateStr(new Date()) ? 'rgba(201,168,76,0.018)' : 'transparent',
+                      }} />
+                    )),
+                  ])}
+
+                  {/* Booking blocks */}
+                  {weekBookings.map((booking) => {
+                    const dateStr = booking.appointment_date_time.substring(0, 10);
+                    const di = weekDayStrs.indexOf(dateStr);
+                    if (di === -1) return null;
+                    const startHour = booking.appointment_time ? parseInt(booking.appointment_time.substring(0, 2), 10) : null;
+                    if (startHour === null || startHour < 9 || startHour > 20) return null;
+                    const durationH = booking.estimated_duration_minutes
+                      ? Math.min(Math.max(1, Math.round(booking.estimated_duration_minutes / 60)), 21 - startHour)
+                      : 1;
+                    const st = CAL_STATUS[booking.appointment_status] ?? { bg: 'rgba(155,155,155,0.1)', border: 'rgba(155,155,155,0.25)', color: 'var(--text-mid)' };
+                    const rowStart = startHour - 7; // row 2 = 9am → 9 - 7 = 2 ✓
+                    const isSelected = selectedBooking?.id === booking.id;
+
+                    return (
+                      <button
+                        key={booking.id}
+                        onClick={() => setSelectedBooking(isSelected ? null : booking)}
+                        style={{
+                          gridColumn: di + 2,
+                          gridRow: `${rowStart} / span ${durationH}`,
+                          zIndex: 2,
+                          margin: '2px',
+                          background: isSelected ? st.bg.replace(/[\d.]+\)$/, '0.35)') : st.bg,
+                          border: `1px solid ${isSelected ? st.color : st.border}`,
+                          borderRadius: '0.375rem',
+                          padding: '0.375rem 0.5rem',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          overflow: 'hidden',
+                          transition: 'all 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.borderColor = st.color; }}
+                        onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.borderColor = st.border; }}
+                      >
+                        <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.6875rem', fontWeight: 500, color: st.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.3 }}>
+                          {booking.first_name} {booking.last_name}
+                        </p>
+                        <p style={{ margin: '0.1rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.44rem', letterSpacing: '0.05em', color: st.color, opacity: 0.7, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {fmtH(startHour)}{booking.estimated_duration_minutes ? ` → ${fmtH(startHour + Math.round(booking.estimated_duration_minutes / 60))}` : ''}
+                        </p>
+                        {durationH >= 2 && booking.placement && (
+                          <p style={{ margin: '0.125rem 0 0', fontFamily: '"DM Sans", sans-serif', fontSize: '0.5625rem', color: 'var(--text-mid)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {booking.placement}
+                          </p>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {weekBookings.length === 0 && !isLoading && (
+                <p style={{ marginTop: '1.5rem', color: 'var(--text-low)', fontSize: '0.875rem', fontFamily: '"DM Sans", sans-serif', textAlign: 'center' }}>
+                  No bookings this week.
+                </p>
+              )}
+            </div>
+
+            {/* Detail panel */}
+            {renderBookingDetailPanel({ width: '380px', flexShrink: 0 })}
           </div>
         )}
 
