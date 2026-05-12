@@ -13,14 +13,15 @@ export async function getConsentForm(req: Request, res: Response) {
     const { bookingId } = req.params;
     await client.connect();
 
-    // Verify booking belongs to this user
+    // Verify booking belongs to this user — also match by email (stub-user fallback)
     const bookingCheck = await client.query(
-      `SELECT id, booking_reference, appointment_date_time, placement, tattoo_description, appointment_status,
+      `SELECT b.id, b.booking_reference, b.appointment_date_time, b.placement, b.tattoo_description, b.appointment_status,
               a.full_name as artist_name
        FROM "Booking" b
        LEFT JOIN "Artist" a ON b.artist_id = a.id
-       WHERE b.id = $1 AND b.user_id = $2`,
-      [bookingId, req.user.id]
+       LEFT JOIN "User" u ON b.user_id = u.id
+       WHERE b.id = $1 AND (b.user_id = $2 OR u.email = $3)`,
+      [bookingId, req.user.id, req.user.email]
     );
 
     if (bookingCheck.rows.length === 0) {
@@ -88,7 +89,7 @@ export async function submitConsentForm(req: Request, res: Response) {
 
     await client.connect();
 
-    // Verify booking belongs to this user
+    // Verify booking belongs to this user — also match by email (stub-user fallback)
     const bookingResult = await client.query(
       `SELECT b.id, b.booking_reference, b.appointment_date_time, b.placement, b.estimated_size, b.tattoo_description,
               b.user_id, b.guest_email, b.guest_name,
@@ -97,8 +98,8 @@ export async function submitConsentForm(req: Request, res: Response) {
        FROM "Booking" b
        LEFT JOIN "User" u ON b.user_id = u.id
        LEFT JOIN "Artist" a ON b.artist_id = a.id
-       WHERE b.id = $1 AND b.user_id = $2`,
-      [bookingId, req.user.id]
+       WHERE b.id = $1 AND (b.user_id = $2 OR u.email = $3)`,
+      [bookingId, req.user.id, req.user.email]
     );
 
     if (bookingResult.rows.length === 0) {
@@ -296,7 +297,7 @@ export async function getClientConsentForms(req: Request, res: Response) {
 
     await client.connect();
 
-    // Get all bookings for this user with their consent form status
+    // Get all bookings for this user — also match by email (stub-user fallback)
     const result = await client.query(
       `SELECT b.id as booking_id, b.booking_reference, b.appointment_date_time,
               b.placement, b.appointment_status, b.estimated_size,
@@ -305,9 +306,10 @@ export async function getClientConsentForms(req: Request, res: Response) {
        FROM "Booking" b
        LEFT JOIN "Artist" a ON b.artist_id = a.id
        LEFT JOIN "ConsentForm" cf ON cf.booking_id = b.id
-       WHERE b.user_id = $1
+       LEFT JOIN "User" u ON b.user_id = u.id
+       WHERE b.user_id = $1 OR u.email = $2
        ORDER BY b.appointment_date_time DESC`,
-      [req.user.id]
+      [req.user.id, req.user.email]
     );
 
     res.json({ success: true, bookings: result.rows });

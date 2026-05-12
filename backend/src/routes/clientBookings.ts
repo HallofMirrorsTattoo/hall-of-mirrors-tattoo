@@ -5,25 +5,18 @@ import { clientAuthMiddleware } from '../middleware/clientAuth.js';
 const { Client } = pkg;
 const router = Router();
 
-// Middleware to verify authentication
 router.use(clientAuthMiddleware);
 
-// GET all client bookings
+// GET /api/client/bookings
 router.get('/', async (req: Request, res: Response) => {
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL,
-  });
-
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
   try {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Not authenticated',
-      });
-    }
+    if (!req.user) return res.status(401).json({ success: false, error: 'Not authenticated' });
 
     await client.connect();
 
+    // Match by user_id OR by email (handles stub users created by the booking form
+    // that have a different UUID than the client's signup account)
     const result = await client.query(
       `SELECT b.id, b.booking_reference,
               b.appointment_date_time as appointment_date,
@@ -34,58 +27,43 @@ router.get('/', async (req: Request, res: Response) => {
               a.full_name as artist_name, a.instagram_handle
        FROM "Booking" b
        LEFT JOIN "Artist" a ON b.artist_id = a.id
-       WHERE b.user_id = $1
+       LEFT JOIN "User" u ON b.user_id = u.id
+       WHERE b.user_id = $1 OR u.email = $2
        ORDER BY b.appointment_date_time DESC`,
-      [req.user.id]
+      [req.user.id, req.user.email]
     );
 
-    res.json({
-      success: true,
-      bookings: result.rows,
-    });
+    res.json({ success: true, bookings: result.rows });
   } catch (error) {
     console.error('Fetch bookings error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch bookings',
-    });
+    res.status(500).json({ success: false, error: 'Failed to fetch bookings' });
   } finally {
     await client.end();
   }
 });
 
-// GET specific booking
+// GET /api/client/bookings/:id
 router.get('/:id', async (req: Request, res: Response) => {
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL,
-  });
-
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
   try {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Not authenticated',
-      });
-    }
+    if (!req.user) return res.status(401).json({ success: false, error: 'Not authenticated' });
 
     const { id } = req.params;
-
     await client.connect();
 
-    // First check if booking belongs to user
-    const bookingResult = await client.query(
-      `SELECT id FROM "Booking" WHERE id = $1 AND user_id = $2`,
-      [id, req.user.id]
+    // Ownership check — accept user_id match OR email match
+    const ownerCheck = await client.query(
+      `SELECT b.id FROM "Booking" b
+       LEFT JOIN "User" u ON b.user_id = u.id
+       WHERE b.id = $1 AND (b.user_id = $2 OR u.email = $3)`,
+      [id, req.user.id, req.user.email]
     );
 
-    if (bookingResult.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: 'Booking not found',
-      });
+    if (ownerCheck.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Booking not found' });
     }
 
-    // Get full booking details
+    // Main booking + artist — no DesignIdea join here so it can't break this query
     const result = await client.query(
       `SELECT b.id, b.booking_reference,
               b.appointment_date_time as appointment_date,
@@ -96,31 +74,30 @@ router.get('/:id', async (req: Request, res: Response) => {
               b.placement as tattoo_placement,
               b.estimated_duration_minutes as estimated_duration,
               b.created_at, b.updated_at,
-              a.id as artist_id, a.full_name as artist_name, a.specialties, a.bio, a.instagram_handle,
-              di.design_idea_id, di.image_url, di.description
+              a.id as artist_id, a.full_name as artist_name, a.specialties, a.bio, a.instagram_handle
        FROM "Booking" b
        LEFT JOIN "Artist" a ON b.artist_id = a.id
-       LEFT JOIN "DesignIdea" di ON b.id = di.booking_id
-       WHERE b.id = $1 AND b.user_id = $2`,
-      [id, req.user.id]
+       WHERE b.id = $1`,
+      [id]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: 'Booking not found',
-      });
+      return res.status(404).json({ success: false, error: 'Booking not found' });
     }
 
-    // Combine booking with design ideas
     const booking = result.rows[0];
-    const designIdeas = result.rows
-      .filter(row => row.design_idea_id)
-      .map(row => ({
-        id: row.design_idea_id,
-        image_url: row.image_url,
-        description: row.description,
-      }));
+
+    // DesignIdea lookup — separate so any issue here doesn't block the response
+    let designIdeas: { design_idea_id: string; image_url: string; description: string }[] = [];
+    try {
+      const diResult = await client.query(
+        `SELECT design_idea_id, image_url, description FROM "DesignIdea" WHERE booking_id = $1`,
+        [id]
+      );
+      designIdeas = diResult.rows;
+    } catch (diErr: any) {
+      console.warn('[clientBookings] DesignIdea fetch skipped:', diErr.message);
+    }
 
     res.json({
       success: true,
@@ -149,54 +126,39 @@ router.get('/:id', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Fetch booking detail error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch booking',
-    });
+    res.status(500).json({ success: false, error: 'Failed to fetch booking' });
   } finally {
     await client.end();
   }
 });
 
-// PATCH booking (update status)
+// PATCH /api/client/bookings/:id  (cancel or reschedule)
 router.patch('/:id', async (req: Request, res: Response) => {
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL,
-  });
-
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
   try {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Not authenticated',
-      });
-    }
+    if (!req.user) return res.status(401).json({ success: false, error: 'Not authenticated' });
 
     const { id } = req.params;
     const { appointment_status, new_appointment_date, new_appointment_time } = req.body;
 
-    // Only allow canceling or rescheduling
     const allowedStatuses = ['cancelled', 'rescheduled'];
     if (!allowedStatuses.includes(appointment_status)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid status. Only "cancelled" or "rescheduled" are allowed',
-      });
+      return res.status(400).json({ success: false, error: 'Only "cancelled" or "rescheduled" are allowed' });
     }
 
     await client.connect();
 
-    // Verify booking belongs to user and get current appointment time
+    // Ownership + current status — email fallback
     const bookingResult = await client.query(
-      `SELECT id, appointment_date_time, appointment_status FROM "Booking" WHERE id = $1 AND user_id = $2`,
-      [id, req.user.id]
+      `SELECT b.id, b.appointment_date_time, b.appointment_status
+       FROM "Booking" b
+       LEFT JOIN "User" u ON b.user_id = u.id
+       WHERE b.id = $1 AND (b.user_id = $2 OR u.email = $3)`,
+      [id, req.user.id, req.user.email]
     );
 
     if (bookingResult.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: 'Booking not found',
-      });
+      return res.status(404).json({ success: false, error: 'Booking not found' });
     }
 
     const existing = bookingResult.rows[0];
@@ -207,7 +169,6 @@ router.patch('/:id', async (req: Request, res: Response) => {
     let updateResult;
 
     if (appointment_status === 'rescheduled' && new_appointment_date && new_appointment_time) {
-      // Validate new date/time format
       if (!/^\d{4}-\d{2}-\d{2}$/.test(new_appointment_date) || !/^\d{2}:\d{2}$/.test(new_appointment_time)) {
         return res.status(400).json({ success: false, error: 'Invalid date or time format' });
       }
@@ -232,17 +193,10 @@ router.patch('/:id', async (req: Request, res: Response) => {
       );
     }
 
-    res.json({
-      success: true,
-      message: `Booking ${appointment_status}`,
-      booking: updateResult.rows[0],
-    });
+    res.json({ success: true, message: `Booking ${appointment_status}`, booking: updateResult.rows[0] });
   } catch (error) {
     console.error('Update booking error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to update booking',
-    });
+    res.status(500).json({ success: false, error: 'Failed to update booking' });
   } finally {
     await client.end();
   }

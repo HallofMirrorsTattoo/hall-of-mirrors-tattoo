@@ -108,8 +108,8 @@ export default function BookingDetailPage() {
           `${process.env.NEXT_PUBLIC_API_URL}/api/client/bookings/${bookingId}`,
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
-        if (!res.ok) throw new Error('Failed to fetch booking');
         const data = await res.json();
+        if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
         setBooking(data.booking);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load booking');
