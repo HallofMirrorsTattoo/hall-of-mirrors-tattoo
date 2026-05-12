@@ -95,13 +95,10 @@ export default function Home() {
           className="absolute bottom-0 left-0 right-0 flex flex-col items-center z-20 pb-14 gap-6 pointer-events-auto"
           style={{ animation: 'fadeUp 1.1s cubic-bezier(0.32,0.72,0,1) 0.6s both' }}
         >
-          <div className="flex gap-3 flex-col md:flex-row justify-center">
+          <div className="flex justify-center">
             <Link href="/booking" className="btn-primary">
               <span>Book Appointment</span>
               <span className="btn-icon" aria-hidden="true">↗</span>
-            </Link>
-            <Link href="/consultation" className="btn-secondary">
-              Free Consultation
             </Link>
           </div>
 
@@ -398,8 +395,8 @@ export default function Home() {
             <div style={{ borderTop: '1px solid var(--border)' }}>
               {([
                 { n: '01', title: 'Bespoke Tattoo',   desc: 'Custom designs drawn from scratch, created in close collaboration with you from initial concept to final line.', link: '/booking' },
-                { n: '02', title: 'Free Consultation', desc: 'A relaxed conversation to discuss your idea, placement, sizing, and what the design process looks like.',        link: '/consultation' },
-                { n: '03', title: 'Cover-Up Work',     desc: "Skilled cover-up and rework of existing tattoos. Book a consultation to discuss what's possible.",              link: '/consultation' },
+                { n: '02', title: 'Free Consultation', desc: 'A relaxed conversation to discuss your idea, placement, sizing, and what the design process looks like.',        link: '/booking' },
+                { n: '03', title: 'Cover-Up Work',     desc: "Skilled cover-up and rework of existing tattoos. Request a consultation to discuss what's possible.",            link: '/booking' },
               ] as const).map((s, i) => (
                 <AnimatedSection key={s.n} delay={i * 100} style={{ borderBottom: '1px solid var(--border)' }}>
                   <Link href={s.link} className="service-row group">
@@ -499,15 +496,12 @@ export default function Home() {
               </h2>
               <p style={{ margin: '0 auto 3rem', maxWidth: '38ch', textAlign: 'center' }}>
                 Limited availability ensures every client receives Robyn&apos;s full attention.
-                Book now or start with a free consultation.
+                Book a session or request a consultation — all in one place.
               </p>
-              <div className="flex gap-3 flex-col md:flex-row justify-center">
+              <div className="flex justify-center">
                 <Link href="/booking" className="btn-primary">
                   <span>Book Appointment</span>
                   <span className="btn-icon" aria-hidden="true">↗</span>
-                </Link>
-                <Link href="/consultation" className="btn-secondary">
-                  Free Consultation
                 </Link>
               </div>
             </AnimatedSection>
