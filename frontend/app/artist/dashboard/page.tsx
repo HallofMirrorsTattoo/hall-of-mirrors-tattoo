@@ -1,8 +1,38 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
+
+// ── Availability types ────────────────────────────────────────────────────────
+
+const TIME_SLOTS = [
+  { id: '09:00-11:00', label: '9am – 11am' },
+  { id: '11:00-13:00', label: '11am – 1pm' },
+  { id: '13:00-15:00', label: '1pm – 3pm' },
+  { id: '15:00-17:00', label: '3pm – 5pm' },
+  { id: '17:00-19:00', label: '5pm – 7pm' },
+  { id: '19:00-21:00', label: '7pm – 9pm' },
+];
+
+interface AvailabilityBlock {
+  id: string;
+  blocked_date: string;
+  blocked_slot: string | null;
+  reason: string | null;
+}
+
+interface AvailabilityResponse {
+  blockedDays: string[];
+  slotData: Record<string, { blocked: string[]; booked: string[] }>;
+  blocks: AvailabilityBlock[];
+}
+
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+const DAYS_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 interface Booking {
   id: string;
@@ -60,7 +90,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function ArtistDashboard() {
   const router = useRouter();
   const { artist, accessToken, logout, isLoading: authLoading } = useAuth();
-  const [tab, setTab] = useState<'bookings' | 'consultations'>('bookings');
+  const [tab, setTab] = useState<'bookings' | 'consultations' | 'availability'>('bookings');
 
   // Bookings state
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -77,6 +107,95 @@ export default function ArtistDashboard() {
   const [consultationError, setConsultationError] = useState('');
 
   const [isLoading, setIsLoading] = useState(true);
+
+  // Availability state
+  const today = new Date();
+  const [avYear, setAvYear]         = useState(today.getFullYear());
+  const [avMonth, setAvMonth]       = useState(today.getMonth());
+  const [avData, setAvData]         = useState<AvailabilityResponse | null>(null);
+  const [avLoading, setAvLoading]   = useState(false);
+  const [avError, setAvError]       = useState('');
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [isBlocking, setIsBlocking]   = useState(false);
+
+  const avMonthKey = `${avYear}-${String(avMonth + 1).padStart(2, '0')}`;
+
+  const fetchAvailability = useCallback(async () => {
+    if (!artist?.id || !accessToken) return;
+    setAvLoading(true);
+    setAvError('');
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/availability/${artist.id}?month=${avMonthKey}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      if (!res.ok) throw new Error('Failed to load availability');
+      const data = await res.json();
+      setAvData(data);
+    } catch (e) {
+      setAvError(e instanceof Error ? e.message : 'Failed to load');
+    } finally {
+      setAvLoading(false);
+    }
+  }, [artist?.id, accessToken, avMonthKey]);
+
+  const avPrevMonth = () => {
+    const now = new Date();
+    const canGo = avYear > now.getFullYear() || (avYear === now.getFullYear() && avMonth > now.getMonth());
+    if (!canGo) return;
+    if (avMonth === 0) { setAvMonth(11); setAvYear((y) => y - 1); }
+    else setAvMonth((m) => m - 1);
+    setSelectedDay(null);
+  };
+  const avNextMonth = () => {
+    if (avMonth === 11) { setAvMonth(0); setAvYear((y) => y + 1); }
+    else setAvMonth((m) => m + 1);
+    setSelectedDay(null);
+  };
+
+  const blockSlot = async (date: string, slot: string | null) => {
+    if (!accessToken) return;
+    setIsBlocking(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/availability/block`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ date, slot }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || 'Failed to block');
+      }
+      await fetchAvailability();
+    } catch (e) {
+      setAvError(e instanceof Error ? e.message : 'Failed to block');
+    } finally {
+      setIsBlocking(false);
+    }
+  };
+
+  const unblockSlot = async (blockId: string) => {
+    if (!accessToken) return;
+    setIsBlocking(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/availability/block/${blockId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) throw new Error('Failed to unblock');
+      await fetchAvailability();
+    } catch (e) {
+      setAvError(e instanceof Error ? e.message : 'Failed to unblock');
+    } finally {
+      setIsBlocking(false);
+    }
+  };
+
+  useEffect(() => {
+    if (tab === 'availability' && artist?.id && accessToken) {
+      fetchAvailability();
+    }
+  }, [tab, fetchAvailability]);
 
   useEffect(() => {
     if (authLoading) return; // wait for localStorage token to load
@@ -207,6 +326,7 @@ export default function ArtistDashboard() {
           {([
             { key: 'bookings', label: 'Bookings', badge: 0 },
             { key: 'consultations', label: 'Consultations', badge: pendingConsultations },
+            { key: 'availability', label: 'Availability', badge: 0 },
           ] as const).map(({ key, label, badge }) => (
             <button
               key={key}
@@ -496,6 +616,293 @@ export default function ArtistDashboard() {
                     </button>
                   </div>
                 )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Availability tab ─────────────────────────────────────────────── */}
+        {tab === 'availability' && (
+          <div style={{ display: 'grid', gridTemplateColumns: selectedDay ? '1fr 320px' : '1fr', gap: '1.5rem', alignItems: 'start' }}>
+
+            {/* Calendar panel */}
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '1.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                <button
+                  onClick={avPrevMonth}
+                  style={{ width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid var(--border)', borderRadius: '50%', cursor: 'pointer', color: 'var(--text-mid)', fontSize: '0.875rem', transition: 'border-color 0.25s ease' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+                  aria-label="Previous month"
+                >←</button>
+
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ margin: 0, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1.25rem', color: 'var(--cream)', lineHeight: 1.1 }}>
+                    {MONTHS[avMonth]}
+                  </p>
+                  <p style={{ margin: '0.1rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.55rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+                    {avYear}
+                  </p>
+                </div>
+
+                <button
+                  onClick={avNextMonth}
+                  style={{ width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid var(--border)', borderRadius: '50%', cursor: 'pointer', color: 'var(--text-mid)', fontSize: '0.875rem', transition: 'border-color 0.25s ease' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+                  aria-label="Next month"
+                >→</button>
+              </div>
+
+              {/* Day headers */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.125rem', marginBottom: '0.375rem' }}>
+                {DAYS_SHORT.map((d) => (
+                  <div key={d} style={{ textAlign: 'center', fontFamily: '"DM Mono", monospace', fontSize: '0.5rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-low)', padding: '0.25rem 0' }}>
+                    {d}
+                  </div>
+                ))}
+              </div>
+
+              {/* Day grid — management mode */}
+              {(() => {
+                const todayStr = (() => {
+                  const n = new Date();
+                  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+                })();
+                const firstDay = new Date(avYear, avMonth, 1);
+                const lastDay = new Date(avYear, avMonth + 1, 0);
+                let startDow = firstDay.getDay();
+                startDow = startDow === 0 ? 6 : startDow - 1;
+
+                type MgmtCell = { dateStr: string; inMonth: boolean };
+                const cells: MgmtCell[] = [];
+                for (let i = 0; i < startDow; i++) {
+                  const d = new Date(avYear, avMonth, 1 - (startDow - i));
+                  cells.push({ dateStr: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`, inMonth: false });
+                }
+                for (let d = 1; d <= lastDay.getDate(); d++) {
+                  cells.push({ dateStr: `${avYear}-${String(avMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`, inMonth: true });
+                }
+                const rem = 42 - cells.length;
+                for (let i = 1; i <= rem; i++) {
+                  const d = new Date(avYear, avMonth + 1, i);
+                  cells.push({ dateStr: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`, inMonth: false });
+                }
+
+                return (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '0.25rem', opacity: avLoading ? 0.5 : 1, transition: 'opacity 0.2s ease' }}>
+                    {cells.map(({ dateStr, inMonth }) => {
+                      const isPast = dateStr < todayStr;
+                      const isToday = dateStr === todayStr;
+                      const isSelected = selectedDay === dateStr;
+                      const isFullBlocked = avData?.blockedDays.includes(dateStr) ?? false;
+                      const daySlots = avData?.slotData[dateStr];
+                      const hasPartialBlock = !isFullBlocked && daySlots && (daySlots.blocked.length > 0 || daySlots.booked.length > 0);
+                      const dayNum = parseInt(dateStr.split('-')[2], 10);
+
+                      let border = '1px solid transparent';
+                      let bg = 'transparent';
+                      let color = 'var(--text)';
+                      let opacity = inMonth ? 1 : 0;
+
+                      if (inMonth) {
+                        if (isSelected) {
+                          border = '1px solid var(--gold)';
+                          bg = 'rgba(201,168,76,0.13)';
+                          color = 'var(--gold)';
+                        } else if (isFullBlocked) {
+                          bg = 'rgba(239,68,68,0.06)';
+                          border = '1px solid rgba(239,68,68,0.2)';
+                          color = '#f87171';
+                          opacity = isPast ? 0.25 : 0.65;
+                        } else if (hasPartialBlock) {
+                          border = '1px solid rgba(234,179,8,0.25)';
+                          bg = 'rgba(234,179,8,0.04)';
+                          color = 'var(--cream)';
+                        } else if (isToday) {
+                          border = '1px solid rgba(201,168,76,0.35)';
+                          color = 'var(--cream)';
+                        } else if (isPast) {
+                          color = 'var(--text-low)';
+                          opacity = 0.3;
+                        }
+                      }
+
+                      return (
+                        <button
+                          key={dateStr}
+                          onClick={() => inMonth && !isPast && setSelectedDay(isSelected ? null : dateStr)}
+                          style={{
+                            aspectRatio: '1',
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                            gap: '0.1rem',
+                            background: bg, border, borderRadius: '0.375rem',
+                            cursor: inMonth && !isPast ? 'pointer' : 'default',
+                            fontFamily: '"DM Sans", sans-serif',
+                            fontSize: '0.775rem',
+                            fontWeight: isToday ? 500 : 400,
+                            color, opacity,
+                            transition: 'background 0.18s ease, border-color 0.18s ease',
+                          }}
+                          onMouseEnter={(e) => { if (inMonth && !isPast && !isSelected && !isFullBlocked) { e.currentTarget.style.background = 'rgba(201,168,76,0.06)'; e.currentTarget.style.borderColor = 'rgba(201,168,76,0.2)'; } }}
+                          onMouseLeave={(e) => { if (inMonth && !isPast && !isSelected && !isFullBlocked) { e.currentTarget.style.background = bg; e.currentTarget.style.borderColor = isFullBlocked ? 'rgba(239,68,68,0.2)' : hasPartialBlock ? 'rgba(234,179,8,0.25)' : isToday ? 'rgba(201,168,76,0.35)' : 'transparent'; } }}
+                        >
+                          {inMonth ? dayNum : ''}
+                          {inMonth && isFullBlocked && <span style={{ fontSize: '0.45rem', lineHeight: 1 }}>✕</span>}
+                          {inMonth && hasPartialBlock && !isFullBlocked && <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#EAB308', display: 'block' }} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+
+              {avError && (
+                <p style={{ marginTop: '1rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#f87171' }}>{avError}</p>
+              )}
+
+              {/* Legend */}
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+                {[
+                  { dot: { background: 'transparent', border: '1px solid var(--border)' }, label: 'Open' },
+                  { dot: { background: 'rgba(234,179,8,0.15)', border: '1px solid rgba(234,179,8,0.35)' }, label: 'Partial' },
+                  { dot: { background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }, label: 'Blocked' },
+                ].map(({ dot, label }) => (
+                  <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                    <span style={{ width: '0.75rem', height: '0.75rem', borderRadius: '0.2rem', display: 'block', ...dot }} />
+                    <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.5rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-low)' }}>{label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Slot management panel */}
+            {selectedDay && (
+              <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '1.5rem', position: 'sticky', top: '5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+                  <div>
+                    <p style={{ margin: 0, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1.125rem', color: 'var(--cream)' }}>
+                      {new Date(`${selectedDay}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+                    </p>
+                    <p style={{ margin: '0.2rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.5rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+                      Manage availability
+                    </p>
+                  </div>
+                  <button onClick={() => setSelectedDay(null)} style={{ background: 'none', border: 'none', color: 'var(--text-low)', cursor: 'pointer', fontSize: '1.25rem', lineHeight: 1 }}>×</button>
+                </div>
+
+                {/* Block whole day toggle */}
+                {(() => {
+                  const dayBlocks = avData?.blocks ?? [];
+                  const fullDayBlock = dayBlocks.find((b) => b.blocked_date === selectedDay && b.blocked_slot === null);
+                  const isFullBlocked = Boolean(fullDayBlock);
+
+                  return (
+                    <div style={{ marginBottom: '1.25rem', padding: '0.875rem 1rem', background: isFullBlocked ? 'rgba(239,68,68,0.06)' : 'rgba(14,12,9,0.4)', border: `1px solid ${isFullBlocked ? 'rgba(239,68,68,0.2)' : 'var(--border)'}`, borderRadius: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: isFullBlocked ? '#f87171' : 'var(--text)' }}>
+                          {isFullBlocked ? 'Day blocked' : 'Block entire day'}
+                        </p>
+                        <p style={{ margin: '0.15rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.5rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+                          {isFullBlocked ? 'Clients cannot book this day' : 'Closes all time slots'}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => isFullBlocked ? unblockSlot(fullDayBlock!.id) : blockSlot(selectedDay, null)}
+                        disabled={isBlocking}
+                        style={{
+                          padding: '0.4rem 0.875rem',
+                          borderRadius: '2rem',
+                          border: `1px solid ${isFullBlocked ? 'rgba(239,68,68,0.35)' : 'var(--border)'}`,
+                          background: 'none',
+                          color: isFullBlocked ? '#f87171' : 'var(--text-mid)',
+                          fontFamily: '"DM Mono", monospace',
+                          fontSize: '0.55rem',
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          cursor: isBlocking ? 'default' : 'pointer',
+                          opacity: isBlocking ? 0.5 : 1,
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        {isFullBlocked ? 'Unblock' : 'Block all'}
+                      </button>
+                    </div>
+                  );
+                })()}
+
+                {/* Individual slot management */}
+                {(() => {
+                  const dayBlocks = avData?.blocks ?? [];
+                  const fullDayBlock = dayBlocks.find((b) => b.blocked_date === selectedDay && b.blocked_slot === null);
+                  if (fullDayBlock) return null; // day fully blocked, no individual slot UI
+
+                  const daySlots = avData?.slotData[selectedDay];
+
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <p style={{ margin: '0 0 0.625rem', fontFamily: '"DM Mono", monospace', fontSize: '0.5rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+                        Individual slots
+                      </p>
+                      {TIME_SLOTS.map((slot) => {
+                        const isSlotBlocked = daySlots?.blocked.includes(slot.id) ?? false;
+                        const isSlotBooked = daySlots?.booked.includes(slot.id) ?? false;
+                        const blockRecord = dayBlocks.find((b) => b.blocked_date === selectedDay && b.blocked_slot === slot.id);
+
+                        let statusColor = 'var(--text)';
+                        let statusLabel = 'Available';
+                        let statusBg = 'rgba(14,12,9,0.4)';
+                        let statusBorder = 'var(--border)';
+
+                        if (isSlotBooked) {
+                          statusColor = 'var(--gold)';
+                          statusLabel = 'Booked';
+                          statusBg = 'rgba(201,168,76,0.06)';
+                          statusBorder = 'rgba(201,168,76,0.2)';
+                        } else if (isSlotBlocked) {
+                          statusColor = '#f87171';
+                          statusLabel = 'Blocked';
+                          statusBg = 'rgba(239,68,68,0.06)';
+                          statusBorder = 'rgba(239,68,68,0.2)';
+                        }
+
+                        return (
+                          <div
+                            key={slot.id}
+                            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.625rem 0.875rem', background: statusBg, border: `1px solid ${statusBorder}`, borderRadius: '0.5rem' }}
+                          >
+                            <div>
+                              <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: statusColor }}>{slot.label}</p>
+                              <p style={{ margin: '0.1rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.48rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-low)' }}>{statusLabel}</p>
+                            </div>
+                            {!isSlotBooked && (
+                              <button
+                                onClick={() => isSlotBlocked ? unblockSlot(blockRecord!.id) : blockSlot(selectedDay, slot.id)}
+                                disabled={isBlocking}
+                                style={{
+                                  padding: '0.3rem 0.75rem',
+                                  borderRadius: '2rem',
+                                  border: `1px solid ${isSlotBlocked ? 'rgba(239,68,68,0.35)' : 'var(--border)'}`,
+                                  background: 'none',
+                                  color: isSlotBlocked ? '#f87171' : 'var(--text-mid)',
+                                  fontFamily: '"DM Mono", monospace',
+                                  fontSize: '0.5rem',
+                                  letterSpacing: '0.1em',
+                                  textTransform: 'uppercase',
+                                  cursor: isBlocking ? 'default' : 'pointer',
+                                  opacity: isBlocking ? 0.5 : 1,
+                                  transition: 'all 0.2s ease',
+                                }}
+                              >
+                                {isSlotBlocked ? 'Unblock' : 'Block'}
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </div>

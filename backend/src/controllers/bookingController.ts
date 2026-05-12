@@ -13,14 +13,21 @@ const CreateBookingSchema = z.object({
   clientName: z.string().min(2, 'Name must be at least 2 characters'),
   clientEmail: z.string().email('Invalid email address'),
   clientPhone: z.string().min(10, 'Phone number must be at least 10 digits'),
-  preferredDate: z.string().datetime('Invalid date format'),
+  // New format: separate date + time slot
+  appointmentDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format').optional(),
+  appointmentTime: z.string().regex(/^\d{2}:\d{2}-\d{2}:\d{2}$/, 'Invalid time slot').optional(),
+  // Legacy format: kept for backward compat
+  preferredDate: z.string().optional(),
   tattooDesignDescription: z.string().min(10, 'Please describe your tattoo design'),
   estimatedSize: z.enum(['small', 'medium', 'large', 'xlarge']),
   estimatedPlacement: z.string().min(2, 'Please specify placement'),
   referralSource: z.string().optional(),
   notes: z.string().optional(),
   artistId: z.string().optional(),
-});
+}).refine(
+  (d) => d.appointmentDate || d.preferredDate,
+  { message: 'Please select a date', path: ['appointmentDate'] }
+);
 
 type BookingFormData = z.infer<typeof CreateBookingSchema>;
 
@@ -32,6 +39,53 @@ export async function createBooking(req: Request, res: Response) {
   try {
     const validatedData = CreateBookingSchema.parse(req.body);
     await client.connect();
+
+    // Resolve appointment datetime and time slot
+    let appointmentDateTime: string;
+    let appointmentTime: string | null = null;
+
+    if (validatedData.appointmentDate) {
+      const slotStart = validatedData.appointmentTime
+        ? validatedData.appointmentTime.split('-')[0]
+        : '12:00';
+      appointmentDateTime = `${validatedData.appointmentDate}T${slotStart}:00`;
+      appointmentTime = validatedData.appointmentTime ?? null;
+    } else {
+      appointmentDateTime = validatedData.preferredDate!;
+    }
+
+    // Validate slot availability when artist + slot both specified
+    if (validatedData.artistId && appointmentTime && validatedData.appointmentDate) {
+      const blockCheck = await client.query(
+        `SELECT id FROM "AvailabilityBlock"
+         WHERE artist_id = $1 AND blocked_date = $2
+           AND (blocked_slot IS NULL OR blocked_slot = $3)
+         LIMIT 1`,
+        [validatedData.artistId, validatedData.appointmentDate, appointmentTime]
+      );
+      if (blockCheck.rows.length > 0) {
+        return res.status(409).json({
+          success: false,
+          error: 'This time slot is not available. Please select another.',
+        });
+      }
+
+      const bookingCheck = await client.query(
+        `SELECT id FROM "Booking"
+         WHERE artist_id = $1
+           AND appointment_date_time::date = $2
+           AND appointment_time = $3
+           AND appointment_status != 'cancelled'
+         LIMIT 1`,
+        [validatedData.artistId, validatedData.appointmentDate, appointmentTime]
+      );
+      if (bookingCheck.rows.length > 0) {
+        return res.status(409).json({
+          success: false,
+          error: 'This slot was just booked. Please choose another time.',
+        });
+      }
+    }
 
     const [firstName, ...lastNameParts] = validatedData.clientName.split(' ');
     const lastName = lastNameParts.join(' ') || 'Guest';
@@ -72,16 +126,17 @@ export async function createBooking(req: Request, res: Response) {
 
     await client.query(
       `INSERT INTO "Booking" (
-        id, studio_id, user_id, artist_id, appointment_date_time, appointment_status,
-        tattoo_description, placement, estimated_size, artist_notes, deposit_amount,
-        balance_due, booking_reference, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())`,
+        id, studio_id, user_id, artist_id, appointment_date_time, appointment_time,
+        appointment_status, tattoo_description, placement, estimated_size, artist_notes,
+        deposit_amount, balance_due, booking_reference, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())`,
       [
         bookingId,
         'default-studio',
         userId,
         validatedData.artistId || null,
-        validatedData.preferredDate,
+        appointmentDateTime,
+        appointmentTime,
         'pending_consent',
         validatedData.tattooDesignDescription,
         validatedData.estimatedPlacement,
@@ -104,7 +159,7 @@ export async function createBooking(req: Request, res: Response) {
     const booking = bookingResult.rows[0];
 
     // Fire emails non-blocking — don't let email failure block the response
-    const appointmentDate = new Date(validatedData.preferredDate);
+    const appointmentDate = new Date(appointmentDateTime);
     sendBookingConfirmationToClient({
       clientEmail: validatedData.clientEmail,
       clientName: validatedData.clientName,

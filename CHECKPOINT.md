@@ -1,7 +1,7 @@
 # Hall of Mirrors Tattoo — Master Checkpoint
 
-**Last Updated:** May 11, 2026 — Booking fixes + file uploads (commits `ba2c1e3`–`6b773ff`)
-**Status:** Production Live ✅ | Phase 0 done | Phase 2 done | Booking form working | File uploads live | Railway build fixed
+**Last Updated:** May 12, 2026 — Phase 1 availability calendar system
+**Status:** Production Live ✅ | Phase 0 done | Phase 2 done | Booking form working | File uploads live | Railway build fixed | Availability calendar live
 
 ---
 
@@ -187,7 +187,9 @@ frontend/
 │       ├── ShopCarousel.tsx    — Ken Burns carousel with prev/next navigation
 │       ├── AnimatedSection.tsx — 'use client' — IntersectionObserver scroll reveal wrapper
 │       ├── CursorGlow.tsx      — 'use client' — tracks mouse, sets --cursor-x/--cursor-y on :root
-│       └── ScrollGradientFade.tsx — Gradient overlay at bottom of carousel
+│       ├── ScrollGradientFade.tsx — Gradient overlay at bottom of carousel
+│       ├── AvailabilityCalendar.tsx — 'use client' — obsidian/gold custom calendar for booking form; fetches /api/availability/:artistId?month=YYYY-MM; exposes onAvailabilityLoad callback
+│       └── TimeSlotPicker.tsx  — 'use client' — 2-hour slot picker (6 slots, 9am–9pm); reads slotData from calendar response to show booked/blocked states
 ├── lib/
 │   ├── authContext.tsx         — Artist JWT auth context + localStorage
 │   ├── clientAuthContext.tsx   — Client JWT auth context + localStorage (separate)
@@ -238,6 +240,13 @@ Base URL production: `https://hall-of-mirrors-tattoo-production.up.railway.app`
 | GET | `/api/artists` | List active artists (used by booking form) |
 | POST | `/api/bookings` | Create a booking (no auth required) |
 | POST | `/api/contact` | Submit contact form |
+| GET | `/api/availability/:artistId?month=YYYY-MM` | Artist availability for a month (blockedDays, slotData, raw blocks) |
+
+### Availability (Artist-protected)
+| Method | Path | Description |
+|---|---|---|
+| POST | `/api/availability/block` | Block a date or specific slot `{ date, slot?, reason? }` |
+| DELETE | `/api/availability/block/:id` | Remove a block |
 
 ### Client Auth
 | Method | Path | Description |
@@ -280,11 +289,13 @@ backend/src/
 ├── index.ts                    — Express app, middleware, route mounting
 ├── controllers/
 │   ├── artistController.ts     — Artist profile, consultations, response
+│   ├── availabilityController.ts — Block/unblock dates + slots; getArtistAvailability (public)
 │   ├── clientAuthController.ts — Client auth, forgot/reset password, profile update
-│   ├── bookingController.ts    — Booking CRUD (uses raw pg.Client) + email triggers
+│   ├── bookingController.ts    — Booking CRUD (uses raw pg.Client) + email triggers + slot validation
 │   ├── consentController.ts    — Consent form CRUD + PDF generation trigger
 │   └── consultationController.ts — Public consultation requests
 ├── routes/                     — One file per resource group
+│   ├── availability.ts         — /api/availability routes (public GET + artist-auth POST/DELETE)
 │   └── consent.ts              — /api/client/consent routes (client-auth protected)
 ├── middleware/
 │   ├── auth.ts                 — Artist JWT middleware
@@ -359,6 +370,16 @@ The full roadmap is documented in the plan file:
 - `Consultation`, `ConsentForm`, `MedicalHistory` tables added to DB schema via setupDb.ts
 - `password_reset_token` + `password_reset_expires` columns on User table
 - **Phase 2: Digital consent form** — `/client/consent/[bookingId]` with medical history (19 fields), 10 legal checkboxes, typed name e-signature; pdfkit PDF generated on submit, emailed to client + studio, booking flipped to `confirmed`
+- **Phase 1: Availability calendar system (May 12 2026):**
+  - `AvailabilityBlock` table added to DB via setupDb.ts (artist_id, blocked_date DATE, blocked_slot TEXT null=whole day, reason)
+  - `appointment_time TEXT` column added to Booking table (stores selected slot like "09:00-11:00")
+  - `POST /api/bookings` now accepts `appointmentDate` (YYYY-MM-DD) + `appointmentTime` (HH:MM-HH:MM) in addition to legacy `preferredDate`; slot availability validated before insert
+  - `GET /api/availability/:artistId?month=YYYY-MM` — returns blockedDays[], slotData (per-day blocked/booked slots), raw blocks[]
+  - `POST /api/availability/block` / `DELETE /api/availability/block/:id` — artist-protected management
+  - `AvailabilityCalendar.tsx` — custom obsidian/gold calendar component; Mon-start 7×6 grid; fetches live data; past/blocked/selected states; onAvailabilityLoad callback
+  - `TimeSlotPicker.tsx` — 6 slots (9am-11am, 11am-1pm, 1pm-3pm, 3pm-5pm, 5pm-7pm, 7pm-9pm) in 3×2 grid; shows booked/blocked/available states
+  - Booking form (`/booking`) rewritten: artist selector first → calendar → slot picker → design details; 4 labelled sections; appointment summary before submit; slot validation on submit
+  - Artist dashboard: 3rd "Availability" tab with management calendar (colour-coded days) + slot management side panel (block whole day or individual slots; shows booked-by-client as read-only)
 - **Fix: Railway ESM crash** — three route files were importing `clientAuth` without `.js` extension; fixed all three
 - **Fix: DB connection** — Railway was pointing to old IPv6 Supabase hostname; updated to session pooler URL (`aws-0-*.pooler.supabase.com`)
 - **Fix: RLS enabled** on all Supabase tables (User, Artist, Booking, Consultation, ConsultationRequest, ContactFormSubmission, Studio, ConsentForm, MedicalHistory, DesignIdea, Review, MedicalHistory, Payment, TattooPortfolio)
@@ -398,7 +419,7 @@ The full roadmap is documented in the plan file:
 - [ ] Add real Instagram + TikTok URLs to footer (currently `href="#"`)
 
 ### Phase 1 — Booking Completion
-- [ ] Availability calendar (Robyn/Christina to decide: Option A blocking vs Option B explicit slots)
+- [x] ~~Availability calendar~~ — **Done ✅** (hybrid Option A + time slots; see API section below)
 - [x] ~~File uploads for design ideas~~ — **Done ✅** (Supabase Storage, file picker UI)
 - [ ] Stripe deposit payments (collect deposit on booking → Payment model has `stripe_charge_id`)
 
@@ -455,6 +476,10 @@ Railway backend deploys separately — check Railway dashboard for backend deplo
 17. **Railway build: `tsc: not found`** — Railway sets `NODE_ENV=production` during build, so `npm ci` skips `devDependencies` and `tsc` is missing when `npm run build` runs. Fixed by `backend/nixpacks.toml` which overrides the install phase to `npm ci --include=dev`. Do not remove that file.
 18. **`uuid` v14 crashes with `crypto is not defined`** — uuid v14 requires `globalThis.crypto` (Web Crypto API) which isn't available on older Node.js. All UUID generation uses Node's built-in `crypto.randomUUID()` instead. Never add the `uuid` package back.
 19. **Backend artists route is `/api/artist` (singular)** — the route is mounted at `/api/artist`, not `/api/artists`. A `/api/artists` alias also exists now. Any new frontend code fetching artists should use `/api/artist`.
+20. **Availability route ordering** — `POST /api/availability/block` and `DELETE /api/availability/block/:id` are registered before `GET /api/availability/:artistId` in `routes/availability.ts`. This prevents "block" being swallowed as an artistId. Do not reorder these.
+21. **Time slots are 2-hour blocks, 9am–9pm** — `['09:00-11:00','11:00-13:00','13:00-15:00','15:00-17:00','17:00-19:00','19:00-21:00']`. Both backend (availabilityController.ts) and frontend (TimeSlotPicker.tsx) define these identically. Keep them in sync.
+22. **`appointment_time` column on Booking** — stores the selected slot string (e.g., `"09:00-11:00"`). If not provided (no-preference bookings), it is NULL. The `appointment_date_time` TIMESTAMP is set to the slot start time (or noon if no slot). Always query both when displaying booking details.
+23. **Availability calendar fetches per month** — `AvailabilityCalendar` calls `/api/availability/:artistId?month=YYYY-MM` every time the visible month changes. The response includes `slotData` which `TimeSlotPicker` reads to show blocked/booked slots. Pass the latest `AvailabilityData` via `onAvailabilityLoad` callback to the parent so `TimeSlotPicker` always shows current data.
 
 ---
 

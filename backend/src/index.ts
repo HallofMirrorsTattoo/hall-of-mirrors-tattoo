@@ -11,6 +11,7 @@ import clientBookingsRouter from './routes/clientBookings.js';
 import clientDesignRouter from './routes/clientDesign.js';
 import clientConsultationRouter from './routes/clientConsultation.js';
 import consentRouter from './routes/consent.js';
+import availabilityRouter from './routes/availability.js';
 import { setupDatabase } from './setupDb.js';
 
 const app: Express = express();
@@ -69,6 +70,7 @@ app.use('/api/client/consultations', clientConsultationRouter);
 app.use('/api/client/consent', consentRouter);
 app.use('/api/bookings', bookingsRouter);
 app.use('/api/consultations', consultationsRouter);
+app.use('/api/availability', availabilityRouter);
 
 // Error handler middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {

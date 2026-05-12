@@ -158,8 +158,20 @@ CREATE INDEX IF NOT EXISTS "Artist_email_idx" ON "Artist"(email);
 CREATE INDEX IF NOT EXISTS "Consultation_artist_id_idx" ON "Consultation"(artist_id);
 CREATE INDEX IF NOT EXISTS "Consultation_user_id_idx" ON "Consultation"(user_id);
 
+CREATE TABLE IF NOT EXISTS "AvailabilityBlock" (
+    id TEXT PRIMARY KEY,
+    artist_id TEXT NOT NULL,
+    blocked_date DATE NOT NULL,
+    blocked_slot TEXT,
+    reason TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (artist_id) REFERENCES "Artist"(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS "AvailabilityBlock_artist_date_idx" ON "AvailabilityBlock"(artist_id, blocked_date);
+
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS password_reset_token TEXT;
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS password_reset_expires TIMESTAMP;
+ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS appointment_time TEXT;
 
 CREATE TABLE IF NOT EXISTS "MedicalHistory" (
     id TEXT PRIMARY KEY,
