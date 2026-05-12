@@ -37,27 +37,40 @@ export async function respondToConsultation(req: Request, res: Response) {
     }
 
     const { id } = req.params;
-    const { response_message } = req.body;
-
-    if (!response_message?.trim()) {
-      return res.status(400).json({ success: false, error: 'Response message is required' });
-    }
+    // action: 'approve' | 'decline' | 'respond' (legacy)
+    const { response_message, action } = req.body;
 
     await client.connect();
 
+    let newStatus: string;
+    if (action === 'approve') {
+      newStatus = 'approved';
+    } else if (action === 'decline') {
+      newStatus = 'declined';
+    } else {
+      // Legacy: respond with a message (keep backward compat)
+      newStatus = 'responded';
+      if (!response_message?.trim()) {
+        return res.status(400).json({ success: false, error: 'Response message is required' });
+      }
+    }
+
     const result = await client.query(
       `UPDATE "Consultation"
-       SET artist_response = $1, status = 'responded', updated_at = NOW()
-       WHERE consultation_id = $2 AND artist_id = $3
-       RETURNING consultation_id, status`,
-      [response_message, id, req.artist.id]
+       SET artist_response = COALESCE($1, artist_response),
+           status = $2,
+           updated_at = NOW(),
+           status_updated_at = NOW()
+       WHERE consultation_id = $3 AND artist_id = $4
+       RETURNING consultation_id, status, artist_response`,
+      [response_message?.trim() || null, newStatus, id, req.artist.id]
     );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Consultation not found' });
     }
 
-    // Fetch client details for the email
+    // Send email on approve or decline
     const clientResult = await client.query(
       `SELECT u.email, u.first_name FROM "User" u
        JOIN "Consultation" c ON c.user_id = u.id
@@ -65,19 +78,19 @@ export async function respondToConsultation(req: Request, res: Response) {
       [id]
     );
 
-    if (clientResult.rows.length > 0) {
+    if (clientResult.rows.length > 0 && response_message?.trim()) {
       sendConsultationResponseToClient({
         clientEmail: clientResult.rows[0].email,
         clientName: clientResult.rows[0].first_name,
         artistName: req.artist.full_name,
-        responseMessage: response_message,
+        responseMessage: response_message.trim(),
       }).catch((e) => console.error('[email] consultation response email failed:', e));
     }
 
     res.json({ success: true, consultation: result.rows[0] });
   } catch (error) {
     console.error('Respond to consultation error:', error);
-    res.status(500).json({ success: false, error: 'Failed to send response' });
+    res.status(500).json({ success: false, error: 'Failed to update consultation' });
   } finally {
     await client.end();
   }

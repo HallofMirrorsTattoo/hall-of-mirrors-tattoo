@@ -227,3 +227,114 @@ export async function sendArtistMessage(req: Request, res: Response) {
     await db.end();
   }
 }
+
+// ── Consultation message routes ────────────────────────────────────────────
+
+export async function getConsultationMessages(req: Request, res: Response) {
+  const db = new Client({ connectionString: process.env.DATABASE_URL });
+  try {
+    const { consultationId } = req.params;
+    await db.connect();
+
+    // Works for both client and artist — one of req.user or req.artist will be set
+    let ownerCheck;
+    if (req.user) {
+      ownerCheck = await db.query(
+        `SELECT consultation_id FROM "Consultation" WHERE consultation_id = $1 AND user_id = $2 AND status = 'approved'`,
+        [consultationId, req.user.id]
+      );
+    } else if (req.artist) {
+      ownerCheck = await db.query(
+        `SELECT consultation_id FROM "Consultation" WHERE consultation_id = $1 AND artist_id = $2 AND status = 'approved'`,
+        [consultationId, req.artist.id]
+      );
+    } else {
+      return res.status(401).json({ success: false, error: 'Not authenticated' });
+    }
+
+    if (ownerCheck.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Consultation not found or not yet approved' });
+    }
+
+    // Mark artist messages as read when client fetches
+    if (req.user) {
+      await db.query(
+        `UPDATE "Message" SET read_at = NOW() WHERE consultation_id = $1 AND sender_type = 'artist' AND read_at IS NULL`,
+        [consultationId]
+      );
+    } else {
+      await db.query(
+        `UPDATE "Message" SET read_at = NOW() WHERE consultation_id = $1 AND sender_type = 'client' AND read_at IS NULL`,
+        [consultationId]
+      );
+    }
+
+    const result = await db.query(
+      `SELECT id, consultation_id, sender_type, body, created_at, read_at
+       FROM "Message" WHERE consultation_id = $1 ORDER BY created_at ASC`,
+      [consultationId]
+    );
+
+    res.json({ success: true, messages: result.rows });
+  } catch (err) {
+    console.error('getConsultationMessages error:', err);
+    res.status(500).json({ success: false, error: 'Failed to fetch messages' });
+  } finally {
+    await db.end();
+  }
+}
+
+export async function sendConsultationMessage(req: Request, res: Response) {
+  const db = new Client({ connectionString: process.env.DATABASE_URL });
+  try {
+    const { consultationId } = req.params;
+    const { body } = req.body;
+
+    if (!body?.trim()) {
+      return res.status(400).json({ success: false, error: 'Message body is required' });
+    }
+
+    await db.connect();
+
+    let senderType: 'client' | 'artist';
+    let senderId: string;
+    let ownerCheck;
+
+    if (req.user) {
+      senderType = 'client';
+      senderId = req.user.id;
+      ownerCheck = await db.query(
+        `SELECT consultation_id FROM "Consultation" WHERE consultation_id = $1 AND user_id = $2 AND status = 'approved'`,
+        [consultationId, req.user.id]
+      );
+    } else if (req.artist) {
+      senderType = 'artist';
+      senderId = req.artist.id;
+      ownerCheck = await db.query(
+        `SELECT consultation_id FROM "Consultation" WHERE consultation_id = $1 AND artist_id = $2 AND status = 'approved'`,
+        [consultationId, req.artist.id]
+      );
+    } else {
+      return res.status(401).json({ success: false, error: 'Not authenticated' });
+    }
+
+    if (ownerCheck.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Consultation not found or not yet approved' });
+    }
+
+    const id = randomUUID();
+    const result = await db.query(
+      `INSERT INTO "Message" (id, consultation_id, sender_type, sender_id, body, created_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())
+       RETURNING id, consultation_id, sender_type, body, created_at`,
+      [id, consultationId, senderType, senderId, body.trim()]
+    );
+
+    res.status(201).json({ success: true, message: result.rows[0] });
+  } catch (err) {
+    console.error('sendConsultationMessage error:', err);
+    res.status(500).json({ success: false, error: 'Failed to send message' });
+  } finally {
+    await db.end();
+  }
+}

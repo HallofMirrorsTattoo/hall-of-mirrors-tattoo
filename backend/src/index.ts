@@ -12,8 +12,9 @@ import clientDesignRouter from './routes/clientDesign.js';
 import clientConsultationRouter from './routes/clientConsultation.js';
 import consentRouter from './routes/consent.js';
 import availabilityRouter from './routes/availability.js';
-import { clientMessagesRouter, artistMessagesRouter } from './routes/messages.js';
+import { clientMessagesRouter, artistMessagesRouter, clientConsultationMessagesRouter, artistConsultationMessagesRouter } from './routes/messages.js';
 import { setupDatabase } from './setupDb.js';
+import { startReminderJob } from './jobs/reminderJob.js';
 
 const app: Express = express();
 const PORT = process.env.PORT || 5000;
@@ -74,6 +75,8 @@ app.use('/api/consultations', consultationsRouter);
 app.use('/api/availability', availabilityRouter);
 app.use('/api/client/messages', clientMessagesRouter);
 app.use('/api/artist/messages', artistMessagesRouter);
+app.use('/api/client/consultation-messages', clientConsultationMessagesRouter);
+app.use('/api/artist/consultation-messages', artistConsultationMessagesRouter);
 
 // Error handler middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
@@ -90,12 +93,13 @@ app.listen(PORT, () => {
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
-// Setup database in background (non-blocking)
+// Setup database then start background jobs
 (async () => {
   try {
     console.log('🔄 Setting up database...');
     await setupDatabase();
     console.log('✅ Database ready');
+    startReminderJob();
   } catch (error) {
     console.error('⚠️ Database setup error:', error);
   }

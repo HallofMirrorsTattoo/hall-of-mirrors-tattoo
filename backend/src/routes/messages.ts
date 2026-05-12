@@ -8,6 +8,8 @@ import {
   getArtistThreads,
   getArtistMessages,
   sendArtistMessage,
+  getConsultationMessages,
+  sendConsultationMessage,
 } from '../controllers/messageController.js';
 
 export const clientMessagesRouter = Router();
@@ -21,3 +23,14 @@ artistMessagesRouter.use(authMiddleware);
 artistMessagesRouter.get('/', getArtistThreads);
 artistMessagesRouter.get('/:bookingId', getArtistMessages);
 artistMessagesRouter.post('/:bookingId', sendArtistMessage);
+
+// Consultation chat routes (shared handler, auth distinguished by req.user vs req.artist)
+export const clientConsultationMessagesRouter = Router();
+clientConsultationMessagesRouter.use(clientAuthMiddleware);
+clientConsultationMessagesRouter.get('/:consultationId', getConsultationMessages);
+clientConsultationMessagesRouter.post('/:consultationId', sendConsultationMessage);
+
+export const artistConsultationMessagesRouter = Router();
+artistConsultationMessagesRouter.use(authMiddleware);
+artistConsultationMessagesRouter.get('/:consultationId', getConsultationMessages);
+artistConsultationMessagesRouter.post('/:consultationId', sendConsultationMessage);

@@ -6,6 +6,9 @@ import {
   sendBookingConfirmationToClient,
   sendBookingNotificationToStudio,
   sendBookingConfirmedToClient,
+  sendRebookInvite,
+  sendArtistCancellationToClient,
+  sendArtistRescheduleToClient,
 } from '../services/emailService.js';
 
 const { Client } = pkg;
@@ -195,6 +198,7 @@ export async function createBooking(req: Request, res: Response) {
       estimatedSize: validatedData.estimatedSize,
       description: validatedData.tattooDesignDescription,
       artistName: artistData?.full_name,
+      artistEmail: artistData?.email,
     }).catch((e) => console.error('[email] studio notification failed:', e));
 
     res.status(201).json({
@@ -503,7 +507,7 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
     }
 
     const { id } = req.params;
-    const { status, notes, duration_hours, notify_end_time } = req.body;
+    const { status, notes, duration_hours, notify_end_time, new_appointment_date, new_appointment_time } = req.body;
 
     // Validate status
     const validStatuses = ['pending_consent', 'confirmed', 'completed', 'cancelled'];
@@ -540,6 +544,7 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
     }
 
     const booking = bookingResult.rows[0];
+    const previousStatus: string = booking.appointment_status;
 
     if (booking.artist_id !== req.artist.id) {
       return res.status(403).json({ success: false, error: 'You do not have access to this booking' });
@@ -559,6 +564,15 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
       params.splice(params.length - 1, 0, Boolean(notify_end_time));
     }
 
+    // Artist-initiated reschedule: update date + time
+    if (new_appointment_date && new_appointment_time) {
+      const newDateTime = `${new_appointment_date}T${new_appointment_time}:00`;
+      setClauses.push(`appointment_date_time = $${params.length}`);
+      params.splice(params.length - 1, 0, newDateTime);
+      setClauses.push(`appointment_time = $${params.length}`);
+      params.splice(params.length - 1, 0, new_appointment_time);
+    }
+
     const updateResult = await client.query(
       `UPDATE "Booking" SET ${setClauses.join(', ')} WHERE id = $${params.length} RETURNING *`,
       params
@@ -566,7 +580,9 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
 
     const updated = updateResult.rows[0];
 
-    // Send artist-confirmed email when booking is confirmed with duration
+    // ── Post-update emails ────────────────────────────────────────────────────
+
+    // Booking confirmed with duration → send confirmed email to client
     if (status === 'confirmed' && duration_hours !== undefined && booking.email && booking.appointment_time) {
       const startHour = parseInt(booking.appointment_time.substring(0, 2), 10);
       const endHour = startHour + Number(duration_hours);
@@ -585,6 +601,29 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
       }).catch((e) => console.error('[email] booking confirmed failed:', e));
     }
 
+    // Artist cancelled a previously confirmed booking → notify client
+    if (status === 'cancelled' && previousStatus === 'confirmed' && booking.email) {
+      sendArtistCancellationToClient({
+        clientEmail: booking.email,
+        clientName: `${booking.first_name} ${booking.last_name}`,
+        bookingReference: booking.booking_reference,
+        appointmentDate: new Date(booking.appointment_date_time),
+        artistName: booking.artist_name ?? undefined,
+      }).catch((e) => console.error('[email] cancellation notification failed:', e));
+    }
+
+    // Artist rescheduled → notify client of new date/time
+    if (new_appointment_date && new_appointment_time && booking.email) {
+      sendArtistRescheduleToClient({
+        clientEmail: booking.email,
+        clientName: `${booking.first_name} ${booking.last_name}`,
+        bookingReference: booking.booking_reference,
+        newAppointmentDate: new Date(`${new_appointment_date}T${new_appointment_time}:00`),
+        newStartTime: new_appointment_time,
+        artistName: booking.artist_name ?? undefined,
+      }).catch((e) => console.error('[email] reschedule notification failed:', e));
+    }
+
     res.json({
       success: true,
       message: 'Booking status updated',
@@ -596,6 +635,46 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
       success: false,
       error: 'Failed to update booking',
     });
+  } finally {
+    await client.end();
+  }
+}
+
+export async function sendRebookInviteByArtist(req: Request, res: Response) {
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  try {
+    if (!req.artist) return res.status(401).json({ success: false, error: 'Not authenticated' });
+
+    const { id } = req.params;
+    await client.connect();
+
+    const result = await client.query(
+      `SELECT b.appointment_status, b.artist_id,
+              u.first_name, u.last_name, u.email,
+              a.full_name as artist_name
+       FROM "Booking" b
+       JOIN "User" u ON b.user_id = u.id
+       LEFT JOIN "Artist" a ON b.artist_id = a.id
+       WHERE b.id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) return res.status(404).json({ success: false, error: 'Booking not found' });
+
+    const booking = result.rows[0];
+    if (booking.artist_id !== req.artist.id) return res.status(403).json({ success: false, error: 'Access denied' });
+    if (booking.appointment_status !== 'completed') return res.status(400).json({ success: false, error: 'Rebook invite can only be sent for completed bookings' });
+
+    await sendRebookInvite({
+      clientEmail: booking.email,
+      clientName: `${booking.first_name} ${booking.last_name}`,
+      artistName: booking.artist_name ?? undefined,
+    });
+
+    res.json({ success: true, message: 'Rebook invite sent' });
+  } catch (error) {
+    console.error('Rebook invite error:', error);
+    res.status(500).json({ success: false, error: 'Failed to send invite' });
   } finally {
     await client.end();
   }

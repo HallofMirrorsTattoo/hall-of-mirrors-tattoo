@@ -9,14 +9,12 @@ import BookingsTab from './bookings';
 import DesignIdeasTab from './design-ideas';
 import ConsultationsTab from './consultations';
 import ConsentFormsTab from './consent-forms';
-import MessagesTab from './messages';
 
 const BASE_TABS = [
   { id: 'bookings',      label: 'Your Bookings' },
   { id: 'design-ideas',  label: 'Design Ideas' },
   { id: 'consultations', label: 'Consultations' },
   { id: 'consent-forms', label: 'Consent Forms' },
-  { id: 'messages',      label: 'Messages' },
 ] as const;
 
 type TabId = typeof BASE_TABS[number]['id'];
@@ -25,7 +23,6 @@ export default function ClientDashboardPage() {
   const router = useRouter();
   const { user, logout } = useClientAuth();
   const [activeTab, setActiveTab] = useState<TabId>('bookings');
-  const [messageUnread, setMessageUnread] = useState(0);
 
   const handleLogout = () => {
     logout();
@@ -63,10 +60,10 @@ export default function ClientDashboardPage() {
           </div>
 
           {/* Tab Navigation */}
-          <div style={{ borderBottom: '1px solid var(--border)', marginBottom: '2.5rem', display: 'flex', gap: '0', overflowX: 'auto' }}>
+          <div className="scroll-no-bar" style={{ borderBottom: '1px solid var(--border)', marginBottom: '2.5rem', display: 'flex', gap: '0', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
             {BASE_TABS.map((tab) => {
               const isActive = activeTab === tab.id;
-              const badge = tab.id === 'messages' ? messageUnread : 0;
+              const badge = 0;
               return (
                 <button
                   key={tab.id}
@@ -114,7 +111,6 @@ export default function ClientDashboardPage() {
             {activeTab === 'design-ideas'  && <DesignIdeasTab />}
             {activeTab === 'consultations' && <ConsultationsTab />}
             {activeTab === 'consent-forms' && <ConsentFormsTab />}
-            {activeTab === 'messages'      && <MessagesTab onUnreadCountChange={setMessageUnread} />}
           </div>
 
           {/* Quick Actions */}

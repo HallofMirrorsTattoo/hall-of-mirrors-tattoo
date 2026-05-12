@@ -493,3 +493,12 @@ a {
   0%   { opacity: 0; transform: translateY(40px); }
   100% { opacity: 1; transform: translateY(0); }
 }
+
+/* Scrollable containers that hide the scrollbar (tabs, horizontal lists) */
+.scroll-no-bar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scroll-no-bar::-webkit-scrollbar {
+  display: none;
+}

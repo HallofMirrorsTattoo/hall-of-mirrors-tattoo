@@ -4,6 +4,7 @@ import {
   getArtistBookings,
   getArtistBookingById,
   updateBookingStatusByArtist,
+  sendRebookInviteByArtist,
 } from '../controllers/bookingController.js';
 import { authMiddleware } from '../middleware/auth.js';
 
@@ -16,6 +17,7 @@ router.get('/', getAllActiveArtists);
 router.get('/bookings', authMiddleware, getArtistBookings);
 router.get('/bookings/:id', authMiddleware, getArtistBookingById);
 router.patch('/bookings/:id', authMiddleware, updateBookingStatusByArtist);
+router.post('/bookings/:id/rebook-invite', authMiddleware, sendRebookInviteByArtist);
 router.get('/consultations', authMiddleware, getArtistConsultations);
 router.patch('/consultations/:id', authMiddleware, respondToConsultation);
 

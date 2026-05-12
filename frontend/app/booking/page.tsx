@@ -53,6 +53,12 @@ export default function BookingPage() {
   const [artists, setArtists]             = useState<Artist[]>([]);
   const [loadingArtists, setLoadingArtists] = useState(true);
 
+  // Captured on successful submit for confirmation card
+  const [confirmedRef, setConfirmedRef]           = useState('');
+  const [confirmedDate, setConfirmedDate]         = useState<string | null>(null);
+  const [confirmedSlot, setConfirmedSlot]         = useState<string | null>(null);
+  const [confirmedArtist, setConfirmedArtist]     = useState('');
+
   // Availability state
   const [selectedArtistId, setSelectedArtistId]   = useState('');
   const [selectedDate, setSelectedDate]           = useState<string | null>(null);
@@ -153,6 +159,11 @@ export default function BookingPage() {
         throw new Error(err.message || err.error || 'Failed to submit booking');
       }
 
+      const json = await res.json();
+      setConfirmedRef(json.booking?.booking_reference ?? '');
+      setConfirmedDate(selectedDate);
+      setConfirmedSlot(selectedSlot);
+      setConfirmedArtist(artists.find((a) => a.id === data.artistId)?.full_name ?? '');
       setSubmitStatus('success');
       reset();
       setSelectedDate(null);
@@ -209,19 +220,74 @@ export default function BookingPage() {
         </div>
       </section>
 
+      {/* Confirmation card — shown after successful submit */}
+      {submitStatus === 'success' && (
+        <section style={{ padding: '0 1.5rem 5rem' }}>
+          <div style={{ maxWidth: '40rem', margin: '0 auto' }}>
+            <div className="card-premium">
+              <div className="card-premium-inner" style={{ textAlign: 'center', padding: '3rem 2.5rem' }}>
+                <div style={{ width: '3rem', height: '3rem', borderRadius: '50%', border: '1px solid rgba(201,168,76,0.4)', background: 'rgba(201,168,76,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.75rem', fontSize: '1.25rem' }}>
+                  ✓
+                </div>
+                <h2 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '2.25rem', color: 'var(--cream)', letterSpacing: '-0.02em', lineHeight: 1.1, margin: '0 0 0.75rem' }}>
+                  Request submitted.
+                </h2>
+                <p style={{ color: 'var(--text-mid)', fontSize: '0.9375rem', lineHeight: 1.7, maxWidth: '30ch', margin: '0 auto 2rem' }}>
+                  We&apos;ll review and confirm within 24 hours. Check your email for a copy of this request.
+                </p>
+
+                {/* Detail summary */}
+                <div style={{ textAlign: 'left', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', padding: '1.25rem 0', margin: '0 0 2rem', display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+                  {confirmedRef && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                      <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)' }}>Reference</span>
+                      <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.8rem', color: 'var(--gold)', letterSpacing: '0.05em' }}>{confirmedRef}</span>
+                    </div>
+                  )}
+                  {confirmedDate && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem' }}>
+                      <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', flexShrink: 0 }}>Requested date</span>
+                      <span style={{ fontSize: '0.875rem', color: 'var(--text)', textAlign: 'right' }}>
+                        {new Date(`${confirmedDate}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                        {confirmedSlot && (() => {
+                          const h = parseInt(confirmedSlot.substring(0, 2), 10);
+                          return ` · ${h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h - 12}pm`}`;
+                        })()}
+                      </span>
+                    </div>
+                  )}
+                  {confirmedArtist && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                      <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)' }}>Artist</span>
+                      <span style={{ fontSize: '0.875rem', color: 'var(--text)' }}>{confirmedArtist}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <Link href="/client/dashboard" style={{ display: 'block', padding: '0.875rem', background: 'var(--gold)', color: 'var(--bg)', fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', textDecoration: 'none', borderRadius: '0.375rem', textAlign: 'center', fontWeight: 600 }}>
+                    View your dashboard
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setSubmitStatus('idle')}
+                    style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-low)', fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.875rem', borderRadius: '0.375rem', cursor: 'pointer', width: '100%' }}
+                  >
+                    Book another session
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Form */}
+      {submitStatus !== 'success' && (
       <section style={{ padding: '0 1.5rem 3rem' }}>
         <div style={{ maxWidth: '40rem', margin: '0 auto' }}>
           <div className="card-premium">
             <div className="card-premium-inner">
-
-              {submitStatus === 'success' && (
-                <div style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem', background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: '0.5rem' }}>
-                  <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: 'var(--gold)', fontWeight: 500, margin: 0 }}>
-                    Booking submitted. We&apos;ll be in touch within 24 hours to confirm.
-                  </p>
-                </div>
-              )}
 
               {submitStatus === 'error' && (
                 <div style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '0.5rem' }}>
@@ -440,7 +506,11 @@ export default function BookingPage() {
                   <span className="btn-icon" aria-hidden="true">↗</span>
                 </button>
 
-                <p style={{ textAlign: 'center', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-low)', marginTop: '1rem' }}>
+                <p style={{ textAlign: 'center', fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.06em', color: 'var(--text-low)', marginTop: '0.875rem', lineHeight: 1.6 }}>
+                  Cancellations within 48 hours of your appointment may be subject to a cancellation fee.
+                </p>
+
+                <p style={{ textAlign: 'center', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-low)', marginTop: '0.75rem' }}>
                   Have questions?{' '}
                   <Link href="/consultation" style={{ color: 'var(--gold)', transition: 'color 0.25s ease' }}
                     onMouseEnter={(e) => { (e.target as HTMLElement).style.color = 'var(--gold-bright)'; }}
@@ -456,6 +526,7 @@ export default function BookingPage() {
           </div>
         </div>
       </section>
+      )}
 
     </div>
   );

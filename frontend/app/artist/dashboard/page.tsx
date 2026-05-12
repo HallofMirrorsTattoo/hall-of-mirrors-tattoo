@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
+import AvailabilityCalendar, { AvailabilityData } from '@/app/components/AvailabilityCalendar';
+import TimeSlotPicker from '@/app/components/TimeSlotPicker';
 
 // ── Availability types ────────────────────────────────────────────────────────
 
@@ -74,6 +76,8 @@ interface Booking {
   placement: string;
   estimated_size: string;
   appointment_status: string;
+  artist_id?: string;
+  artist_notes?: string;
   first_name?: string;
   last_name?: string;
   email?: string;
@@ -123,7 +127,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function ArtistDashboard() {
   const router = useRouter();
   const { artist, accessToken, logout, isLoading: authLoading } = useAuth();
-  const [tab, setTab] = useState<'bookings' | 'calendar' | 'consultations' | 'availability' | 'messages'>('bookings');
+  const [tab, setTab] = useState<'bookings' | 'calendar' | 'consultations' | 'availability'>('bookings');
 
   // Bookings state
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -136,28 +140,38 @@ export default function ArtistDashboard() {
   const [confirmDurationHours, setConfirmDurationHours] = useState(2);
   const [confirmNotifyEnd, setConfirmNotifyEnd] = useState(true);
 
+  // Private artist notes state
+  const [notesText, setNotesText] = useState('');
+  const [notesSaving, setNotesSaving] = useState<'idle' | 'saving' | 'saved'>('idle');
+
+  // Post-session actions
+  const [aftercareSent, setAftercareSent] = useState<'idle' | 'sending' | 'sent'>('idle');
+  const [rebookSent, setRebookSent] = useState<'idle' | 'sending' | 'sent'>('idle');
+
+  // Artist cancel / reschedule
+  const [artistActionMode, setArtistActionMode] = useState<'none' | 'cancel-confirm' | 'reschedule'>('none');
+  const [rescheduleDate, setRescheduleDate] = useState<string | null>(null);
+  const [rescheduleSlot, setRescheduleSlot] = useState<string | null>(null);
+  const [rescheduleAvailData, setRescheduleAvailData] = useState<AvailabilityData | null>(null);
+
   // Consultations state
   const [consultations, setConsultations] = useState<Consultation[]>([]);
-  const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
-  const [responseText, setResponseText] = useState('');
-  const [isSendingResponse, setIsSendingResponse] = useState(false);
   const [consultationError, setConsultationError] = useState('');
 
   const [isLoading, setIsLoading] = useState(true);
 
-  // Messages state
-  interface MsgThread { id: string; booking_reference: string; appointment_date_time: string; appointment_status: string; first_name: string; last_name: string; client_email: string; total_messages: number; unread_count: number; last_message_body: string | null; last_message_sender: string | null; last_message_at: string | null; }
-  interface Msg { id: string; booking_id: string; sender_type: 'client' | 'artist'; body: string; created_at: string; }
-  const [msgThreads, setMsgThreads] = useState<MsgThread[]>([]);
-  const [msgThreadsLoading, setMsgThreadsLoading] = useState(false);
-  const [selectedMsgBooking, setSelectedMsgBooking] = useState<string | null>(null);
-  const [msgs, setMsgs] = useState<Msg[]>([]);
-  const [msgDraft, setMsgDraft] = useState('');
-  const [msgSending, setMsgSending] = useState(false);
-  const [msgError, setMsgError] = useState('');
-  const msgPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const msgAreaRef = useRef<HTMLDivElement>(null);
-  const msgUnreadTotal = msgThreads.reduce((s, t) => s + (t.unread_count || 0), 0);
+  // Consultation chat state
+  interface ConsultMsg { id: string; consultation_id: string; sender_type: 'client' | 'artist'; body: string; created_at: string; }
+  const [openConsultChatId, setOpenConsultChatId] = useState<string | null>(null);
+  const [consultMsgs, setConsultMsgs] = useState<ConsultMsg[]>([]);
+  const [consultMsgDraft, setConsultMsgDraft] = useState('');
+  const [consultMsgSending, setConsultMsgSending] = useState(false);
+  const [consultMsgError, setConsultMsgError] = useState('');
+  const [consultActionId, setConsultActionId] = useState<string | null>(null);
+  const [consultResponseText, setConsultResponseText] = useState('');
+  const [consultActioning, setConsultActioning] = useState(false);
+  const consultMsgPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const consultMsgAreaRef = useRef<HTMLDivElement>(null);
 
   // Calendar state
   const [calWeekStart, setCalWeekStart] = useState<Date>(() => getMonday(new Date()));
@@ -264,7 +278,7 @@ export default function ArtistDashboard() {
     fetchConsultations();
   }, [accessToken, authLoading, router]);
 
-  const fetchBookings = async () => {
+  const fetchBookings = async (): Promise<Booking[]> => {
     try {
       setIsLoading(true);
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/bookings`, {
@@ -272,9 +286,12 @@ export default function ArtistDashboard() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to fetch bookings');
-      setBookings(data.bookings || []);
+      const list: Booking[] = data.bookings || [];
+      setBookings(list);
+      return list;
     } catch (err) {
       setBookingError(err instanceof Error ? err.message : 'Failed to load bookings');
+      return [];
     } finally {
       setIsLoading(false);
     }
@@ -292,66 +309,115 @@ export default function ArtistDashboard() {
     }
   };
 
-  const fetchMsgThreads = useCallback(async () => {
+  const fetchConsultMsgs = useCallback(async (consultationId: string) => {
     if (!accessToken) return;
-    setMsgThreadsLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/messages`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/consultation-messages/${consultationId}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       const data = await res.json();
-      if (res.ok) setMsgThreads(data.threads || []);
+      if (res.ok) setConsultMsgs(data.messages || []);
     } catch { /* non-critical */ }
-    finally { setMsgThreadsLoading(false); }
   }, [accessToken]);
 
-  const fetchMsgs = useCallback(async (bookingId: string) => {
-    if (!accessToken) return;
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/messages/${bookingId}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      const data = await res.json();
-      if (res.ok) { setMsgs(data.messages || []); fetchMsgThreads(); }
-    } catch { /* non-critical */ }
-  }, [accessToken, fetchMsgThreads]);
+  useEffect(() => {
+    if (consultMsgPollRef.current) clearInterval(consultMsgPollRef.current);
+    if (!openConsultChatId) { setConsultMsgs([]); return; }
+    fetchConsultMsgs(openConsultChatId);
+    consultMsgPollRef.current = setInterval(() => fetchConsultMsgs(openConsultChatId), 30_000);
+    return () => { if (consultMsgPollRef.current) clearInterval(consultMsgPollRef.current); };
+  }, [openConsultChatId, fetchConsultMsgs]);
 
   useEffect(() => {
-    if (tab === 'messages' && accessToken) fetchMsgThreads();
-  }, [tab, fetchMsgThreads, accessToken]);
-
-  useEffect(() => {
-    if (msgPollRef.current) clearInterval(msgPollRef.current);
-    if (!selectedMsgBooking) return;
-    fetchMsgs(selectedMsgBooking);
-    msgPollRef.current = setInterval(() => fetchMsgs(selectedMsgBooking), 30_000);
-    return () => { if (msgPollRef.current) clearInterval(msgPollRef.current); };
-  }, [selectedMsgBooking, fetchMsgs]);
-
-  useEffect(() => {
-    const el = msgAreaRef.current;
+    const el = consultMsgAreaRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [msgs]);
+  }, [consultMsgs]);
 
-  const sendArtistMsg = async () => {
-    if (!msgDraft.trim() || !selectedMsgBooking || msgSending) return;
-    setMsgSending(true);
-    setMsgError('');
+  // Sync notes + action state when selected booking changes
+  useEffect(() => {
+    setNotesText(selectedBooking?.artist_notes ?? '');
+    setNotesSaving('idle');
+    setAftercareSent('idle');
+    setRebookSent('idle');
+    setArtistActionMode('none');
+    setRescheduleDate(null);
+    setRescheduleSlot(null);
+    setRescheduleAvailData(null);
+  }, [selectedBooking?.id]);
+
+  const saveNotes = async () => {
+    if (!selectedBooking) return;
+    setNotesSaving('saving');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/messages/${selectedMsgBooking}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/bookings/${selectedBooking.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ status: selectedBooking.appointment_status, notes: notesText }),
+      });
+      if (res.ok) {
+        setNotesSaving('saved');
+        setBookings((prev) => prev.map((b) => b.id === selectedBooking.id ? { ...b, artist_notes: notesText } : b));
+        setSelectedBooking((prev) => prev ? { ...prev, artist_notes: notesText } : null);
+        setTimeout(() => setNotesSaving('idle'), 2000);
+      } else {
+        setNotesSaving('idle');
+      }
+    } catch {
+      setNotesSaving('idle');
+    }
+  };
+
+  const AFTERCARE_TEXT = `Thanks so much for coming in! Here's a quick reminder of aftercare:\n\n• Keep your tattoo wrapped for 2–4 hours after your session\n• Gently wash with fragrance-free soap and pat dry\n• Apply a thin layer of unscented moisturiser 2–3x daily\n• Avoid direct sunlight, swimming, saunas, and scratching for at least 2 weeks\n• The surface heals in 2–3 weeks; full healing takes 2–3 months\n\nFeel free to message me if you have any questions — happy healing! ✨`;
+
+  const sendAftercareMessage = async () => {
+    if (!selectedBooking || aftercareSent !== 'idle') return;
+    setAftercareSent('sending');
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/messages/${selectedBooking.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ body: msgDraft.trim() }),
+        body: JSON.stringify({ body: AFTERCARE_TEXT }),
+      });
+      if (res.ok) setAftercareSent('sent');
+      else setAftercareSent('idle');
+    } catch {
+      setAftercareSent('idle');
+    }
+  };
+
+  const sendRebookInvite = async () => {
+    if (!selectedBooking || rebookSent !== 'idle') return;
+    setRebookSent('sending');
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/bookings/${selectedBooking.id}/rebook-invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.ok) setRebookSent('sent');
+      else setRebookSent('idle');
+    } catch {
+      setRebookSent('idle');
+    }
+  };
+
+  const sendConsultMsg = async () => {
+    if (!consultMsgDraft.trim() || !openConsultChatId || consultMsgSending) return;
+    setConsultMsgSending(true);
+    setConsultMsgError('');
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/consultation-messages/${openConsultChatId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ body: consultMsgDraft.trim() }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to send');
-      setMsgs((prev) => [...prev, data.message]);
-      setMsgDraft('');
-      fetchMsgThreads();
+      setConsultMsgs((prev) => [...prev, data.message]);
+      setConsultMsgDraft('');
     } catch (e) {
-      setMsgError(e instanceof Error ? e.message : 'Failed to send');
+      setConsultMsgError(e instanceof Error ? e.message : 'Failed to send');
     } finally {
-      setMsgSending(false);
+      setConsultMsgSending(false);
     }
   };
 
@@ -359,7 +425,7 @@ export default function ArtistDashboard() {
     bookingId: string,
     status: string,
     notes: string,
-    opts?: { duration_hours?: number; notify_end_time?: boolean }
+    opts?: { duration_hours?: number; notify_end_time?: boolean; new_appointment_date?: string; new_appointment_time?: string }
   ) => {
     try {
       setIsUpdating(true);
@@ -373,8 +439,9 @@ export default function ArtistDashboard() {
         const d = await res.json();
         throw new Error(d.error || 'Failed to update booking');
       }
-      await fetchBookings();
-      setSelectedBooking(null);
+      setStatusFilter('all');
+      const refreshed = await fetchBookings();
+      setSelectedBooking(refreshed.find((b) => b.id === bookingId) ?? null);
       setConfirmDurationHours(2);
       setConfirmNotifyEnd(true);
     } catch (err) {
@@ -384,31 +451,43 @@ export default function ArtistDashboard() {
     }
   };
 
-  const handleSendResponse = async () => {
-    if (!selectedConsultation || !responseText.trim()) return;
-    setIsSendingResponse(true);
+  const handleArtistReschedule = () => {
+    if (!selectedBooking || !rescheduleDate || !rescheduleSlot) return;
+    handleStatusUpdate(selectedBooking.id, selectedBooking.appointment_status, selectedBooking.artist_notes ?? '', {
+      new_appointment_date: rescheduleDate,
+      new_appointment_time: rescheduleSlot,
+    });
+  };
+
+  const handleConsultAction = async () => {
+    if (!consultActionId) return;
+    const colonIdx = consultActionId.lastIndexOf(':');
+    const consultationId = consultActionId.substring(0, colonIdx);
+    const action = consultActionId.substring(colonIdx + 1) as 'approve' | 'decline';
+    setConsultActioning(true);
     setConsultationError('');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/consultations/${selectedConsultation.consultation_id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/consultations/${consultationId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ response_message: responseText }),
+        body: JSON.stringify({ action, ...(consultResponseText.trim() ? { response_message: consultResponseText.trim() } : {}) }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to send response');
+      if (!res.ok) throw new Error(data.error || 'Failed to update consultation');
+      const newStatus = action === 'approve' ? 'approved' : 'declined';
       setConsultations((prev) =>
         prev.map((c) =>
-          c.consultation_id === selectedConsultation.consultation_id
-            ? { ...c, status: 'responded', artist_response: responseText }
+          c.consultation_id === consultationId
+            ? { ...c, status: newStatus, artist_response: consultResponseText.trim() || c.artist_response }
             : c
         )
       );
-      setSelectedConsultation({ ...selectedConsultation, status: 'responded', artist_response: responseText });
-      setResponseText('');
-    } catch (err) {
-      setConsultationError(err instanceof Error ? err.message : 'Failed to send response');
+      setConsultActionId(null);
+      setConsultResponseText('');
+    } catch (e) {
+      setConsultationError(e instanceof Error ? e.message : 'Failed to update consultation');
     } finally {
-      setIsSendingResponse(false);
+      setConsultActioning(false);
     }
   };
 
@@ -487,6 +566,161 @@ export default function ArtistDashboard() {
           ))}
         </div>
 
+        {/* Private notes — not visible to client */}
+        <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem', marginBottom: '1.25rem' }}>
+          <span style={{ ...labelStyle, marginBottom: '0.25rem' }}>Private notes</span>
+          <p style={{ margin: '0 0 0.625rem', fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--text-low)' }}>
+            Not visible to the client
+          </p>
+          <textarea
+            value={notesText}
+            onChange={(e) => { setNotesText(e.target.value); setNotesSaving('idle'); }}
+            placeholder="Session notes, price agreed, allergies, anything relevant…"
+            rows={3}
+            style={{ width: '100%', resize: 'vertical', minHeight: '5rem' }}
+          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
+            <button
+              type="button"
+              onClick={saveNotes}
+              disabled={notesSaving === 'saving'}
+              style={{ padding: '0.4rem 0.875rem', background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.3)', color: 'var(--gold)', fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', borderRadius: '0.25rem', cursor: notesSaving === 'saving' ? 'default' : 'pointer', opacity: notesSaving === 'saving' ? 0.6 : 1 }}
+            >
+              {notesSaving === 'saving' ? 'Saving…' : 'Save notes'}
+            </button>
+            {notesSaving === 'saved' && (
+              <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', color: 'rgba(34,197,94,0.8)' }}>Saved ✓</span>
+            )}
+          </div>
+        </div>
+
+        {/* Cancel / reschedule — confirmed bookings */}
+        {selectedBooking.appointment_status === 'confirmed' && (
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem', marginBottom: '1.25rem' }}>
+
+            {artistActionMode === 'none' && (
+              <div style={{ display: 'flex', gap: '0.625rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setArtistActionMode('reschedule')}
+                  className="btn-secondary"
+                  style={{ flex: 1, padding: '0.65rem', fontSize: '0.72rem' }}
+                >
+                  Reschedule
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setArtistActionMode('cancel-confirm')}
+                  className="btn-secondary"
+                  style={{ flex: 1, padding: '0.65rem', fontSize: '0.72rem', color: '#f87171', borderColor: 'rgba(239,68,68,0.3)' }}
+                >
+                  Cancel booking
+                </button>
+              </div>
+            )}
+
+            {artistActionMode === 'cancel-confirm' && (
+              <div>
+                <div style={{ padding: '1rem', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '0.5rem', marginBottom: '1rem' }}>
+                  <p style={{ margin: '0 0 0.375rem', fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#f87171' }}>
+                    Cancel this booking?
+                  </p>
+                  <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text)', lineHeight: 1.65 }}>
+                    The client will be notified by email. This cannot be undone.
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: '0.625rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => handleStatusUpdate(selectedBooking.id, 'cancelled', selectedBooking.artist_notes ?? '')}
+                    disabled={isUpdating}
+                    style={{ flex: 1, padding: '0.65rem', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', borderRadius: '0.375rem', cursor: isUpdating ? 'default' : 'pointer', opacity: isUpdating ? 0.6 : 1 }}
+                  >
+                    {isUpdating ? 'Cancelling…' : 'Yes, cancel'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setArtistActionMode('none')}
+                    className="btn-secondary"
+                    style={{ flex: 1, padding: '0.65rem', fontSize: '0.72rem' }}
+                  >
+                    Keep booking
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {artistActionMode === 'reschedule' && (
+              <div>
+                <p style={{ ...labelStyle, marginBottom: '1rem' }}>Choose a new date</p>
+                <div style={{ padding: '1rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.5rem', marginBottom: rescheduleDate ? '0.875rem' : '0' }}>
+                  <AvailabilityCalendar
+                    artistId={selectedBooking.artist_id ?? artist?.id ?? ''}
+                    selectedDate={rescheduleDate}
+                    onDateSelect={(d) => { setRescheduleDate(d); setRescheduleSlot(null); }}
+                    onAvailabilityLoad={setRescheduleAvailData}
+                  />
+                </div>
+                {rescheduleDate && (
+                  <div style={{ marginBottom: '0.875rem' }}>
+                    <TimeSlotPicker
+                      date={rescheduleDate}
+                      selectedSlot={rescheduleSlot}
+                      onSlotSelect={setRescheduleSlot}
+                      slotData={rescheduleAvailData?.slotData}
+                    />
+                  </div>
+                )}
+                {bookingError && (
+                  <p style={{ margin: '0 0 0.5rem', fontSize: '0.8125rem', color: '#f87171' }}>{bookingError}</p>
+                )}
+                <div style={{ display: 'flex', gap: '0.625rem', marginTop: '0.875rem' }}>
+                  <button
+                    type="button"
+                    onClick={handleArtistReschedule}
+                    disabled={!rescheduleDate || !rescheduleSlot || isUpdating}
+                    className="btn-primary"
+                    style={{ flex: 1, padding: '0.65rem', fontSize: '0.72rem', opacity: (!rescheduleDate || !rescheduleSlot || isUpdating) ? 0.4 : 1 }}
+                  >
+                    {isUpdating ? 'Saving…' : 'Confirm reschedule'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setArtistActionMode('none'); setRescheduleDate(null); setRescheduleSlot(null); }}
+                    className="btn-secondary"
+                    style={{ flex: 1, padding: '0.65rem', fontSize: '0.72rem' }}
+                  >
+                    Go back
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Post-session actions — completed bookings only */}
+        {selectedBooking.appointment_status === 'completed' && (
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+            <span style={{ ...labelStyle, marginBottom: '0.5rem' }}>Post-session</span>
+            <button
+              type="button"
+              onClick={sendAftercareMessage}
+              disabled={aftercareSent !== 'idle'}
+              style={{ width: '100%', padding: '0.7rem', background: aftercareSent === 'sent' ? 'rgba(34,197,94,0.1)' : 'rgba(201,168,76,0.08)', border: `1px solid ${aftercareSent === 'sent' ? 'rgba(34,197,94,0.4)' : 'rgba(201,168,76,0.25)'}`, color: aftercareSent === 'sent' ? 'rgba(34,197,94,0.9)' : 'var(--gold)', fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.12em', textTransform: 'uppercase', borderRadius: '0.375rem', cursor: aftercareSent === 'idle' ? 'pointer' : 'default', opacity: aftercareSent === 'sending' ? 0.6 : 1 }}
+            >
+              {aftercareSent === 'sent' ? 'Aftercare sent ✓' : aftercareSent === 'sending' ? 'Sending…' : 'Send aftercare instructions'}
+            </button>
+            <button
+              type="button"
+              onClick={sendRebookInvite}
+              disabled={rebookSent !== 'idle'}
+              style={{ width: '100%', padding: '0.7rem', background: rebookSent === 'sent' ? 'rgba(34,197,94,0.1)' : 'transparent', border: `1px solid ${rebookSent === 'sent' ? 'rgba(34,197,94,0.4)' : 'var(--border)'}`, color: rebookSent === 'sent' ? 'rgba(34,197,94,0.9)' : 'var(--text-mid)', fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.12em', textTransform: 'uppercase', borderRadius: '0.375rem', cursor: rebookSent === 'idle' ? 'pointer' : 'default', opacity: rebookSent === 'sending' ? 0.6 : 1 }}
+            >
+              {rebookSent === 'sent' ? 'Invite sent ✓' : rebookSent === 'sending' ? 'Sending…' : 'Invite to rebook'}
+            </button>
+          </div>
+        )}
+
         {selectedBooking.appointment_status !== 'confirmed' && selectedBooking.appointment_status !== 'completed' && selectedBooking.appointment_status !== 'cancelled' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
             <div>
@@ -537,6 +771,7 @@ export default function ArtistDashboard() {
             )}
 
             <button
+              type="button"
               onClick={() => handleStatusUpdate(selectedBooking.id, 'confirmed', '', {
                 duration_hours: confirmDurationHours,
                 notify_end_time: confirmNotifyEnd,
@@ -548,12 +783,13 @@ export default function ArtistDashboard() {
               {isUpdating ? 'Confirming…' : 'Confirm & Schedule'}
             </button>
             <button
+              type="button"
               onClick={() => handleStatusUpdate(selectedBooking.id, 'cancelled', '')}
               disabled={isUpdating}
               className="btn-secondary"
               style={{ width: '100%', padding: '0.75rem', color: '#f87171', borderColor: 'rgba(239,68,68,0.3)', opacity: isUpdating ? 0.6 : 1, cursor: isUpdating ? 'default' : 'pointer' }}
             >
-              Decline
+              Decline request
             </button>
           </div>
         )}
@@ -679,11 +915,11 @@ export default function ArtistDashboard() {
         })()}
 
         {/* Tab bar */}
-        <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border)', marginBottom: '2.5rem' }}>
+        <div className="scroll-no-bar" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderBottom: '1px solid var(--border)', marginBottom: '2.5rem' }}>
+          <div style={{ display: 'flex', gap: 0, minWidth: 'max-content' }}>
           {([
             { key: 'bookings', label: 'Bookings', badge: 0 },
             { key: 'calendar', label: 'Calendar', badge: 0 },
-            { key: 'messages', label: 'Messages', badge: msgUnreadTotal },
             { key: 'consultations', label: 'Consultations', badge: pendingConsultations },
             { key: 'availability', label: 'Availability', badge: 0 },
           ] as const).map(({ key, label, badge }) => (
@@ -691,19 +927,20 @@ export default function ArtistDashboard() {
               key={key}
               onClick={() => setTab(key)}
               style={{
-                padding: '0.875rem 1.5rem',
+                paddingBottom: '1rem',
+                paddingRight: '1.5rem',
+                paddingLeft: '0',
                 background: 'none',
                 border: 'none',
                 borderBottom: tab === key ? '2px solid var(--gold)' : '2px solid transparent',
                 cursor: 'pointer',
-                fontFamily: '"DM Mono", monospace',
-                fontSize: '0.65rem',
-                letterSpacing: '0.15em',
-                textTransform: 'uppercase',
+                fontFamily: '"DM Sans", sans-serif',
+                fontSize: '0.875rem',
+                fontWeight: tab === key ? 500 : 400,
                 color: tab === key ? 'var(--gold)' : 'var(--text-mid)',
-                transition: 'color 0.3s ease',
-                position: 'relative',
+                transition: 'color 0.2s ease',
                 marginBottom: '-1px',
+                whiteSpace: 'nowrap',
               }}
             >
               {label}
@@ -714,6 +951,7 @@ export default function ArtistDashboard() {
               )}
             </button>
           ))}
+          </div>
         </div>
 
         {/* Bookings tab */}
@@ -964,271 +1202,204 @@ export default function ArtistDashboard() {
           </div>
         )}
 
-        {/* ── Messages tab ─────────────────────────────────────────────────── */}
-        {tab === 'messages' && (() => {
-          const selectedThread = msgThreads.find((t) => t.id === selectedMsgBooking) ?? null;
-          return (
-            <div style={{ display: 'grid', gridTemplateColumns: selectedMsgBooking ? '280px 1fr' : '1fr', gap: '1.5rem', alignItems: 'start', minHeight: '28rem' }}>
-              {/* Thread list */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {msgThreadsLoading && msgThreads.length === 0 ? (
-                  <p style={{ ...labelStyle, opacity: 0.4, padding: '2rem 0' }}>Loading...</p>
-                ) : msgThreads.length === 0 ? (
-                  <p style={{ color: 'var(--text-low)', fontSize: '0.875rem', padding: '2rem 0' }}>No active booking conversations yet.</p>
-                ) : (
-                  msgThreads.map((t) => {
-                    const isSelected = selectedMsgBooking === t.id;
-                    return (
-                      <button
-                        key={t.id}
-                        onClick={() => { setSelectedMsgBooking(isSelected ? null : t.id); setMsgs([]); setMsgError(''); }}
-                        style={{
-                          padding: '1rem 1.125rem',
-                          background: isSelected ? 'rgba(201,168,76,0.08)' : 'var(--surface)',
-                          border: `1px solid ${isSelected ? 'rgba(201,168,76,0.35)' : 'var(--border)'}`,
-                          borderRadius: '0.625rem',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                          transition: 'all 0.2s ease',
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.2rem' }}>
-                          <p style={{ margin: 0, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1rem', color: isSelected ? 'var(--gold)' : 'var(--cream)' }}>
-                            {t.first_name} {t.last_name}
-                          </p>
-                          {t.unread_count > 0 && (
-                            <span style={{ padding: '0.1rem 0.45rem', background: 'var(--gold)', color: 'var(--bg)', borderRadius: '2rem', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', fontWeight: 600, flexShrink: 0, marginLeft: '0.5rem' }}>
-                              {t.unread_count}
-                            </span>
-                          )}
-                        </div>
-                        <p style={{ margin: '0 0 0.3rem', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
-                          {t.booking_reference}
-                        </p>
-                        {t.last_message_body ? (
-                          <p style={{ margin: 0, fontSize: '0.75rem', color: t.unread_count > 0 ? 'var(--text)' : 'var(--text-low)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: t.unread_count > 0 ? 500 : 400 }}>
-                            {t.last_message_sender === 'artist' ? 'You: ' : `${t.first_name}: `}{t.last_message_body}
-                          </p>
-                        ) : (
-                          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-low)', fontStyle: 'italic' }}>No messages yet</p>
-                        )}
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-
-              {/* Thread panel */}
-              {selectedMsgBooking && (
-                <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', display: 'flex', flexDirection: 'column', height: '24rem' }}>
-                  {/* Header */}
-                  <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-                    <div>
-                      <p style={{ margin: 0, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1.125rem', color: 'var(--cream)' }}>
-                        {selectedThread?.first_name} {selectedThread?.last_name}
-                      </p>
-                      <p style={{ margin: '0.1rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
-                        {selectedThread?.booking_reference}
-                        {selectedThread?.appointment_date_time && ` · ${new Date(selectedThread.appointment_date_time).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`}
-                      </p>
-                    </div>
-                    <button onClick={() => { setSelectedMsgBooking(null); setMsgs([]); }} style={{ background: 'none', border: 'none', color: 'var(--text-low)', cursor: 'pointer', fontSize: '1.25rem', lineHeight: 1 }}>×</button>
-                  </div>
-
-                  {/* Messages */}
-                  <div ref={msgAreaRef} style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {msgs.length === 0 ? (
-                      <div style={{ textAlign: 'center', paddingTop: '4rem' }}>
-                        <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.125rem', color: 'var(--text-mid)', marginBottom: '0.5rem' }}>Start the conversation</p>
-                        <p style={{ fontSize: '0.8125rem', color: 'var(--text-low)' }}>Send a message to {selectedThread?.first_name} about their booking.</p>
-                      </div>
-                    ) : (
-                      <>
-                        {msgs.map((msg, i) => {
-                          const isArtist = msg.sender_type === 'artist';
-                          const prev = msgs[i - 1];
-                          const showDate = !prev || new Date(msg.created_at).toDateString() !== new Date(prev.created_at).toDateString();
-                          return (
-                            <div key={msg.id}>
-                              {showDate && (
-                                <p style={{ textAlign: 'center', fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', margin: '0.75rem 0 0.5rem' }}>
-                                  {new Date(msg.created_at).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
-                                </p>
-                              )}
-                              <div style={{ display: 'flex', justifyContent: isArtist ? 'flex-end' : 'flex-start' }}>
-                                <div style={{ maxWidth: '72%', padding: '0.625rem 0.875rem', borderRadius: isArtist ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem', background: isArtist ? 'rgba(201,168,76,0.14)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isArtist ? 'rgba(201,168,76,0.3)' : 'var(--border)'}` }}>
-                                  <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.6, wordBreak: 'break-word' }}>{msg.body}</p>
-                                  <p style={{ margin: '0.25rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.06em', color: isArtist ? 'rgba(201,168,76,0.5)' : 'var(--text-low)', textAlign: isArtist ? 'right' : 'left' }}>
-                                    {new Date(msg.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </>
-                    )}
-                  </div>
-
-                  {/* Input */}
-                  <div style={{ padding: '0.875rem 1.25rem', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
-                    {msgError && <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', color: '#f87171' }}>{msgError}</p>}
-                    <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'flex-end' }}>
-                      <textarea
-                        value={msgDraft}
-                        onChange={(e) => setMsgDraft(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendArtistMsg(); } }}
-                        placeholder="Write a message… (Enter to send)"
-                        rows={2}
-                        style={{ flex: 1, padding: '0.625rem 0.875rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--cream)', fontSize: '0.875rem', lineHeight: 1.5, resize: 'none', outline: 'none', fontFamily: '"DM Sans", sans-serif', transition: 'border-color 0.2s ease' }}
-                        onFocus={(e) => (e.target.style.borderColor = 'rgba(201,168,76,0.5)')}
-                        onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
-                      />
-                      <button
-                        onClick={sendArtistMsg}
-                        disabled={!msgDraft.trim() || msgSending}
-                        className="btn-primary"
-                        style={{ padding: '0.625rem 1.125rem', flexShrink: 0, opacity: (!msgDraft.trim() || msgSending) ? 0.5 : 1, cursor: (!msgDraft.trim() || msgSending) ? 'default' : 'pointer' }}
-                      >
-                        {msgSending ? '…' : '→'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })()}
-
-        {/* Consultations tab */}
+        {/* ── Consultations tab ────────────────────────────────────────────── */}
         {tab === 'consultations' && (
-          <div style={{ display: 'grid', gridTemplateColumns: selectedConsultation ? '1fr 400px' : '1fr', gap: '1.5rem' }}>
-            <div>
-              {consultationError && (
-                <div style={{ padding: '0.875rem 1rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '0.5rem', marginBottom: '1rem' }}>
-                  <p style={{ margin: 0, fontSize: '0.875rem', color: '#f87171' }}>{consultationError}</p>
-                </div>
-              )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+            {consultationError && (
+              <div style={{ padding: '0.875rem 1rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '0.5rem' }}>
+                <p style={{ margin: 0, fontSize: '0.875rem', color: '#f87171' }}>{consultationError}</p>
+              </div>
+            )}
 
-              {consultations.length === 0 ? (
-                <p style={{ color: 'var(--text-low)', fontSize: '0.9rem', padding: '2rem 0' }}>No consultation requests yet.</p>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {consultations.map((c) => (
-                    <button
-                      key={c.consultation_id}
-                      onClick={() => {
-                        setSelectedConsultation(selectedConsultation?.consultation_id === c.consultation_id ? null : c);
-                        setResponseText('');
-                        setConsultationError('');
-                      }}
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr auto',
-                        alignItems: 'center',
-                        gap: '1rem',
-                        width: '100%',
-                        padding: '1.25rem 1.5rem',
-                        background: selectedConsultation?.consultation_id === c.consultation_id ? 'rgba(201,168,76,0.06)' : 'var(--surface)',
-                        border: `1px solid ${selectedConsultation?.consultation_id === c.consultation_id ? 'rgba(201,168,76,0.3)' : 'var(--border)'}`,
-                        borderRadius: '0.75rem',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        transition: 'all 0.3s ease',
-                      }}
-                    >
+            {consultations.length === 0 ? (
+              <p style={{ color: 'var(--text-low)', fontSize: '0.9rem', padding: '2rem 0' }}>No consultation requests yet.</p>
+            ) : (
+              consultations.map((c) => {
+                const actionKey = consultActionId?.startsWith(c.consultation_id) ? consultActionId : null;
+                const isChatOpen = openConsultChatId === c.consultation_id;
+                return (
+                  <div
+                    key={c.consultation_id}
+                    style={{
+                      background: 'var(--surface)',
+                      border: `1px solid ${isChatOpen ? 'rgba(201,168,76,0.3)' : 'var(--border)'}`,
+                      borderRadius: '0.75rem',
+                      overflow: 'hidden',
+                      transition: 'border-color 0.2s ease',
+                    }}
+                  >
+                    {/* Summary row */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'start', gap: '1rem', padding: '1.25rem 1.5rem' }}>
                       <div>
                         <p style={{ margin: '0 0 0.25rem', fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.1rem', fontWeight: 300, color: 'var(--cream)' }}>
                           {c.first_name} {c.last_name}
                         </p>
-                        <p style={{ margin: '0 0 0.375rem', fontSize: '0.8125rem', color: 'var(--text-mid)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '400px' }}>
+                        <p style={{ margin: '0 0 0.375rem', fontSize: '0.8125rem', color: 'var(--text-mid)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '560px' }}>
                           {c.message}
                         </p>
-                        <p style={{ margin: 0, fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.1em', color: 'var(--text-low)' }}>
+                        <p style={{ margin: 0, fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.1em', color: 'var(--text-low)' }}>
                           {new Date(c.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          {c.preferred_dates ? ` · preferred: ${c.preferred_dates}` : ''}
                         </p>
                       </div>
                       <StatusBadge status={c.status} />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Consultation detail + response panel */}
-            {selectedConsultation && (
-              <div style={{ position: 'sticky', top: '5rem', alignSelf: 'start', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '1.75rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                  <h3 style={{ margin: 0, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.375rem', fontWeight: 300, color: 'var(--cream)' }}>
-                    Consultation
-                  </h3>
-                  <button onClick={() => setSelectedConsultation(null)} style={{ background: 'none', border: 'none', color: 'var(--text-low)', cursor: 'pointer', fontSize: '1.25rem', lineHeight: 1 }}>×</button>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '1.75rem' }}>
-                  <div>
-                    <span style={labelStyle}>Client</span>
-                    <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text)' }}>{selectedConsultation.first_name} {selectedConsultation.last_name}</p>
-                    <p style={{ margin: '0.25rem 0 0', fontSize: '0.8125rem', color: 'var(--text-mid)' }}>{selectedConsultation.email}</p>
-                  </div>
-                  <div>
-                    <span style={labelStyle}>Message</span>
-                    <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.7 }}>{selectedConsultation.message}</p>
-                  </div>
-                  {selectedConsultation.preferred_dates && (
-                    <div>
-                      <span style={labelStyle}>Preferred dates</span>
-                      <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text)' }}>{selectedConsultation.preferred_dates}</p>
                     </div>
-                  )}
-                  {selectedConsultation.artist_response && (
-                    <div style={{ padding: '1rem', background: 'rgba(201,168,76,0.05)', borderLeft: '2px solid rgba(201,168,76,0.3)', borderRadius: '0 0.5rem 0.5rem 0' }}>
-                      <span style={{ ...labelStyle, opacity: 0.8 }}>Your response</span>
-                      <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.7 }}>{selectedConsultation.artist_response}</p>
-                    </div>
-                  )}
-                </div>
 
-                {selectedConsultation.status !== 'responded' && (
-                  <div>
-                    <span style={labelStyle}>Reply to {selectedConsultation.first_name}</span>
-                    <textarea
-                      value={responseText}
-                      onChange={(e) => setResponseText(e.target.value)}
-                      placeholder="Write your response..."
-                      rows={5}
-                      style={{
-                        width: '100%',
-                        padding: '0.875rem 1rem',
-                        background: 'rgba(14,12,9,0.5)',
-                        border: '1px solid var(--border)',
-                        borderRadius: '0.5rem',
-                        color: 'var(--cream)',
-                        fontSize: '0.875rem',
-                        lineHeight: 1.7,
-                        resize: 'vertical',
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                        marginBottom: '0.875rem',
-                        fontFamily: '"DM Sans", sans-serif',
-                      }}
-                      onFocus={(e) => (e.target.style.borderColor = 'var(--gold)')}
-                      onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
-                    />
-                    {consultationError && (
-                      <p style={{ margin: '0 0 0.75rem', fontSize: '0.8125rem', color: '#f87171' }}>{consultationError}</p>
+                    {/* Pending — approve / decline actions */}
+                    {c.status === 'pending' && (
+                      <div style={{ padding: '0 1.5rem 1.25rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+                        {!actionKey ? (
+                          <div style={{ display: 'flex', gap: '0.625rem' }}>
+                            <button
+                              type="button"
+                              onClick={() => { setConsultActionId(`${c.consultation_id}:approve`); setConsultResponseText(''); setConsultationError(''); }}
+                              style={{ padding: '0.5rem 1rem', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', color: '#16A34A', fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', borderRadius: '0.375rem', cursor: 'pointer' }}
+                            >
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setConsultActionId(`${c.consultation_id}:decline`); setConsultResponseText(''); setConsultationError(''); }}
+                              style={{ padding: '0.5rem 1rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171', fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', borderRadius: '0.375rem', cursor: 'pointer' }}
+                            >
+                              Decline
+                            </button>
+                          </div>
+                        ) : (
+                          <div>
+                            <p style={{ margin: '0 0 0.625rem', fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: actionKey.endsWith(':approve') ? '#16A34A' : '#f87171' }}>
+                              {actionKey.endsWith(':approve') ? `Approve ${c.first_name}'s consultation` : `Decline ${c.first_name}'s request`}
+                            </p>
+                            <textarea
+                              value={consultResponseText}
+                              onChange={(e) => setConsultResponseText(e.target.value)}
+                              placeholder={actionKey.endsWith(':approve') ? 'Optional: add a note for the client…' : 'Optional: let them know why…'}
+                              rows={3}
+                              style={{ width: '100%', padding: '0.75rem 1rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--cream)', fontSize: '0.875rem', lineHeight: 1.6, resize: 'vertical', outline: 'none', boxSizing: 'border-box', marginBottom: '0.75rem', fontFamily: '"DM Sans", sans-serif' }}
+                              onFocus={(e) => (e.target.style.borderColor = 'var(--gold)')}
+                              onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+                            />
+                            <div style={{ display: 'flex', gap: '0.625rem' }}>
+                              <button
+                                type="button"
+                                onClick={handleConsultAction}
+                                disabled={consultActioning}
+                                style={{
+                                  padding: '0.5rem 1.125rem',
+                                  background: actionKey.endsWith(':approve') ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.12)',
+                                  border: `1px solid ${actionKey.endsWith(':approve') ? 'rgba(34,197,94,0.35)' : 'rgba(239,68,68,0.3)'}`,
+                                  color: actionKey.endsWith(':approve') ? '#16A34A' : '#f87171',
+                                  fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', borderRadius: '0.375rem',
+                                  cursor: consultActioning ? 'default' : 'pointer', opacity: consultActioning ? 0.6 : 1,
+                                }}
+                              >
+                                {consultActioning ? '…' : actionKey.endsWith(':approve') ? 'Confirm approve' : 'Confirm decline'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => { setConsultActionId(null); setConsultResponseText(''); setConsultationError(''); }}
+                                className="btn-secondary"
+                                style={{ padding: '0.5rem 0.875rem', fontSize: '0.72rem' }}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     )}
-                    <button
-                      onClick={handleSendResponse}
-                      disabled={isSendingResponse || !responseText.trim()}
-                      className="btn-primary"
-                      style={{ width: '100%', padding: '0.75rem', opacity: (isSendingResponse || !responseText.trim()) ? 0.5 : 1, cursor: (isSendingResponse || !responseText.trim()) ? 'default' : 'pointer' }}
-                    >
-                      {isSendingResponse ? 'Sending...' : 'Send response'}
-                    </button>
+
+                    {/* Approved — chat toggle */}
+                    {c.status === 'approved' && (
+                      <div style={{ borderTop: '1px solid var(--border)' }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpenConsultChatId(isChatOpen ? null : c.consultation_id);
+                            setConsultMsgDraft('');
+                            setConsultMsgError('');
+                          }}
+                          style={{ width: '100%', padding: '0.875rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', color: isChatOpen ? 'var(--gold)' : 'var(--text-mid)', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', transition: 'color 0.2s ease' }}
+                        >
+                          <span>{isChatOpen ? 'Close chat' : 'Open chat with client'}</span>
+                          <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', opacity: 0.7 }}>{isChatOpen ? '↑' : '↓'}</span>
+                        </button>
+
+                        {isChatOpen && (
+                          <div style={{ borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', height: '22rem' }}>
+                            {/* Messages */}
+                            <div ref={consultMsgAreaRef} style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                              {consultMsgs.length === 0 ? (
+                                <div style={{ textAlign: 'center', paddingTop: '3rem' }}>
+                                  <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.0625rem', color: 'var(--text-mid)', marginBottom: '0.375rem' }}>Consultation approved</p>
+                                  <p style={{ fontSize: '0.8125rem', color: 'var(--text-low)' }}>Start the conversation with {c.first_name}.</p>
+                                </div>
+                              ) : (
+                                consultMsgs.map((msg, i) => {
+                                  const isArtist = msg.sender_type === 'artist';
+                                  const prev = consultMsgs[i - 1];
+                                  const showDate = !prev || new Date(msg.created_at).toDateString() !== new Date(prev.created_at).toDateString();
+                                  return (
+                                    <div key={msg.id}>
+                                      {showDate && (
+                                        <p style={{ textAlign: 'center', fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', margin: '0.75rem 0 0.5rem' }}>
+                                          {new Date(msg.created_at).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                        </p>
+                                      )}
+                                      <div style={{ display: 'flex', justifyContent: isArtist ? 'flex-end' : 'flex-start' }}>
+                                        <div style={{ maxWidth: '72%', padding: '0.625rem 0.875rem', borderRadius: isArtist ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem', background: isArtist ? 'rgba(201,168,76,0.14)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isArtist ? 'rgba(201,168,76,0.3)' : 'var(--border)'}` }}>
+                                          <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.6, wordBreak: 'break-word' }}>{msg.body}</p>
+                                          <p style={{ margin: '0.25rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.06em', color: isArtist ? 'rgba(201,168,76,0.5)' : 'var(--text-low)', textAlign: isArtist ? 'right' : 'left' }}>
+                                            {new Date(msg.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+
+                            {/* Input */}
+                            <div style={{ padding: '0.875rem 1.5rem', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+                              {consultMsgError && <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', color: '#f87171' }}>{consultMsgError}</p>}
+                              <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'flex-end' }}>
+                                <textarea
+                                  value={consultMsgDraft}
+                                  onChange={(e) => setConsultMsgDraft(e.target.value)}
+                                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendConsultMsg(); } }}
+                                  placeholder="Write a message… (Enter to send)"
+                                  rows={2}
+                                  style={{ flex: 1, padding: '0.625rem 0.875rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--cream)', fontSize: '0.875rem', lineHeight: 1.5, resize: 'none', outline: 'none', fontFamily: '"DM Sans", sans-serif', transition: 'border-color 0.2s ease' }}
+                                  onFocus={(e) => (e.target.style.borderColor = 'rgba(201,168,76,0.5)')}
+                                  onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={sendConsultMsg}
+                                  disabled={!consultMsgDraft.trim() || consultMsgSending}
+                                  className="btn-primary"
+                                  style={{ padding: '0.625rem 1.125rem', flexShrink: 0, opacity: (!consultMsgDraft.trim() || consultMsgSending) ? 0.5 : 1, cursor: (!consultMsgDraft.trim() || consultMsgSending) ? 'default' : 'pointer' }}
+                                >
+                                  {consultMsgSending ? '…' : '→'}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Declined — show artist response if any */}
+                    {c.status === 'declined' && c.artist_response && (
+                      <div style={{ padding: '0.875rem 1.5rem', borderTop: '1px solid var(--border)', background: 'rgba(239,68,68,0.04)' }}>
+                        <span style={{ ...labelStyle, fontSize: '0.65rem', opacity: 0.75 }}>Your response</span>
+                        <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--text-mid)', lineHeight: 1.6 }}>{c.artist_response}</p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                );
+              })
             )}
           </div>
         )}
