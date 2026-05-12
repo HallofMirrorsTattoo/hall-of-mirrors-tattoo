@@ -97,7 +97,7 @@ router.get('/:id', async (req: Request, res: Response) => {
               b.estimated_duration_minutes as estimated_duration,
               b.created_at, b.updated_at,
               a.id as artist_id, a.full_name as artist_name, a.specialties, a.bio, a.instagram_handle,
-              di.id as design_idea_id, di.image_url, di.description
+              di.design_idea_id, di.image_url, di.description
        FROM "Booking" b
        LEFT JOIN "Artist" a ON b.artist_id = a.id
        LEFT JOIN "DesignIdea" di ON b.id = di.booking_id
@@ -173,7 +173,7 @@ router.patch('/:id', async (req: Request, res: Response) => {
     }
 
     const { id } = req.params;
-    const { appointment_status } = req.body;
+    const { appointment_status, new_appointment_date, new_appointment_time } = req.body;
 
     // Only allow canceling or rescheduling
     const allowedStatuses = ['cancelled', 'rescheduled'];
@@ -186,9 +186,9 @@ router.patch('/:id', async (req: Request, res: Response) => {
 
     await client.connect();
 
-    // Verify booking belongs to user
+    // Verify booking belongs to user and get current appointment time
     const bookingResult = await client.query(
-      `SELECT id FROM "Booking" WHERE id = $1 AND user_id = $2`,
+      `SELECT id, appointment_date_time, appointment_status FROM "Booking" WHERE id = $1 AND user_id = $2`,
       [id, req.user.id]
     );
 
@@ -199,14 +199,38 @@ router.patch('/:id', async (req: Request, res: Response) => {
       });
     }
 
-    // Update booking
-    const updateResult = await client.query(
-      `UPDATE "Booking"
-       SET appointment_status = $1, updated_at = NOW()
-       WHERE id = $2
-       RETURNING id, booking_reference, appointment_status, updated_at`,
-      [appointment_status, id]
-    );
+    const existing = bookingResult.rows[0];
+    if (existing.appointment_status === 'cancelled') {
+      return res.status(400).json({ success: false, error: 'Booking is already cancelled' });
+    }
+
+    let updateResult;
+
+    if (appointment_status === 'rescheduled' && new_appointment_date && new_appointment_time) {
+      // Validate new date/time format
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(new_appointment_date) || !/^\d{2}:\d{2}$/.test(new_appointment_time)) {
+        return res.status(400).json({ success: false, error: 'Invalid date or time format' });
+      }
+      const newDateTime = `${new_appointment_date}T${new_appointment_time}:00`;
+      updateResult = await client.query(
+        `UPDATE "Booking"
+         SET appointment_status = 'rescheduled',
+             appointment_date_time = $1,
+             appointment_time = $2,
+             updated_at = NOW()
+         WHERE id = $3
+         RETURNING id, booking_reference, appointment_status, appointment_date_time, appointment_time, updated_at`,
+        [newDateTime, new_appointment_time, id]
+      );
+    } else {
+      updateResult = await client.query(
+        `UPDATE "Booking"
+         SET appointment_status = $1, updated_at = NOW()
+         WHERE id = $2
+         RETURNING id, booking_reference, appointment_status, appointment_date_time, appointment_time, updated_at`,
+        [appointment_status, id]
+      );
+    }
 
     res.json({
       success: true,

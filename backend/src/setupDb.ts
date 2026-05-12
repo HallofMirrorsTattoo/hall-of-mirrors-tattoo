@@ -201,6 +201,20 @@ CREATE TABLE IF NOT EXISTS "MedicalHistory" (
     FOREIGN KEY (user_id) REFERENCES "User"(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS "DesignIdea" (
+    design_idea_id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    booking_id TEXT,
+    image_url TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES "User"(id) ON DELETE CASCADE,
+    FOREIGN KEY (booking_id) REFERENCES "Booking"(id) ON DELETE SET NULL
+);
+CREATE INDEX IF NOT EXISTS "DesignIdea_user_id_idx" ON "DesignIdea"(user_id);
+CREATE INDEX IF NOT EXISTS "DesignIdea_booking_id_idx" ON "DesignIdea"(booking_id);
+
 CREATE TABLE IF NOT EXISTS "ConsentForm" (
     id TEXT PRIMARY KEY,
     user_id TEXT,
