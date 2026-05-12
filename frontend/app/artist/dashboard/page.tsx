@@ -25,7 +25,7 @@ const TIME_SLOTS = [
 // ── Calendar constants ─────────────────────────────────────────────────────────
 
 const CAL_HOURS = Array.from({ length: 12 }, (_, i) => 9 + i); // 9 to 20
-const HOUR_PX = 64;
+const HOUR_PX = 48;
 
 function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -156,7 +156,7 @@ export default function ArtistDashboard() {
   const [msgSending, setMsgSending] = useState(false);
   const [msgError, setMsgError] = useState('');
   const msgPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const msgBottomRef = useRef<HTMLDivElement>(null);
+  const msgAreaRef = useRef<HTMLDivElement>(null);
   const msgUnreadTotal = msgThreads.reduce((s, t) => s + (t.unread_count || 0), 0);
 
   // Calendar state
@@ -329,7 +329,8 @@ export default function ArtistDashboard() {
   }, [selectedMsgBooking, fetchMsgs]);
 
   useEffect(() => {
-    msgBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = msgAreaRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [msgs]);
 
   const sendArtistMsg = async () => {
@@ -596,6 +597,87 @@ export default function ArtistDashboard() {
       </header>
 
       <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '2.5rem 1.5rem' }}>
+
+        {/* ── Upcoming appointment hub ───────────────────────────────────────── */}
+        {(() => {
+          const now = new Date();
+          const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+          const upcoming = bookings
+            .filter((b) => b.appointment_status === 'confirmed' && b.appointment_date_time >= todayStr)
+            .sort((a, b) => a.appointment_date_time.localeCompare(b.appointment_date_time));
+          if (upcoming.length === 0) return null;
+          const next = upcoming[0];
+          const nextDate = next.appointment_date_time.substring(0, 10);
+          const isToday = nextDate === todayStr;
+          const startHour = next.appointment_time ? parseInt(next.appointment_time.substring(0, 2), 10) : null;
+          const endHour = startHour !== null && next.estimated_duration_minutes
+            ? startHour + Math.round(next.estimated_duration_minutes / 60)
+            : null;
+          const fmtHour = (h: number) => h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h - 12}pm`;
+          const todayCount = upcoming.filter((b) => b.appointment_date_time.substring(0, 10) === todayStr).length;
+          return (
+            <div style={{
+              marginBottom: '2rem',
+              padding: '1rem 1.5rem',
+              background: isToday ? 'rgba(201,168,76,0.07)' : 'var(--surface)',
+              border: `1px solid ${isToday ? 'rgba(201,168,76,0.3)' : 'var(--border)'}`,
+              borderRadius: '0.75rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1.5rem',
+              flexWrap: 'wrap',
+            }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', minWidth: 0 }}>
+                <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: isToday ? 'var(--gold)' : 'rgba(201,168,76,0.5)' }}>
+                  {isToday ? `Today · ${todayCount} session${todayCount > 1 ? 's' : ''}` : 'Next session'}
+                </span>
+                <span style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1.25rem', color: 'var(--cream)', lineHeight: 1.2 }}>
+                  {next.first_name} {next.last_name}
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', flex: 1 }}>
+                <div>
+                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', display: 'block' }}>Date</span>
+                  <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)', fontWeight: isToday ? 500 : 400 }}>
+                    {isToday ? 'Today' : new Date(nextDate + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
+                  </span>
+                </div>
+                {startHour !== null && (
+                  <div>
+                    <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', display: 'block' }}>Time</span>
+                    <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)' }}>
+                      {fmtHour(startHour)}{endHour ? ` → ${fmtHour(endHour)}` : ''}
+                    </span>
+                  </div>
+                )}
+                {next.placement && (
+                  <div>
+                    <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', display: 'block' }}>Placement</span>
+                    <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)' }}>{next.placement}</span>
+                  </div>
+                )}
+                {next.estimated_duration_minutes && (
+                  <div>
+                    <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', display: 'block' }}>Duration</span>
+                    <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)' }}>
+                      {Math.round(next.estimated_duration_minutes / 60)}h
+                    </span>
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => { setTab('bookings'); setSelectedBooking(next); }}
+                style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--gold)', background: 'none', border: '1px solid rgba(201,168,76,0.3)', padding: '0.5rem 0.875rem', borderRadius: '2rem', cursor: 'pointer', transition: 'border-color 0.25s ease', flexShrink: 0 }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.3)')}
+              >
+                View →
+              </button>
+            </div>
+          );
+        })()}
+
         {/* Tab bar */}
         <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border)', marginBottom: '2.5rem' }}>
           {([
@@ -733,6 +815,7 @@ export default function ArtistDashboard() {
                 <div style={{ display: 'flex', gap: '0.25rem' }}>
                   {[{ fn: calPrevWeek, icon: '←' }, { fn: calNextWeek, icon: '→' }].map(({ fn, icon }) => (
                     <button
+                      type="button"
                       key={icon}
                       onClick={fn}
                       style={{ width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid var(--border)', borderRadius: '50%', cursor: 'pointer', color: 'var(--text-mid)', fontSize: '0.875rem', transition: 'border-color 0.25s ease' }}
@@ -749,6 +832,7 @@ export default function ArtistDashboard() {
                   })()}
                 </span>
                 <button
+                  type="button"
                   onClick={calGoToday}
                   style={{ padding: '0.3rem 0.875rem', borderRadius: '2rem', border: '1px solid var(--border)', background: 'none', color: 'var(--text-mid)', fontFamily: '"DM Mono", monospace', fontSize: '0.55rem', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.25s ease' }}
                   onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--gold)'; e.currentTarget.style.color = 'var(--gold)'; }}
@@ -831,6 +915,7 @@ export default function ArtistDashboard() {
 
                     return (
                       <button
+                        type="button"
                         key={booking.id}
                         onClick={() => setSelectedBooking(isSelected ? null : booking)}
                         style={{
@@ -935,7 +1020,7 @@ export default function ArtistDashboard() {
 
               {/* Thread panel */}
               {selectedMsgBooking && (
-                <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', display: 'flex', flexDirection: 'column', height: '32rem' }}>
+                <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', display: 'flex', flexDirection: 'column', height: '24rem' }}>
                   {/* Header */}
                   <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
                     <div>
@@ -951,7 +1036,7 @@ export default function ArtistDashboard() {
                   </div>
 
                   {/* Messages */}
-                  <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div ref={msgAreaRef} style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     {msgs.length === 0 ? (
                       <div style={{ textAlign: 'center', paddingTop: '4rem' }}>
                         <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.125rem', color: 'var(--text-mid)', marginBottom: '0.5rem' }}>Start the conversation</p>
@@ -981,7 +1066,6 @@ export default function ArtistDashboard() {
                             </div>
                           );
                         })}
-                        <div ref={msgBottomRef} />
                       </>
                     )}
                   </div>

@@ -42,7 +42,7 @@ const eyebrow: React.CSSProperties = {
 const divider: React.CSSProperties = {
   border: 'none',
   borderTop: '1px solid var(--border)',
-  margin: '2rem 0',
+  margin: '1.5rem 0',
 };
 
 export default function BookingPage() {
@@ -173,8 +173,8 @@ export default function BookingPage() {
 
       {/* Hero */}
       <section style={{
-        minHeight: '38dvh',
-        padding: '2rem 1.5rem 4rem',
+        minHeight: '24dvh',
+        padding: '2rem 1.5rem 2.5rem',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         position: 'relative', overflow: 'hidden',
       }}>
@@ -210,7 +210,7 @@ export default function BookingPage() {
       </section>
 
       {/* Form */}
-      <section style={{ padding: '0 1.5rem 5rem' }}>
+      <section style={{ padding: '0 1.5rem 3rem' }}>
         <div style={{ maxWidth: '40rem', margin: '0 auto' }}>
           <div className="card-premium">
             <div className="card-premium-inner">

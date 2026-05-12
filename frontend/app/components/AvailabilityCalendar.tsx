@@ -114,6 +114,7 @@ export default function AvailabilityCalendar({ artistId, selectedDate, onDateSel
       {/* Month navigation */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
         <button
+          type="button"
           onClick={prevMonth}
           disabled={!canGoPrev}
           style={{ ...navBtn, opacity: canGoPrev ? 1 : 0.25, cursor: canGoPrev ? 'pointer' : 'default' }}
@@ -150,6 +151,7 @@ export default function AvailabilityCalendar({ artistId, selectedDate, onDateSel
         </div>
 
         <button
+          type="button"
           onClick={nextMonth}
           style={{ ...navBtn }}
           onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
@@ -226,6 +228,7 @@ export default function AvailabilityCalendar({ artistId, selectedDate, onDateSel
 
           return (
             <button
+              type="button"
               key={dateStr}
               onClick={() => isClickable && onDateSelect(dateStr)}
               disabled={!isClickable}

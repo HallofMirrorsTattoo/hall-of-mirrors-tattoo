@@ -57,6 +57,7 @@ export default function TimeSlotPicker({ date, selectedSlot, onSlotSelect, slotD
 
           return (
             <button
+              type="button"
               key={slot.id}
               onClick={() => available && onSlotSelect(slot.id)}
               disabled={!available}

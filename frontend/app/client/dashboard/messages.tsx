@@ -66,7 +66,7 @@ export default function MessagesTab({ onUnreadCountChange }: MessagesTabProps) {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState('');
 
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const msgAreaRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchThreads = useCallback(async () => {
@@ -121,7 +121,8 @@ export default function MessagesTab({ onUnreadCountChange }: MessagesTabProps) {
 
   // Scroll to bottom when messages arrive
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = msgAreaRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
   const sendMessage = async () => {
@@ -224,7 +225,7 @@ export default function MessagesTab({ onUnreadCountChange }: MessagesTabProps) {
 
       {/* Message thread */}
       {selectedBookingId && (
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', display: 'flex', flexDirection: 'column', height: '32rem' }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', display: 'flex', flexDirection: 'column', height: '24rem' }}>
           {/* Thread header */}
           <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
             <div>
@@ -244,7 +245,7 @@ export default function MessagesTab({ onUnreadCountChange }: MessagesTabProps) {
           </div>
 
           {/* Messages area */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div ref={msgAreaRef} style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {messagesLoading && messages.length === 0 ? (
               <p style={{ ...mono, fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)', textAlign: 'center', paddingTop: '4rem' }}>
                 Loading...
@@ -290,7 +291,6 @@ export default function MessagesTab({ onUnreadCountChange }: MessagesTabProps) {
                     </div>
                   );
                 })}
-                <div ref={bottomRef} />
               </>
             )}
           </div>
