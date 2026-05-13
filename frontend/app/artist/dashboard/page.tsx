@@ -127,7 +127,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function ArtistDashboard() {
   const router = useRouter();
   const { artist, accessToken, logout, isLoading: authLoading } = useAuth();
-  const [tab, setTab] = useState<'bookings' | 'calendar' | 'consultations' | 'availability'>('bookings');
+  const [tab, setTab] = useState<'bookings' | 'calendar' | 'consultations' | 'availability' | 'stats'>('bookings');
 
   // Bookings state
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -977,6 +977,7 @@ export default function ArtistDashboard() {
             { key: 'calendar', label: 'Calendar', badge: 0 },
             { key: 'consultations', label: 'Consultations', badge: pendingConsultations },
             { key: 'availability', label: 'Availability', badge: 0 },
+            { key: 'stats',        label: 'Stats',        badge: 0 },
           ] as const).map(({ key, label, badge }) => (
             <button
               key={key}
@@ -1850,6 +1851,108 @@ export default function ArtistDashboard() {
             )}
           </div>
         )}
+        {/* ── Stats tab ────────────────────────────────────────────────────── */}
+        {tab === 'stats' && (() => {
+          const now = new Date();
+          const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+          const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          const lastMonthKey = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}`;
+
+          const getMonthKey = (b: Booking) => (b.appointment_date_time || '').slice(0, 7);
+
+          const completed  = bookings.filter(b => b.appointment_status === 'completed');
+          const confirmed  = bookings.filter(b => b.appointment_status === 'confirmed');
+          const pending    = bookings.filter(b => ['pending', 'pending_consent', 'rescheduled'].includes(b.appointment_status));
+          const cancelled  = bookings.filter(b => b.appointment_status === 'cancelled');
+
+          const thisMonthAll       = bookings.filter(b => getMonthKey(b) === thisMonthKey);
+          const thisMonthCompleted = completed.filter(b => getMonthKey(b) === thisMonthKey);
+          const thisMonthConfirmed = confirmed.filter(b => getMonthKey(b) === thisMonthKey);
+          const lastMonthCompleted = completed.filter(b => getMonthKey(b) === lastMonthKey);
+
+          const estimateRevenue = (list: Booking[]) =>
+            list.reduce((sum, b) => sum + Math.round((b.estimated_duration_minutes ?? 60) / 60 * 150), 0);
+
+          const allTimeRevenue    = estimateRevenue(completed);
+          const thisMonthRevenue  = estimateRevenue([...thisMonthCompleted, ...thisMonthConfirmed]);
+          const lastMonthRevenue  = estimateRevenue(lastMonthCompleted);
+
+          const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+          const monthLabel     = `${MONTH_NAMES[now.getMonth()]} ${now.getFullYear()}`;
+          const lastMonthLabel = `${MONTH_NAMES[lastMonthDate.getMonth()]} ${lastMonthDate.getFullYear()}`;
+
+          const total = bookings.length || 1;
+
+          return (
+            <div style={{ maxWidth: '720px' }}>
+
+              {/* Headline stats */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(155px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+                {[
+                  { label: 'Total Bookings', value: bookings.length, sub: 'All time' },
+                  { label: 'Completed',       value: completed.length, sub: 'Sessions done' },
+                  { label: 'Upcoming',        value: confirmed.length,  sub: 'Confirmed' },
+                  { label: monthLabel,        value: thisMonthAll.length, sub: 'This month' },
+                ].map(s => (
+                  <div key={s.label} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '1.375rem 1.25rem' }}>
+                    <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', margin: '0 0 0.625rem' }}>{s.label}</p>
+                    <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '2.5rem', fontWeight: 300, color: 'var(--cream)', lineHeight: 1, margin: '0 0 0.25rem' }}>{s.value}</p>
+                    <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', color: 'var(--text-low)', margin: 0 }}>{s.sub}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Revenue estimate */}
+              <div style={{ background: 'var(--surface)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '0.75rem', padding: '1.5rem', marginBottom: '2rem' }}>
+                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', margin: '0 0 0.25rem' }}>Revenue Estimate</p>
+                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', color: 'var(--text-low)', margin: '0 0 1.5rem' }}>
+                  Calculated at £150/hr from session duration. Actual totals depend on your invoicing.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1.5rem' }}>
+                  {[
+                    { label: 'All-time (completed)', value: `£${allTimeRevenue.toLocaleString()}` },
+                    { label: monthLabel,              value: `£${thisMonthRevenue.toLocaleString()}`,  sub: 'completed + confirmed' },
+                    { label: lastMonthLabel,          value: `£${lastMonthRevenue.toLocaleString()}`,  sub: 'completed' },
+                  ].map(r => (
+                    <div key={r.label}>
+                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', margin: '0 0 0.375rem' }}>{r.label}</p>
+                      <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.875rem', fontWeight: 300, color: 'var(--gold)', lineHeight: 1, margin: 0 }}>{r.value}</p>
+                      {r.sub && <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', color: 'var(--text-low)', margin: '0.25rem 0 0' }}>{r.sub}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Status breakdown with bar */}
+              <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', overflow: 'hidden', marginBottom: '1.5rem' }}>
+                <div style={{ padding: '1.125rem 1.5rem', borderBottom: '1px solid var(--border)' }}>
+                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', margin: 0 }}>Bookings by Status</p>
+                </div>
+                {([
+                  { label: 'Completed',                count: completed.length, color: 'var(--gold)' },
+                  { label: 'Confirmed (upcoming)',      count: confirmed.length,  color: '#16A34A' },
+                  { label: 'Pending / Awaiting consent', count: pending.length,  color: '#CA8A04' },
+                  { label: 'Cancelled',                count: cancelled.length,  color: '#DC2626' },
+                ] as const).map((row, i, arr) => (
+                  <div key={row.label} style={{ padding: '0.875rem 1.5rem', borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem' }}>
+                      <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text)' }}>{row.label}</span>
+                      <span style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.125rem', color: row.color }}>{row.count}</span>
+                    </div>
+                    <div style={{ height: '2px', background: 'rgba(255,255,255,0.05)', borderRadius: '1px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${Math.round(row.count / total * 100)}%`, background: row.color, borderRadius: '1px', opacity: 0.5, transition: 'width 0.6s ease' }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.08em', color: 'var(--text-low)', textAlign: 'center' }}>
+                Revenue figures are estimates only · Data reflects all bookings in your records
+              </p>
+            </div>
+          );
+        })()}
+
       </main>
     </div>
   );

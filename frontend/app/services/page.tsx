@@ -1,11 +1,16 @@
 import Link from 'next/link';
 import AnimatedSection from '../components/AnimatedSection';
 
+export const metadata = {
+  title: 'Services & Pricing | Hall of Mirrors Tattoo Studio Liverpool',
+  description: 'Custom tattoos, cover-ups, and free consultations at Hall of Mirrors Tattoo Studio, Castle Street Liverpool. Neo-traditional specialists. Transparent pricing guide — starting from £150.',
+};
+
 const services = [
   {
     n: '01',
-    title: 'Bespoke Tattoo',
-    desc: 'Custom designs drawn entirely from scratch. Developed through consultation, sketch review, and refinement before a single mark is made. Every piece is created for one person.',
+    title: 'Bespoke Custom Tattoo',
+    desc: 'The foundation of what we do. Every custom tattoo at Hall of Mirrors is drawn from scratch — no flash, no clip art, no compromises. We work through your idea together, from rough concept to polished design, before anything touches your skin. Neo-traditional our speciality, though we work across styles.',
     price: '£150+',
     link: '/booking',
     cta: 'Book now',
@@ -13,18 +18,26 @@ const services = [
   {
     n: '02',
     title: 'Free Consultation',
-    desc: 'A relaxed conversation about your idea, placement, sizing, and the design process. No fee, no pressure. Most clients start here before committing to a session.',
+    desc: "Not sure where to start? Book a free consultation at our Castle Street studio. We'll talk through your idea, suitable placement, approximate sizing, and what the design process involves. Most of our clients start here — there's no obligation and no pressure.",
     price: 'Free',
-    link: '/consultation',
+    link: '/booking',
     cta: 'Book consultation',
   },
   {
     n: '03',
     title: 'Cover-Up & Rework',
-    desc: "Skilled transformation of existing work — full cover or a rework to sharpen and refresh a faded piece. Every case is assessed individually. Consultation required first.",
+    desc: "Specialist cover-up tattoos for existing work you want transformed — whether it's a name, an old design that's lost its meaning, or simply a tattoo that was never quite right. Cover-up work requires a consultation first so we can assess the existing ink and recommend the best approach.",
     price: 'Custom quote',
-    link: '/consultation',
+    link: '/booking',
     cta: 'Book consultation',
+  },
+  {
+    n: '04',
+    title: 'Touch-Ups & Aftercare',
+    desc: "We stand behind our work. If a healed tattoo needs a touch-up — colour refresh, line sharpening — get in touch. Touch-ups on Hall of Mirrors work are handled case-by-case. We also provide detailed aftercare guidance with every appointment.",
+    price: 'Case-by-case',
+    link: '/booking',
+    cta: 'Get in touch',
   },
 ];
 
@@ -54,11 +67,13 @@ export default function Services() {
               lineHeight: 1.0,
               marginBottom: '1.5rem',
             }}>
-              What we offer
+              Custom tattoos, cover-ups &amp; consultations
             </h1>
-            <p style={{ maxWidth: '46ch' }}>
-              Every piece begins with a conversation. Prices below are starting points —
-              final quotes depend on design complexity, size, and placement.
+            <p style={{ maxWidth: '52ch' }}>
+              Hall of Mirrors is a private tattoo studio on Castle Street, Liverpool,
+              specialising in bespoke neo-traditional tattooing, full-colour work, and
+              skilled cover-ups. Every service is appointment-only — we don&apos;t do
+              walk-ins, and we don&apos;t do off-the-shelf designs.
             </p>
           </AnimatedSection>
         </div>
@@ -127,6 +142,44 @@ export default function Services() {
             ))}
           </div>
 
+          {/* ── THE STUDIO EXPERIENCE ─────────────────────────────────────── */}
+          <AnimatedSection delay={200} className="mt-20 md:mt-28">
+            <p className="eyebrow" style={{ marginBottom: '2rem' }}>The Studio Experience</p>
+            <div className="grid grid-cols-1 md:grid-cols-3" style={{ borderTop: '1px solid var(--border)' }}>
+              {([
+                { roman: 'I',   label: 'Appointment Only',  body: "We don't take walk-ins. Every session is booked in advance, giving your artist time to prepare your design and you a dedicated slot with no pressure." },
+                { roman: 'II',  label: 'Private Studio',    body: 'Hall of Mirrors is a quiet, private space at Suite 3, 34 Castle Street, Liverpool. One client at a time.' },
+                { roman: 'III', label: 'Fully Licensed',    body: 'Licensed by Liverpool City Council (Ref: A11394900). Autoclave sterilisation. Hepatitis B vaccinated. Your safety is non-negotiable.' },
+              ] as const).map((item, i) => (
+                <div
+                  key={item.roman}
+                  className={`py-10 px-8 relative overflow-hidden${i < 2 ? ' md:border-r' : ''}`}
+                  style={{ borderColor: 'var(--border)', borderBottom: '1px solid var(--border)' }}
+                >
+                  <span
+                    className="absolute top-0 right-4 pointer-events-none select-none"
+                    style={{
+                      fontFamily: '"Cormorant Garamond", serif',
+                      fontStyle: 'italic',
+                      fontSize: '7rem',
+                      fontWeight: 300,
+                      color: 'var(--gold)',
+                      opacity: 0.045,
+                      lineHeight: 1,
+                    }}
+                    aria-hidden="true"
+                  >
+                    {item.roman}
+                  </span>
+                  <p className="eyebrow" style={{ marginBottom: '0.75rem' }}>{item.label}</p>
+                  <p style={{ fontSize: '0.9rem', lineHeight: 1.75, maxWidth: '34ch' }}>
+                    {item.body}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </AnimatedSection>
+
           {/* Pricing breakdown */}
           <AnimatedSection delay={300} className="mt-20 md:mt-28">
             <p className="eyebrow" style={{ marginBottom: '2rem' }}>Pricing Guide</p>
@@ -191,20 +244,22 @@ export default function Services() {
             }}>
               <p className="eyebrow" style={{ marginBottom: '0.5rem' }}>Deposits</p>
               <p style={{ fontSize: '0.9rem', maxWidth: '62ch' }}>
-                A deposit secures your booking and is deducted from the final session price.
-                Deposits are non-refundable for cancellations within 48 hours of your appointment.
+                A non-refundable deposit is required to secure your booking. This is deducted
+                from the final session price on the day. Cancellations within 48 hours forfeit
+                the deposit. We appreciate you respecting our time — we&apos;re a small studio
+                and last-minute cancellations have a real impact.
               </p>
             </div>
           </AnimatedSection>
 
           {/* CTAs */}
           <AnimatedSection delay={500} className="mt-16 flex gap-3 flex-col sm:flex-row">
-            <Link href="/consultation" className="btn-primary">
-              <span>Free Consultation</span>
+            <Link href="/booking" className="btn-primary">
+              <span>Book Appointment</span>
               <span className="btn-icon" aria-hidden="true">↗</span>
             </Link>
-            <Link href="/booking" className="btn-secondary">
-              Book Directly
+            <Link href="/portfolio" className="btn-secondary">
+              View Our Artists
             </Link>
           </AnimatedSection>
         </div>

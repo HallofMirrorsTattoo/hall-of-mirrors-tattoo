@@ -3,6 +3,11 @@ import Image from 'next/image';
 import ShopCarousel from './components/ShopCarousel';
 import AnimatedSection from './components/AnimatedSection';
 
+export const metadata = {
+  title: 'Hall of Mirrors Tattoo Studio | Liverpool City Centre',
+  description: 'Hall of Mirrors is a private tattoo studio on Castle Street, Liverpool. Specialising in neo-traditional tattoos, custom bespoke designs, colour realism, and cover-up work. Book online.',
+};
+
 const cornerStyles: Record<string, string> = {
   'top-6 left-6':     '1px 0 0 1px',
   'top-6 right-6':    '1px 1px 0 0',
@@ -275,13 +280,13 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ── THE ARTIST ─────────────────────────────────────────────────────── */}
+        {/* ── THE STUDIO ─────────────────────────────────────────────────────── */}
         <section className="px-6 py-28 md:py-40">
           <div className="max-w-6xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24 items-center">
 
               <AnimatedSection>
-                <p className="eyebrow">The Artist</p>
+                <p className="eyebrow">The Studio</p>
                 <h2 style={{
                   fontFamily: '"Cormorant Garamond", serif',
                   fontWeight: 300,
@@ -292,25 +297,25 @@ export default function Home() {
                   letterSpacing: '-0.025em',
                   marginBottom: '1.5rem',
                 }}>
-                  Robyn creates work<br />that lasts lifetimes
+                  Liverpool&apos;s home for<br />custom tattooing
                 </h2>
                 <p style={{ marginBottom: '1.25rem' }}>
-                  Based in the heart of Liverpool&apos;s Castle Street, Hall of Mirrors is a
-                  private studio specialising in neo-traditional tattooing — bold lines,
-                  rich colour palettes, and timeless imagery drawn from art history,
-                  natural forms, and personal narrative.
+                  Hall of Mirrors is an independent tattoo studio on Castle Street, Liverpool
+                  city centre — a quiet, private space dedicated to bespoke tattoo design. We
+                  specialise in neo-traditional tattooing, colour realism, and cover-up work,
+                  creating pieces that are built to last and designed to mean something.
                 </p>
                 <p>
-                  Every piece begins with a conversation. Robyn works closely with each
-                  client to understand their vision before a single line is drawn, ensuring
-                  the result is something truly personal and enduring.
+                  Our artists work one-to-one with every client, taking on a limited number of
+                  bookings to ensure each piece gets the attention it deserves. Every tattoo
+                  begins with a conversation.
                 </p>
 
                 <div className="flex gap-10 mt-10">
                   {([
-                    { num: '8+',    label: 'Years Experience' },
-                    { num: '100%',  label: 'Custom Designs' },
-                    { num: '1:1',   label: 'Consultation' },
+                    { num: '2',    label: 'Resident Artists' },
+                    { num: '10+',  label: 'Combined Years' },
+                    { num: '1:1',  label: 'Every Session' },
                   ] as const).map((s) => (
                     <div key={s.label}>
                       <p style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1.75rem', fontWeight: 400, color: 'var(--gold)', lineHeight: 1, marginBottom: '0.25rem' }}>
@@ -324,12 +329,12 @@ export default function Home() {
                 </div>
 
                 <div className="mt-10">
-                  <Link href="/about" className="btn-secondary">About the Studio</Link>
+                  <Link href="/portfolio" className="btn-secondary">Meet Our Artists</Link>
                 </div>
               </AnimatedSection>
 
               <AnimatedSection delay={200}>
-                {/* Artist/studio image — replace with real photo */}
+                {/* Studio image — replace with real photo */}
                 <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: '4/5', background: 'linear-gradient(160deg, #1D1A15 0%, #0E0C09 100%)' }}>
                   {/* Mirror frame ornament */}
                   <div className="absolute rounded-xl" style={{ inset: '1.5rem', border: '1px solid rgba(201,168,76,0.15)' }} aria-hidden="true" />
@@ -355,7 +360,7 @@ export default function Home() {
                       aria-hidden="true"
                     />
                     <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '0.875rem', color: 'rgba(201,168,76,0.3)', marginTop: '1rem', letterSpacing: '0.05em' }}>
-                      Artist photo coming soon
+                      Studio photography coming soon
                     </p>
                   </div>
                 </div>
@@ -495,7 +500,8 @@ export default function Home() {
                 Ready to begin?
               </h2>
               <p style={{ margin: '0 auto 3rem', maxWidth: '38ch', textAlign: 'center' }}>
-                Limited availability ensures every client receives Robyn&apos;s full attention.
+                Our artists take on a limited number of clients each month — so every tattoo
+                receives the time, care, and skill it deserves.
                 Book a session or request a consultation — all in one place.
               </p>
               <div className="flex justify-center">
