@@ -2,14 +2,16 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useClientAuth } from '@/lib/clientAuthContext';
 
-export default function ClientSignupPage() {
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { signup, isLoading } = useClientAuth();
   const [formData, setFormData] = useState({
-    email: '',
+    email: searchParams.get('email') || '',
     password: '',
     confirmPassword: '',
     first_name: '',
@@ -196,5 +198,13 @@ export default function ClientSignupPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ClientSignupPage() {
+  return (
+    <Suspense>
+      <SignupForm />
+    </Suspense>
   );
 }

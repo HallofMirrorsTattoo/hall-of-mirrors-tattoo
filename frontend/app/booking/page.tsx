@@ -46,7 +46,7 @@ const divider: React.CSSProperties = {
 };
 
 export default function BookingPage() {
-  const { user, accessToken } = useClientAuth();
+  const { user, accessToken, activate } = useClientAuth();
   const [formMode, setFormMode] = useState<'booking' | 'consultation'>('booking');
   const [isSubmitting, setIsSubmitting]   = useState(false);
   const [submitStatus, setSubmitStatus]   = useState<'idle' | 'success' | 'error'>('idle');
@@ -59,6 +59,16 @@ export default function BookingPage() {
   const [confirmedDate, setConfirmedDate]         = useState<string | null>(null);
   const [confirmedSlot, setConfirmedSlot]         = useState<string | null>(null);
   const [confirmedArtist, setConfirmedArtist]     = useState('');
+
+  // Captured form data for post-booking account activation
+  const [capturedEmail, setCapturedEmail]           = useState('');
+  // firstName/lastName/phone captured for future use (e.g. pre-filling profile)
+  const [, setCapturedFirstName] = useState('');
+  const [, setCapturedLastName]  = useState('');
+  const [, setCapturedPhone]     = useState('');
+  const [activationPw, setActivationPw]             = useState('');
+  const [activationState, setActivationState]       = useState<'idle' | 'submitting' | 'done' | 'dismissed'>('idle');
+  const [activationError, setActivationError]       = useState('');
 
   // Availability state
   const [selectedArtistId, setSelectedArtistId]   = useState('');
@@ -179,6 +189,16 @@ export default function BookingPage() {
         setConfirmedDate(selectedDate);
         setConfirmedSlot(selectedSlot);
         setConfirmedArtist(artists.find((a) => a.id === data.artistId)?.full_name ?? '');
+
+        // Capture form data before reset() clears it
+        setCapturedEmail(data.clientEmail);
+        const [fn, ...ln] = data.clientName.split(' ');
+        setCapturedFirstName(fn || '');
+        setCapturedLastName(ln.join(' ') || 'Guest');
+        setCapturedPhone(data.clientPhone || '');
+        setActivationPw('');
+        setActivationState('idle');
+        setActivationError('');
       }
       setSubmitStatus('success');
       reset();
@@ -294,6 +314,98 @@ export default function BookingPage() {
                     Book another session
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Account activation panel — shown after guest booking if not logged in */}
+      {submitStatus === 'success' && !user && formMode === 'booking' && activationState !== 'done' && activationState !== 'dismissed' && (
+        <section style={{ padding: '0 1.5rem 5rem' }}>
+          <div style={{ maxWidth: '40rem', margin: '0 auto' }}>
+            <div style={{ background: 'var(--surface)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '0.75rem', padding: '2rem 2rem 1.75rem' }}>
+              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', margin: '0 0 0.75rem' }}>
+                Optional — but recommended
+              </p>
+              <h3 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1.75rem', color: 'var(--cream)', lineHeight: 1.1, margin: '0 0 0.75rem' }}>
+                Message your artist directly
+              </h3>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-mid)', lineHeight: 1.7, margin: '0 0 1.5rem', maxWidth: '44ch' }}>
+                Create your client account to track this booking, message your artist, and sign your consent form online. Takes 10 seconds.
+              </p>
+
+              {activationError && (
+                <div style={{ padding: '0.75rem 1rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '0.5rem', marginBottom: '1rem' }}>
+                  <p style={{ margin: 0, fontSize: '0.8125rem', color: '#f87171' }}>{activationError}</p>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                <input
+                  type="password"
+                  placeholder="Choose a password (min 8 chars)"
+                  value={activationPw}
+                  onChange={(e) => setActivationPw(e.target.value)}
+                  minLength={8}
+                  style={{ flex: 1, minWidth: '200px', padding: '0.75rem 1rem', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--cream)', fontSize: '0.9375rem', outline: 'none' }}
+                />
+                <button
+                  type="button"
+                  disabled={activationState === 'submitting' || activationPw.length < 8}
+                  onClick={async () => {
+                    if (activationPw.length < 8) return;
+                    setActivationState('submitting');
+                    setActivationError('');
+                    try {
+                      await activate(capturedEmail, activationPw);
+                      setActivationState('done');
+                    } catch (err) {
+                      setActivationError(err instanceof Error ? err.message : 'Failed to create account');
+                      setActivationState('idle');
+                    }
+                  }}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    background: activationPw.length >= 8 ? 'var(--gold)' : 'var(--surface)',
+                    color: activationPw.length >= 8 ? 'var(--bg)' : 'var(--text-low)',
+                    border: activationPw.length >= 8 ? 'none' : '1px solid var(--border)',
+                    borderRadius: '0.5rem',
+                    fontFamily: '"DM Mono", monospace',
+                    fontSize: '0.72rem',
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    cursor: activationPw.length >= 8 ? 'pointer' : 'default',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.25s ease',
+                    flexShrink: 0,
+                  }}
+                >
+                  {activationState === 'submitting' ? 'Creating…' : 'Create Account →'}
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setActivationState('dismissed')}
+                style={{ marginTop: '1rem', background: 'none', border: 'none', padding: 0, fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-low)', cursor: 'pointer', display: 'block' }}
+              >
+                I'll do this later
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Success message when activation done */}
+      {submitStatus === 'success' && activationState === 'done' && (
+        <section style={{ padding: '0 1.5rem 5rem' }}>
+          <div style={{ maxWidth: '40rem', margin: '0 auto' }}>
+            <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: '0.75rem', padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <span style={{ color: 'var(--gold)', fontSize: '1.25rem' }}>✓</span>
+              <div>
+                <p style={{ margin: 0, fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--gold)' }}>Account created</p>
+                <p style={{ margin: '0.25rem 0 0', fontSize: '0.8125rem', color: 'var(--text-mid)' }}>You're now logged in. Head to your dashboard to track this booking.</p>
               </div>
             </div>
           </div>

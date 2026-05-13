@@ -80,7 +80,7 @@ function Field({
 
 export default function ClientProfilePage() {
   const router = useRouter();
-  const { accessToken, isLoading: authLoading } = useClientAuth();
+  const { accessToken, isLoading: authLoading, logout } = useClientAuth();
   const [form, setForm] = useState<ProfileData>({
     first_name: '',
     last_name: '',
@@ -96,6 +96,9 @@ export default function ClientProfilePage() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   useEffect(() => {
     if (!authLoading && !accessToken) {
@@ -135,6 +138,26 @@ export default function ClientProfilePage() {
 
   const handleChange = (name: keyof ProfileData, value: string) => {
     setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/client/me`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete account');
+      }
+      logout();
+      router.push('/');
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete account');
+      setDeleting(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -252,7 +275,74 @@ export default function ClientProfilePage() {
             {saving ? 'Saving...' : 'Save changes'}
           </button>
         </form>
+
+        {/* Danger zone */}
+        <div style={{ marginTop: '4rem', paddingTop: '2rem', borderTop: '1px solid rgba(239,68,68,0.15)' }}>
+          <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(248,113,113,0.5)', marginBottom: '1.5rem' }}>
+            Danger zone
+          </p>
+          <div style={{ padding: '1.5rem', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '0.5rem' }}>
+            <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', marginBottom: '0.5rem', fontWeight: 500 }}>
+              Delete account
+            </p>
+            <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-low)', lineHeight: 1.65, marginBottom: '1.25rem' }}>
+              This permanently removes your personal details from our records. Your booking history is retained for studio administration — we are legally required to keep this.
+            </p>
+            <button
+              type="button"
+              onClick={() => setDeleteOpen(true)}
+              style={{ padding: '0.625rem 1.5rem', background: 'transparent', border: '1px solid rgba(239,68,68,0.4)', borderRadius: '0.375rem', color: '#f87171', fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', transition: 'border-color 0.2s, color 0.2s' }}
+              onMouseEnter={(e) => { (e.target as HTMLButtonElement).style.borderColor = 'rgba(239,68,68,0.7)'; (e.target as HTMLButtonElement).style.color = '#fca5a5'; }}
+              onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.borderColor = 'rgba(239,68,68,0.4)'; (e.target as HTMLButtonElement).style.color = '#f87171'; }}
+            >
+              Delete my account
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* Delete confirmation modal */}
+      {deleteOpen && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', background: 'rgba(14,12,9,0.85)', backdropFilter: 'blur(4px)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setDeleteOpen(false); }}
+        >
+          <div style={{ width: '100%', maxWidth: '24rem', background: 'var(--surface)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '0.75rem', padding: '2rem' }}>
+            <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#f87171', marginBottom: '1rem' }}>
+              Confirm deletion
+            </p>
+            <p style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1.5rem', fontStyle: 'italic', fontWeight: 300, color: 'var(--cream)', marginBottom: '1rem', lineHeight: 1.2 }}>
+              Are you sure?
+            </p>
+            <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-low)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+              Your personal details will be permanently removed. This cannot be undone. Your booking records will remain for studio accounting purposes.
+            </p>
+
+            {deleteError && (
+              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginBottom: '1rem' }}>{deleteError}</p>
+            )}
+
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                type="button"
+                onClick={() => { setDeleteOpen(false); setDeleteError(''); }}
+                disabled={deleting}
+                style={{ flex: 1, padding: '0.75rem', background: 'transparent', border: '1px solid var(--border)', borderRadius: '0.375rem', color: 'var(--text-mid)', fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                style={{ flex: 1, padding: '0.75rem', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: '0.375rem', color: '#fca5a5', fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: deleting ? 'default' : 'pointer', opacity: deleting ? 0.6 : 1 }}
+              >
+                {deleting ? 'Deleting...' : 'Yes, delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

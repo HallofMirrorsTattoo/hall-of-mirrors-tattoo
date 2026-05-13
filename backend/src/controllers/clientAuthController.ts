@@ -29,14 +29,31 @@ export async function clientSignup(req: Request, res: Response) {
 
     // Check if user already exists
     const existingUser = await client.query(
-      `SELECT id FROM "User" WHERE email = $1`,
+      `SELECT id, password_hash FROM "User" WHERE email = $1`,
       [email]
     );
 
     if (existingUser.rows.length > 0) {
-      return res.status(409).json({
-        success: false,
-        error: 'Email already registered',
+      const existing = existingUser.rows[0];
+      if (existing.password_hash !== '') {
+        return res.status(409).json({ success: false, error: 'Email already registered' });
+      }
+      // Stub user from a prior guest booking — activate it in place
+      const stubHash = await bcrypt.hash(password, 10);
+      await client.query(
+        `UPDATE "User" SET password_hash = $1, first_name = $2, last_name = $3,
+         phone = COALESCE($4, phone), account_status = 'active', updated_at = NOW()
+         WHERE id = $5`,
+        [stubHash, first_name, last_name, phone || null, existing.id]
+      );
+      const stubAccess = jwt.sign({ id: existing.id, email, first_name, last_name }, JWT_SECRET, { expiresIn: '7d' });
+      const stubRefresh = jwt.sign({ id: existing.id }, JWT_REFRESH_SECRET, { expiresIn: '30d' });
+      sendWelcomeEmail({ clientEmail: email, clientFirstName: first_name })
+        .catch((e) => console.error('[email] welcome email failed:', e));
+      return res.status(201).json({
+        success: true, message: 'Account activated',
+        accessToken: stubAccess, refreshToken: stubRefresh,
+        user: { id: existing.id, email, first_name, last_name, phone: phone || null },
       });
     }
 
@@ -120,7 +137,7 @@ export async function clientLogin(req: Request, res: Response) {
 
     // Find user by email
     const result = await client.query(
-      `SELECT id, email, first_name, last_name, phone, password_hash FROM "User" WHERE email = $1`,
+      `SELECT id, email, first_name, last_name, phone, password_hash, account_status FROM "User" WHERE email = $1`,
       [email]
     );
 
@@ -132,6 +149,10 @@ export async function clientLogin(req: Request, res: Response) {
     }
 
     const user = result.rows[0];
+
+    if (user.account_status === 'deleted') {
+      return res.status(401).json({ success: false, error: 'This account has been deleted.' });
+    }
 
     // Check if password matches
     const passwordMatch = await bcrypt.compare(password, user.password_hash);
@@ -274,14 +295,14 @@ export async function clientActivate(req: Request, res: Response) {
 
     // Find user by email
     const userResult = await client.query(
-      `SELECT id, email, first_name, last_name, phone FROM "User" WHERE email = $1`,
+      `SELECT id, email, first_name, last_name, phone FROM "User" WHERE email = $1 AND password_hash = ''`,
       [email]
     );
 
     if (userResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        error: 'User not found',
+        error: 'No pending account found for this email. If you already have an account, please log in.',
       });
     }
 
@@ -451,6 +472,42 @@ export async function updateClientProfile(req: Request, res: Response) {
   } catch (error) {
     console.error('Update profile error:', error);
     res.status(500).json({ success: false, error: 'Failed to update profile' });
+  } finally {
+    await client.end();
+  }
+}
+
+export async function deleteClientAccount(req: Request, res: Response) {
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: 'Not authenticated' });
+    }
+    await client.connect();
+    await client.query(
+      `UPDATE "User" SET
+        email = 'deleted_' || id || '@deleted.invalid',
+        first_name = 'Deleted',
+        last_name = 'Account',
+        password_hash = '',
+        phone = NULL,
+        date_of_birth = NULL,
+        address = NULL,
+        city = NULL,
+        postcode = NULL,
+        emergency_contact_name = NULL,
+        emergency_contact_phone = NULL,
+        password_reset_token = NULL,
+        password_reset_expires = NULL,
+        account_status = 'deleted',
+        updated_at = NOW()
+      WHERE id = $1`,
+      [req.user.id]
+    );
+    res.json({ success: true, message: 'Account deleted' });
+  } catch (error) {
+    console.error('Delete account error:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete account' });
   } finally {
     await client.end();
   }

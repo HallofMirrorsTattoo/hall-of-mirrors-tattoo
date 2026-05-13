@@ -178,6 +178,14 @@ export async function sendBookingConfirmationToClient(data: {
     ${calSection}
     ${body(`Your artist will review your request and confirm the session. You&apos;ll receive a separate email once your appointment is locked in.`)}
     ${ctaButton(`${FRONTEND_URL}/client/dashboard`, 'View Your Dashboard')}
+    <div style="margin-top:28px;padding:20px 24px;border:1px solid rgba(201,168,76,0.18);border-radius:4px;background:rgba(201,168,76,0.04);">
+      <p style="margin:0 0 6px;font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(201,168,76,0.5);">Message your artist</p>
+      <p style="margin:0 0 14px;font-size:13px;line-height:1.65;color:#9A9082;">Create a free client account to track your booking, message your artist directly, and manage your consent form — all in one place.</p>
+      <a href="${FRONTEND_URL}/client/signup?email=${encodeURIComponent(data.clientEmail)}"
+         style="display:inline-block;padding:10px 24px;background:none;border:1px solid rgba(201,168,76,0.35);color:#C9A84C;font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;border-radius:2px;">
+        Set up your account →
+      </a>
+    </div>
   `;
 
   await send({
