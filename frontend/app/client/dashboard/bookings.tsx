@@ -20,6 +20,7 @@ export default function BookingsTab() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showPast, setShowPast] = useState(false);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -68,7 +69,6 @@ export default function BookingsTab() {
   const activeStatuses = ['pending_consent', 'confirmed', 'rescheduled'];
   const activeBookings = bookings.filter(b => activeStatuses.includes(b.appointment_status));
   const pastBookings   = bookings.filter(b => !activeStatuses.includes(b.appointment_status));
-  const [showPast, setShowPast] = useState(false);
 
   const BookingCard = ({ booking }: { booking: Booking }) => (
     <Link
