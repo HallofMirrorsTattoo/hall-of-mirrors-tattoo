@@ -159,6 +159,9 @@ export default function ArtistDashboard() {
   const [consultationError, setConsultationError] = useState('');
 
   const [isLoading, setIsLoading] = useState(true);
+  const [showPastBookings, setShowPastBookings] = useState(false);
+  const [showDeclinedConsults, setShowDeclinedConsults] = useState(false);
+  const [showCompletedChats, setShowCompletedChats] = useState(false);
 
   // Consultation chat state
   interface ConsultMsg { id: string; consultation_id: string; sender_type: 'client' | 'artist'; body: string; created_at: string; }
@@ -546,7 +549,44 @@ export default function ArtistDashboard() {
     }
   };
 
+  const activeStatuses = ['pending_consent', 'confirmed', 'rescheduled'];
   const filteredBookings = bookings.filter((b) => statusFilter === 'all' || b.appointment_status === statusFilter);
+  const pastBookingsAll = bookings.filter((b) => !activeStatuses.includes(b.appointment_status));
+
+  const renderBookingRow = (booking: Booking) => {
+    const isCancelled = booking.appointment_status === 'cancelled';
+    const isSelected = selectedBooking?.id === booking.id;
+    return (
+      <button
+        key={booking.id}
+        type="button"
+        onClick={() => setSelectedBooking(isSelected ? null : booking)}
+        style={{
+          display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center',
+          gap: '1rem', width: '100%', padding: '1.25rem 1.5rem',
+          background: isSelected ? 'rgba(201,168,76,0.06)' : 'var(--surface)',
+          border: `1px solid ${isSelected ? 'rgba(201,168,76,0.3)' : 'var(--border)'}`,
+          borderRadius: '0.75rem', cursor: 'pointer', textAlign: 'left',
+          transition: 'all 0.3s ease', opacity: isCancelled ? 0.5 : 1,
+        }}
+      >
+        <div>
+          <p style={{ margin: '0 0 0.25rem', fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.1rem', fontWeight: 300, color: isCancelled ? 'var(--text-mid)' : 'var(--cream)', textDecoration: isCancelled ? 'line-through' : 'none' }}>
+            {booking.first_name} {booking.last_name}
+          </p>
+          <p style={{ margin: '0 0 0.375rem', fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.1em', color: 'var(--text-low)' }}>
+            {booking.booking_reference}
+          </p>
+          <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--text-mid)' }}>
+            {new Date(booking.appointment_date_time).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+            {' · '}{booking.placement}
+          </p>
+        </div>
+        <StatusBadge status={booking.appointment_status} />
+      </button>
+    );
+  };
+
   const pendingConsultations = consultations.filter((c) => c.status === 'pending').length;
 
   // ── Calendar derived data ───────────────────────────────────────────────────
@@ -889,6 +929,17 @@ export default function ArtistDashboard() {
 
       <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '2.5rem 1.5rem' }}>
 
+        {/* Welcome greeting */}
+        <div style={{ marginBottom: '2.5rem' }}>
+          <p className="eyebrow" style={{ marginBottom: '0.5rem' }}>Artist Studio</p>
+          <h1 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: 'clamp(2rem, 5vw, 3.5rem)', color: 'var(--cream)', letterSpacing: '-0.02em', lineHeight: 1.1, margin: '0 0 0.5rem' }}>
+            Welcome back{artist?.full_name ? `, ${artist.full_name.split(' ')[0]}` : ''}
+          </h1>
+          <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.6, margin: 0 }}>
+            Manage your bookings, availability, and client conversations
+          </p>
+        </div>
+
         {/* ── Upcoming appointment hub ───────────────────────────────────────── */}
         {(() => {
           const now = new Date();
@@ -1047,50 +1098,41 @@ export default function ArtistDashboard() {
 
               {isLoading ? (
                 <p style={{ ...labelStyle, opacity: 0.4, padding: '2rem 0' }}>Loading...</p>
-              ) : filteredBookings.length === 0 ? (
+              ) : filteredBookings.length === 0 && pastBookingsAll.length === 0 ? (
                 <p style={{ color: 'var(--text-low)', fontSize: '0.9rem', padding: '2rem 0' }}>No bookings found.</p>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {filteredBookings.map((booking) => {
-                    const isCancelled = booking.appointment_status === 'cancelled';
-                    const isSelected = selectedBooking?.id === booking.id;
-                    return (
+                <>
+                  {statusFilter === 'all' && filteredBookings.filter(b => activeStatuses.includes(b.appointment_status)).length === 0 && (
+                    <p style={{ color: 'var(--text-low)', fontSize: '0.875rem', marginBottom: '1rem' }}>No upcoming bookings.</p>
+                  )}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {(statusFilter === 'all'
+                      ? filteredBookings.filter(b => activeStatuses.includes(b.appointment_status))
+                      : filteredBookings
+                    ).map(renderBookingRow)}
+                  </div>
+                  {statusFilter === 'all' && pastBookingsAll.length > 0 && (
+                    <div>
                       <button
-                        key={booking.id}
-                        onClick={() => setSelectedBooking(isSelected ? null : booking)}
-                        style={{
-                          display: 'grid',
-                          gridTemplateColumns: '1fr auto',
-                          alignItems: 'center',
-                          gap: '1rem',
-                          width: '100%',
-                          padding: '1.25rem 1.5rem',
-                          background: isSelected ? 'rgba(201,168,76,0.06)' : 'var(--surface)',
-                          border: `1px solid ${isSelected ? 'rgba(201,168,76,0.3)' : 'var(--border)'}`,
-                          borderRadius: '0.75rem',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                          transition: 'all 0.3s ease',
-                          opacity: isCancelled ? 0.5 : 1,
-                        }}
+                        type="button"
+                        onClick={() => setShowPastBookings(p => !p)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', padding: '0.75rem 0', cursor: 'pointer', borderTop: '1px solid var(--border)', width: '100%', textAlign: 'left', marginTop: '0.5rem' }}
                       >
-                        <div>
-                          <p style={{ margin: '0 0 0.25rem', fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.1rem', fontWeight: 300, color: isCancelled ? 'var(--text-mid)' : 'var(--cream)', textDecoration: isCancelled ? 'line-through' : 'none' }}>
-                            {booking.first_name} {booking.last_name}
-                          </p>
-                          <p style={{ margin: '0 0 0.375rem', fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.1em', color: 'var(--text-low)' }}>
-                            {booking.booking_reference}
-                          </p>
-                          <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--text-mid)' }}>
-                            {new Date(booking.appointment_date_time).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
-                            {' · '}{booking.placement}
-                          </p>
-                        </div>
-                        <StatusBadge status={booking.appointment_status} />
+                        <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+                          Past Bookings ({pastBookingsAll.length})
+                        </span>
+                        <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', color: 'var(--text-low)', marginLeft: 'auto' }}>
+                          {showPastBookings ? '↑ Hide' : '↓ Show'}
+                        </span>
                       </button>
-                    );
-                  })}
-                </div>
+                      {showPastBookings && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', opacity: 0.7 }}>
+                          {pastBookingsAll.map(renderBookingRow)}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
@@ -1267,10 +1309,10 @@ export default function ArtistDashboard() {
               </div>
             )}
 
-            {consultations.length === 0 ? (
+            {consultations.filter(c => c.status !== 'declined').length === 0 && consultations.filter(c => c.status === 'declined').length === 0 ? (
               <p style={{ color: 'var(--text-low)', fontSize: '0.9rem', padding: '2rem 0' }}>No consultation requests yet.</p>
             ) : (
-              consultations.map((c) => {
+              consultations.filter(c => c.status !== 'declined').map((c) => {
                 const actionKey = consultActionId?.startsWith(c.consultation_id) ? consultActionId : null;
                 const isChatOpen = openConsultChatId === c.consultation_id;
                 return (
@@ -1457,15 +1499,65 @@ export default function ArtistDashboard() {
                 );
               })
             )}
+            {/* Declined consultations — collapsed */}
+            {consultations.filter(c => c.status === 'declined').length > 0 && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowDeclinedConsults(p => !p)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', padding: '0.75rem 0', cursor: 'pointer', borderTop: '1px solid var(--border)', width: '100%', textAlign: 'left' }}
+                >
+                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+                    Declined ({consultations.filter(c => c.status === 'declined').length})
+                  </span>
+                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', color: 'var(--text-low)', marginLeft: 'auto' }}>
+                    {showDeclinedConsults ? '↑ Hide' : '↓ Show'}
+                  </span>
+                </button>
+                {showDeclinedConsults && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', opacity: 0.7 }}>
+                    {consultations.filter(c => c.status === 'declined').map((c) => {
+                      return (
+                        <div
+                          key={c.consultation_id}
+                          style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', overflow: 'hidden' }}
+                        >
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'start', gap: '1rem', padding: '1.25rem 1.5rem' }}>
+                            <div>
+                              <p style={{ margin: '0 0 0.25rem', fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.1rem', fontWeight: 300, color: 'var(--text-mid)' }}>
+                                {c.first_name} {c.last_name}
+                              </p>
+                              <p style={{ margin: '0 0 0.375rem', fontSize: '0.8125rem', color: 'var(--text-mid)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '560px' }}>
+                                {c.message}
+                              </p>
+                              <p style={{ margin: 0, fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.1em', color: 'var(--text-low)' }}>
+                                {new Date(c.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </p>
+                            </div>
+                            <StatusBadge status={c.status} />
+                          </div>
+                          {c.artist_response && (
+                            <div style={{ padding: '0.875rem 1.5rem', borderTop: '1px solid var(--border)', background: 'rgba(239,68,68,0.04)' }}>
+                              <span style={{ ...labelStyle, fontSize: '0.65rem', opacity: 0.75 }}>Your response</span>
+                              <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--text-mid)', lineHeight: 1.6 }}>{c.artist_response}</p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
         {/* ── Confirmed booking conversations (within Consultations tab) ───── */}
+        {/* ── Confirmed booking conversations (within Consultations tab) ───── */}
         {tab === 'consultations' && (() => {
-          const confirmedBookings = bookings.filter(
-            (b) => b.appointment_status === 'confirmed' || b.appointment_status === 'completed'
-          );
-          if (confirmedBookings.length === 0) return null;
+          const confirmedBookings = bookings.filter(b => b.appointment_status === 'confirmed');
+          const completedBookings = bookings.filter(b => b.appointment_status === 'completed');
+          if (confirmedBookings.length === 0 && completedBookings.length === 0) return null;
           return (
             <div style={{ marginTop: '1.5rem' }}>
               <span style={{ ...labelStyle, display: 'block', marginBottom: '0.875rem' }}>Booking conversations</span>
@@ -1559,6 +1651,114 @@ export default function ArtistDashboard() {
                   );
                 })}
               </div>
+              {completedBookings.length > 0 && (
+                <div style={{ marginTop: '0.5rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowCompletedChats(p => !p)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', padding: '0.75rem 0', cursor: 'pointer', borderTop: '1px solid var(--border)', width: '100%', textAlign: 'left' }}
+                  >
+                    <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+                      Past Sessions ({completedBookings.length})
+                    </span>
+                    <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', color: 'var(--text-low)', marginLeft: 'auto' }}>
+                      {showCompletedChats ? '↑ Hide' : '↓ Show'}
+                    </span>
+                  </button>
+                  {showCompletedChats && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', opacity: 0.7 }}>
+                      {completedBookings.map((b) => {
+                        const isOpen = openBookingChatId === b.id;
+                        const dateStr = new Date(b.appointment_date_time).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+                        return (
+                          <div key={b.id} style={{ background: 'var(--surface)', border: `1px solid ${isOpen ? 'rgba(201,168,76,0.3)' : 'var(--border)'}`, borderRadius: '0.75rem', overflow: 'hidden', transition: 'border-color 0.2s ease' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center', gap: '1rem', padding: '1.125rem 1.5rem' }}>
+                              <div>
+                                <p style={{ margin: '0 0 0.2rem', fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1.0625rem', color: 'var(--cream)' }}>
+                                  {b.first_name} {b.last_name} · {dateStr}
+                                </p>
+                                <p style={{ margin: 0, fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-low)' }}>
+                                  {b.booking_reference}
+                                </p>
+                              </div>
+                              <StatusBadge status={b.appointment_status} />
+                            </div>
+                            <div style={{ borderTop: '1px solid var(--border)' }}>
+                              <button
+                                type="button"
+                                onClick={() => { setOpenBookingChatId(isOpen ? null : b.id); setBookingChatDraft(''); setBookingChatError(''); }}
+                                style={{ width: '100%', padding: '0.875rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', color: isOpen ? 'var(--gold)' : 'var(--text-mid)', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', transition: 'color 0.2s ease' }}
+                              >
+                                <span>{isOpen ? 'Close chat' : 'Message client'}</span>
+                                <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', opacity: 0.7 }}>{isOpen ? '↑' : '↓'}</span>
+                              </button>
+                              {isOpen && (
+                                <div style={{ borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', height: '22rem' }}>
+                                  <div ref={bookingChatAreaRef} style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                    {bookingChatMsgs.length === 0 ? (
+                                      <div style={{ textAlign: 'center', paddingTop: '3rem' }}>
+                                        <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.0625rem', color: 'var(--text-mid)', marginBottom: '0.375rem' }}>Start the conversation</p>
+                                        <p style={{ fontSize: '0.8125rem', color: 'var(--text-low)' }}>Send {b.first_name} a message about their booking.</p>
+                                      </div>
+                                    ) : (
+                                      bookingChatMsgs.map((msg, i) => {
+                                        const isArtist = msg.sender_type === 'artist';
+                                        const prev = bookingChatMsgs[i - 1];
+                                        const showDate = !prev || new Date(msg.created_at).toDateString() !== new Date(prev.created_at).toDateString();
+                                        return (
+                                          <div key={msg.id}>
+                                            {showDate && (
+                                              <p style={{ textAlign: 'center', fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', margin: '0.75rem 0 0.5rem' }}>
+                                                {new Date(msg.created_at).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                              </p>
+                                            )}
+                                            <div style={{ display: 'flex', justifyContent: isArtist ? 'flex-end' : 'flex-start' }}>
+                                              <div style={{ maxWidth: '72%', padding: '0.625rem 0.875rem', borderRadius: isArtist ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem', background: isArtist ? 'rgba(201,168,76,0.14)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isArtist ? 'rgba(201,168,76,0.3)' : 'var(--border)'}` }}>
+                                                <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.6, wordBreak: 'break-word' }}>{msg.body}</p>
+                                                <p style={{ margin: '0.25rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.06em', color: isArtist ? 'rgba(201,168,76,0.5)' : 'var(--text-low)', textAlign: isArtist ? 'right' : 'left' }}>
+                                                  {new Date(msg.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                                                </p>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        );
+                                      })
+                                    )}
+                                  </div>
+                                  <div style={{ padding: '0.875rem 1.5rem', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+                                    {bookingChatError && <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', color: '#f87171' }}>{bookingChatError}</p>}
+                                    <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'flex-end' }}>
+                                      <textarea
+                                        value={bookingChatDraft}
+                                        onChange={(e) => setBookingChatDraft(e.target.value)}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBookingChatMsg(); } }}
+                                        placeholder="Write a message… (Enter to send)"
+                                        rows={2}
+                                        style={{ flex: 1, padding: '0.625rem 0.875rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--cream)', fontSize: '0.875rem', lineHeight: 1.5, resize: 'none', outline: 'none', fontFamily: '"DM Sans", sans-serif', transition: 'border-color 0.2s ease' }}
+                                        onFocus={(e) => (e.target.style.borderColor = 'rgba(201,168,76,0.5)')}
+                                        onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={sendBookingChatMsg}
+                                        disabled={!bookingChatDraft.trim() || bookingChatSending}
+                                        className="btn-primary"
+                                        style={{ padding: '0.625rem 1.125rem', flexShrink: 0, opacity: (!bookingChatDraft.trim() || bookingChatSending) ? 0.5 : 1, cursor: (!bookingChatDraft.trim() || bookingChatSending) ? 'default' : 'pointer' }}
+                                      >
+                                        {bookingChatSending ? '…' : '→'}
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           );
         })()}
