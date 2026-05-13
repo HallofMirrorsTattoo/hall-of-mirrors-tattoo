@@ -678,7 +678,7 @@ export default function ArtistDashboard() {
   const renderBookingDetailPanel = (extraStyle?: React.CSSProperties) => {
     if (!selectedBooking) return null;
     return (
-      <div style={{ position: 'sticky', top: '5rem', alignSelf: 'start', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '1.75rem', ...extraStyle }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '1.75rem', ...extraStyle }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
           <h3 style={{ margin: 0, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.375rem', fontWeight: 300, color: 'var(--cream)' }}>
             Booking details
@@ -1315,7 +1315,7 @@ export default function ArtistDashboard() {
 
         {/* Bookings tab */}
         {tab === 'bookings' && (
-          <div style={{ display: 'grid', gridTemplateColumns: selectedBooking ? '1fr 380px' : '1fr', gap: '1.5rem' }}>
+          <div>
             <div>
               {/* Status filter */}
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
@@ -1388,8 +1388,12 @@ export default function ArtistDashboard() {
               )}
             </div>
 
-            {/* Booking detail panel */}
-            {renderBookingDetailPanel()}
+            {/* Booking detail panel — drops below, centred */}
+            {selectedBooking && (
+              <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'center' }}>
+                {renderBookingDetailPanel({ width: '100%', maxWidth: '640px' })}
+              </div>
+            )}
           </div>
         )}
 

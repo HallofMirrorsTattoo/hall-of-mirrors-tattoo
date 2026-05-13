@@ -119,6 +119,10 @@ router.get('/:id', async (req: Request, res: Response) => {
         estimated_duration: booking.estimated_duration,
         created_at: booking.created_at,
         updated_at: booking.updated_at,
+        counter_offer_date: booking.counter_offer_date ?? null,
+        counter_offer_time: booking.counter_offer_time ?? null,
+        counter_offer_note: booking.counter_offer_note ?? null,
+        counter_offered_by: booking.counter_offered_by ?? null,
         artist: booking.artist_id ? {
           id: booking.artist_id,
           name: booking.artist_name,
