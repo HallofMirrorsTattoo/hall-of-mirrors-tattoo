@@ -13,6 +13,10 @@ interface Booking {
   deposit_price: number;
   final_price: number;
   artist_name: string;
+  counter_offer_date: string | null;
+  counter_offer_time: string | null;
+  counter_offer_note: string | null;
+  counter_offered_by: string | null;
 }
 
 export default function BookingsTab() {
@@ -56,6 +60,8 @@ export default function BookingsTab() {
         return { background: 'rgba(201,168,76,0.12)', color: 'var(--gold)', border: '1px solid rgba(201,168,76,0.25)' };
       case 'pending_consent':
         return { background: 'rgba(201,168,76,0.08)', color: 'rgba(201,168,76,0.7)', border: '1px solid rgba(201,168,76,0.18)' };
+      case 'counter_offered':
+        return { background: 'rgba(201,168,76,0.15)', color: 'var(--gold)', border: '1px solid rgba(201,168,76,0.4)' };
       case 'cancelled':
         return { background: 'rgba(239,68,68,0.08)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.2)' };
       default:
@@ -66,7 +72,7 @@ export default function BookingsTab() {
   if (loading) return <p>Loading your bookings...</p>;
   if (error) return <p style={{ color: '#fca5a5', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem' }}>{error}</p>;
 
-  const activeStatuses = ['pending_consent', 'confirmed', 'rescheduled'];
+  const activeStatuses = ['pending_consent', 'confirmed', 'rescheduled', 'counter_offered'];
   const activeBookings = bookings.filter(b => activeStatuses.includes(b.appointment_status));
   const pastBookings   = bookings.filter(b => !activeStatuses.includes(b.appointment_status));
 
@@ -98,6 +104,20 @@ export default function BookingsTab() {
             {booking.appointment_time}
           </p>
         </div>
+        {booking.appointment_status === 'counter_offered' && booking.counter_offered_by === 'artist' && (
+          <div style={{ margin: '0.5rem 0 0.75rem', padding: '0.625rem 0.875rem', background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.35)', borderRadius: '0.5rem' }}>
+            <p style={{ margin: 0, fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--gold)' }}>
+              Response needed — tap to view
+            </p>
+          </div>
+        )}
+        {booking.appointment_status === 'counter_offered' && booking.counter_offered_by === 'client' && (
+          <div style={{ margin: '0.5rem 0 0.75rem', padding: '0.625rem 0.875rem', background: 'rgba(154,144,130,0.08)', border: '1px solid var(--border)', borderRadius: '0.5rem' }}>
+            <p style={{ margin: 0, fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-mid)' }}>
+              Awaiting artist response
+            </p>
+          </div>
+        )}
         <div className="pt-4" style={{ borderTop: '1px solid var(--border)' }}>
           <p className="text-xs" style={{ color: 'var(--text-low)' }}>
             Deposit: £{booking.deposit_price}

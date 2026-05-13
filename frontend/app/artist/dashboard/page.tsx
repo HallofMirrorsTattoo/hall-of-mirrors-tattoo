@@ -82,6 +82,10 @@ interface Booking {
   last_name?: string;
   email?: string;
   phone?: string;
+  counter_offer_date?: string | null;
+  counter_offer_time?: string | null;
+  counter_offer_note?: string | null;
+  counter_offered_by?: string | null;
 }
 
 interface Consultation {
@@ -115,6 +119,7 @@ function StatusBadge({ status }: { status: string }) {
     rescheduled:     { bg: 'rgba(99,102,241,0.12)', color: '#818CF8', label: 'Rescheduled' },
     pending:         { bg: 'rgba(234,179,8,0.12)',  color: '#CA8A04', label: 'Pending' },
     responded:       { bg: 'rgba(34,197,94,0.12)',  color: '#16A34A', label: 'Responded' },
+    counter_offered: { bg: 'rgba(201,168,76,0.15)', color: 'var(--gold)', label: 'Counter offer' },
   };
   const s = map[status] || { bg: 'rgba(155,155,155,0.12)', color: 'var(--text-mid)', label: status };
   return (
@@ -148,11 +153,16 @@ export default function ArtistDashboard() {
   const [aftercareSent, setAftercareSent] = useState<'idle' | 'sending' | 'sent'>('idle');
   const [rebookSent, setRebookSent] = useState<'idle' | 'sending' | 'sent'>('idle');
 
-  // Artist cancel / reschedule
-  const [artistActionMode, setArtistActionMode] = useState<'none' | 'cancel-confirm' | 'reschedule'>('none');
+  // Artist cancel / reschedule / counter-offer
+  const [artistActionMode, setArtistActionMode] = useState<'none' | 'cancel-confirm' | 'reschedule' | 'counter-offer'>('none');
   const [rescheduleDate, setRescheduleDate] = useState<string | null>(null);
   const [rescheduleSlot, setRescheduleSlot] = useState<string | null>(null);
   const [rescheduleAvailData, setRescheduleAvailData] = useState<AvailabilityData | null>(null);
+  const [counterOfferDate, setCounterOfferDate] = useState<string | null>(null);
+  const [counterOfferSlot, setCounterOfferSlot] = useState<string | null>(null);
+  const [counterOfferNote, setCounterOfferNote] = useState('');
+  const [counterOfferAvailData, setCounterOfferAvailData] = useState<AvailabilityData | null>(null);
+  const [counterOfferActing, setCounterOfferActing] = useState(false);
 
   // Consultations state
   const [consultations, setConsultations] = useState<Consultation[]>([]);
@@ -517,6 +527,62 @@ export default function ArtistDashboard() {
     });
   };
 
+  const handleArtistCounterOffer = async () => {
+    if (!selectedBooking || !counterOfferDate || !counterOfferSlot || !counterOfferNote.trim()) return;
+    setCounterOfferActing(true);
+    setBookingError('');
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/artist/bookings/${selectedBooking.id}/counter-offer`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+          body: JSON.stringify({ counter_offer_date: counterOfferDate, counter_offer_time: counterOfferSlot, counter_offer_note: counterOfferNote.trim() }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send counter-offer');
+      setBookings(prev => prev.map(b => b.id === selectedBooking.id
+        ? { ...b, appointment_status: 'counter_offered', counter_offer_date: counterOfferDate, counter_offer_time: counterOfferSlot, counter_offer_note: counterOfferNote.trim(), counter_offered_by: 'artist' }
+        : b
+      ));
+      setSelectedBooking(prev => prev ? { ...prev, appointment_status: 'counter_offered', counter_offer_date: counterOfferDate, counter_offer_time: counterOfferSlot, counter_offer_note: counterOfferNote.trim(), counter_offered_by: 'artist' } : prev);
+      setArtistActionMode('none');
+      setCounterOfferDate(null); setCounterOfferSlot(null); setCounterOfferNote('');
+    } catch (e) {
+      setBookingError(e instanceof Error ? e.message : 'Failed to send counter-offer');
+    } finally {
+      setCounterOfferActing(false);
+    }
+  };
+
+  const handleArtistAcceptClientOffer = async () => {
+    if (!selectedBooking) return;
+    setCounterOfferActing(true);
+    setBookingError('');
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/artist/bookings/${selectedBooking.id}/accept-offer`,
+        { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to accept offer');
+      const newDateTime = selectedBooking.counter_offer_date && selectedBooking.counter_offer_time
+        ? `${selectedBooking.counter_offer_date}T${selectedBooking.counter_offer_time}:00`
+        : selectedBooking.appointment_date_time;
+      setBookings(prev => prev.map(b => b.id === selectedBooking.id
+        ? { ...b, appointment_status: 'pending_consent', appointment_date_time: newDateTime, appointment_time: selectedBooking.counter_offer_time ?? b.appointment_time, counter_offer_date: null, counter_offer_time: null, counter_offer_note: null, counter_offered_by: null }
+        : b
+      ));
+      setSelectedBooking(prev => prev ? { ...prev, appointment_status: 'pending_consent', appointment_date_time: newDateTime, appointment_time: selectedBooking.counter_offer_time ?? prev.appointment_time, counter_offer_date: null, counter_offer_time: null, counter_offer_note: null, counter_offered_by: null } : prev);
+      setArtistActionMode('none');
+    } catch (e) {
+      setBookingError(e instanceof Error ? e.message : 'Failed to accept offer');
+    } finally {
+      setCounterOfferActing(false);
+    }
+  };
+
   const handleConsultAction = async () => {
     if (!consultActionId) return;
     const colonIdx = consultActionId.lastIndexOf(':');
@@ -549,7 +615,7 @@ export default function ArtistDashboard() {
     }
   };
 
-  const activeStatuses = ['pending_consent', 'confirmed', 'rescheduled'];
+  const activeStatuses = ['pending_consent', 'confirmed', 'rescheduled', 'counter_offered'];
   const filteredBookings = bookings.filter((b) => statusFilter === 'all' || b.appointment_status === statusFilter);
   const pastBookingsAll = bookings.filter((b) => !activeStatuses.includes(b.appointment_status));
 
@@ -560,7 +626,7 @@ export default function ArtistDashboard() {
       <button
         key={booking.id}
         type="button"
-        onClick={() => setSelectedBooking(isSelected ? null : booking)}
+        onClick={() => { setSelectedBooking(isSelected ? null : booking); setArtistActionMode('none'); setCounterOfferDate(null); setCounterOfferSlot(null); setCounterOfferNote(''); }}
         style={{
           display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center',
           gap: '1rem', width: '100%', padding: '1.25rem 1.5rem',
@@ -617,7 +683,7 @@ export default function ArtistDashboard() {
           <h3 style={{ margin: 0, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.375rem', fontWeight: 300, color: 'var(--cream)' }}>
             Booking details
           </h3>
-          <button onClick={() => setSelectedBooking(null)} style={{ background: 'none', border: 'none', color: 'var(--text-low)', cursor: 'pointer', fontSize: '1.25rem', lineHeight: 1 }}>×</button>
+          <button onClick={() => { setSelectedBooking(null); setArtistActionMode('none'); setCounterOfferDate(null); setCounterOfferSlot(null); setCounterOfferNote(''); }} style={{ background: 'none', border: 'none', color: 'var(--text-low)', cursor: 'pointer', fontSize: '1.25rem', lineHeight: 1 }}>×</button>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '1.75rem' }}>
@@ -816,76 +882,262 @@ export default function ArtistDashboard() {
           </div>
         )}
 
-        {selectedBooking.appointment_status !== 'confirmed' && selectedBooking.appointment_status !== 'completed' && selectedBooking.appointment_status !== 'cancelled' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-            <div>
-              <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', display: 'block', marginBottom: '0.5rem' }}>
-                Session duration
-              </span>
-              <select
-                value={confirmDurationHours}
-                onChange={(e) => setConfirmDurationHours(Number(e.target.value))}
-                style={{ width: '100%' }}
-              >
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((h) => (
-                  <option key={h} value={h}>{h} hour{h > 1 ? 's' : ''}</option>
-                ))}
-              </select>
-              {selectedBooking.appointment_time && (
-                (() => {
-                  const startH = parseInt(selectedBooking.appointment_time.substring(0, 2), 10);
-                  const endH = startH + confirmDurationHours;
-                  return (
-                    <p style={{ margin: '0.5rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.1em', color: 'rgba(201,168,76,0.55)' }}>
-                      Session: {fmtH(startH)} → {fmtH(endH)}
+        {/* Client has responded with a counter-offer */}
+        {selectedBooking.appointment_status === 'counter_offered' && selectedBooking.counter_offered_by === 'client' && (
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
+            {artistActionMode === 'none' && (
+              <div>
+                <div style={{ padding: '1rem 1.125rem', background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '0.5rem', marginBottom: '1rem' }}>
+                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)', margin: '0 0 0.5rem' }}>
+                    Client proposed a new time
+                  </p>
+                  <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--cream)', margin: '0 0 0.25rem', fontWeight: 500 }}>
+                    {selectedBooking.counter_offer_date
+                      ? new Date(`${selectedBooking.counter_offer_date}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+                      : '—'}
+                    {selectedBooking.counter_offer_time && ` at ${fmtH(parseInt(selectedBooking.counter_offer_time.substring(0, 2), 10))}`}
+                  </p>
+                  {selectedBooking.counter_offer_note && (
+                    <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)', margin: '0.5rem 0 0', lineHeight: 1.65, fontStyle: 'italic' }}>
+                      &ldquo;{selectedBooking.counter_offer_note}&rdquo;
                     </p>
-                  );
-                })()
-              )}
-            </div>
+                  )}
+                </div>
+                {bookingError && <p style={{ margin: '0 0 0.5rem', fontSize: '0.8125rem', color: '#f87171' }}>{bookingError}</p>}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    onClick={handleArtistAcceptClientOffer}
+                    disabled={counterOfferActing}
+                    className="btn-primary"
+                    style={{ width: '100%', padding: '0.7rem', opacity: counterOfferActing ? 0.6 : 1 }}
+                  >
+                    {counterOfferActing ? 'Accepting…' : 'Accept this time'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setArtistActionMode('counter-offer'); setCounterOfferDate(null); setCounterOfferSlot(null); setCounterOfferNote(''); }}
+                    className="btn-secondary"
+                    style={{ width: '100%', padding: '0.7rem', fontSize: '0.72rem' }}
+                  >
+                    Propose a different time
+                  </button>
+                </div>
+              </div>
+            )}
+            {artistActionMode === 'counter-offer' && (
+              <div>
+                <p style={{ ...labelStyle, marginBottom: '1rem' }}>Propose a different time</p>
+                <div style={{ padding: '1rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.5rem', marginBottom: counterOfferDate ? '0.875rem' : '0' }}>
+                  <AvailabilityCalendar
+                    artistId={selectedBooking.artist_id ?? artist?.id ?? ''}
+                    selectedDate={counterOfferDate}
+                    onDateSelect={(d) => { setCounterOfferDate(d); setCounterOfferSlot(null); }}
+                    onAvailabilityLoad={setCounterOfferAvailData}
+                  />
+                </div>
+                {counterOfferDate && (
+                  <div style={{ marginBottom: '0.875rem' }}>
+                    <TimeSlotPicker
+                      date={counterOfferDate}
+                      selectedSlot={counterOfferSlot}
+                      onSlotSelect={setCounterOfferSlot}
+                      slotData={counterOfferAvailData?.slotData}
+                    />
+                  </div>
+                )}
+                <div style={{ marginBottom: '0.875rem' }}>
+                  <span style={{ ...labelStyle, marginBottom: '0.375rem' }}>Note for client</span>
+                  <textarea
+                    value={counterOfferNote}
+                    onChange={e => setCounterOfferNote(e.target.value)}
+                    placeholder="Explain why this time works better…"
+                    rows={3}
+                    style={{ width: '100%', resize: 'vertical', minHeight: '4rem' }}
+                  />
+                </div>
+                {bookingError && <p style={{ margin: '0 0 0.5rem', fontSize: '0.8125rem', color: '#f87171' }}>{bookingError}</p>}
+                <div style={{ display: 'flex', gap: '0.625rem' }}>
+                  <button
+                    type="button"
+                    onClick={handleArtistCounterOffer}
+                    disabled={!counterOfferDate || !counterOfferSlot || !counterOfferNote.trim() || counterOfferActing}
+                    className="btn-primary"
+                    style={{ flex: 1, padding: '0.65rem', fontSize: '0.72rem', opacity: (!counterOfferDate || !counterOfferSlot || !counterOfferNote.trim() || counterOfferActing) ? 0.4 : 1 }}
+                  >
+                    {counterOfferActing ? 'Sending…' : 'Send proposal'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setArtistActionMode('none'); setCounterOfferDate(null); setCounterOfferSlot(null); setCounterOfferNote(''); }}
+                    className="btn-secondary"
+                    style={{ flex: 1, padding: '0.65rem', fontSize: '0.72rem' }}
+                  >
+                    Go back
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={confirmNotifyEnd}
-                onChange={(e) => setConfirmNotifyEnd(e.target.checked)}
-                style={{ accentColor: 'var(--gold)', width: '0.875rem', height: '0.875rem', cursor: 'pointer' }}
-              />
-              <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-mid)' }}>
-                Tell client the finish time
-              </span>
-            </label>
-            {!confirmNotifyEnd && (
-              <p style={{ margin: '-0.375rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-low)' }}>
-                Client sees start time only. Calendar still blocks the full session.
+        {/* Artist proposed — awaiting client */}
+        {selectedBooking.appointment_status === 'counter_offered' && selectedBooking.counter_offered_by === 'artist' && (
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
+            <div style={{ padding: '1rem 1.125rem', background: 'rgba(154,144,130,0.06)', border: '1px solid var(--border)', borderRadius: '0.5rem' }}>
+              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-mid)', margin: '0 0 0.375rem' }}>
+                Awaiting client response
               </p>
-            )}
+              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)', margin: 0, lineHeight: 1.65 }}>
+                You proposed{' '}
+                <strong style={{ color: 'var(--cream)' }}>
+                  {selectedBooking.counter_offer_date
+                    ? new Date(`${selectedBooking.counter_offer_date}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+                    : '—'}
+                  {selectedBooking.counter_offer_time && ` at ${fmtH(parseInt(selectedBooking.counter_offer_time.substring(0, 2), 10))}`}
+                </strong>
+                . Waiting for the client to accept or respond.
+              </p>
+            </div>
+          </div>
+        )}
 
-            {bookingError && (
-              <p style={{ margin: 0, fontSize: '0.8125rem', color: '#f87171' }}>{bookingError}</p>
-            )}
+        {/* Pending consent — confirm/decline + optional propose time */}
+        {(selectedBooking.appointment_status === 'pending_consent' || selectedBooking.appointment_status === 'rescheduled') && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+            {artistActionMode === 'none' && (
+              <>
+                <div>
+                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', display: 'block', marginBottom: '0.5rem' }}>
+                    Session duration
+                  </span>
+                  <select
+                    value={confirmDurationHours}
+                    onChange={(e) => setConfirmDurationHours(Number(e.target.value))}
+                    style={{ width: '100%' }}
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((h) => (
+                      <option key={h} value={h}>{h} hour{h > 1 ? 's' : ''}</option>
+                    ))}
+                  </select>
+                  {selectedBooking.appointment_time && (
+                    (() => {
+                      const startH = parseInt(selectedBooking.appointment_time!.substring(0, 2), 10);
+                      const endH = startH + confirmDurationHours;
+                      return (
+                        <p style={{ margin: '0.5rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.1em', color: 'rgba(201,168,76,0.55)' }}>
+                          Session: {fmtH(startH)} → {fmtH(endH)}
+                        </p>
+                      );
+                    })()
+                  )}
+                </div>
 
-            <button
-              type="button"
-              onClick={() => handleStatusUpdate(selectedBooking.id, 'confirmed', '', {
-                duration_hours: confirmDurationHours,
-                notify_end_time: confirmNotifyEnd,
-              })}
-              disabled={isUpdating}
-              className="btn-primary"
-              style={{ width: '100%', padding: '0.75rem', opacity: isUpdating ? 0.6 : 1, cursor: isUpdating ? 'default' : 'pointer' }}
-            >
-              {isUpdating ? 'Confirming…' : 'Confirm & Schedule'}
-            </button>
-            <button
-              type="button"
-              onClick={() => handleStatusUpdate(selectedBooking.id, 'cancelled', '')}
-              disabled={isUpdating}
-              className="btn-secondary"
-              style={{ width: '100%', padding: '0.75rem', color: '#f87171', borderColor: 'rgba(239,68,68,0.3)', opacity: isUpdating ? 0.6 : 1, cursor: isUpdating ? 'default' : 'pointer' }}
-            >
-              Decline request
-            </button>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={confirmNotifyEnd}
+                    onChange={(e) => setConfirmNotifyEnd(e.target.checked)}
+                    style={{ accentColor: 'var(--gold)', width: '0.875rem', height: '0.875rem', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-mid)' }}>
+                    Tell client the finish time
+                  </span>
+                </label>
+                {!confirmNotifyEnd && (
+                  <p style={{ margin: '-0.375rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-low)' }}>
+                    Client sees start time only. Calendar still blocks the full session.
+                  </p>
+                )}
+
+                {bookingError && (
+                  <p style={{ margin: 0, fontSize: '0.8125rem', color: '#f87171' }}>{bookingError}</p>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => handleStatusUpdate(selectedBooking.id, 'confirmed', '', {
+                    duration_hours: confirmDurationHours,
+                    notify_end_time: confirmNotifyEnd,
+                  })}
+                  disabled={isUpdating}
+                  className="btn-primary"
+                  style={{ width: '100%', padding: '0.75rem', opacity: isUpdating ? 0.6 : 1, cursor: isUpdating ? 'default' : 'pointer' }}
+                >
+                  {isUpdating ? 'Confirming…' : 'Confirm & Schedule'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setArtistActionMode('counter-offer'); setCounterOfferDate(null); setCounterOfferSlot(null); setCounterOfferNote(''); }}
+                  className="btn-secondary"
+                  style={{ width: '100%', padding: '0.75rem', fontSize: '0.72rem' }}
+                >
+                  Propose a different time
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleStatusUpdate(selectedBooking.id, 'cancelled', '')}
+                  disabled={isUpdating}
+                  className="btn-secondary"
+                  style={{ width: '100%', padding: '0.75rem', color: '#f87171', borderColor: 'rgba(239,68,68,0.3)', opacity: isUpdating ? 0.6 : 1, cursor: isUpdating ? 'default' : 'pointer' }}
+                >
+                  Decline request
+                </button>
+              </>
+            )}
+            {artistActionMode === 'counter-offer' && (
+              <div>
+                <p style={{ ...labelStyle, marginBottom: '1rem' }}>Propose a different time</p>
+                <div style={{ padding: '1rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.5rem', marginBottom: counterOfferDate ? '0.875rem' : '0' }}>
+                  <AvailabilityCalendar
+                    artistId={selectedBooking.artist_id ?? artist?.id ?? ''}
+                    selectedDate={counterOfferDate}
+                    onDateSelect={(d) => { setCounterOfferDate(d); setCounterOfferSlot(null); }}
+                    onAvailabilityLoad={setCounterOfferAvailData}
+                  />
+                </div>
+                {counterOfferDate && (
+                  <div style={{ marginBottom: '0.875rem' }}>
+                    <TimeSlotPicker
+                      date={counterOfferDate}
+                      selectedSlot={counterOfferSlot}
+                      onSlotSelect={setCounterOfferSlot}
+                      slotData={counterOfferAvailData?.slotData}
+                    />
+                  </div>
+                )}
+                <div style={{ marginBottom: '0.875rem' }}>
+                  <span style={{ ...labelStyle, marginBottom: '0.375rem' }}>Note for client</span>
+                  <textarea
+                    value={counterOfferNote}
+                    onChange={e => setCounterOfferNote(e.target.value)}
+                    placeholder="Explain why this time works better…"
+                    rows={3}
+                    style={{ width: '100%', resize: 'vertical', minHeight: '4rem' }}
+                  />
+                </div>
+                {bookingError && <p style={{ margin: '0 0 0.5rem', fontSize: '0.8125rem', color: '#f87171' }}>{bookingError}</p>}
+                <div style={{ display: 'flex', gap: '0.625rem' }}>
+                  <button
+                    type="button"
+                    onClick={handleArtistCounterOffer}
+                    disabled={!counterOfferDate || !counterOfferSlot || !counterOfferNote.trim() || counterOfferActing}
+                    className="btn-primary"
+                    style={{ flex: 1, padding: '0.65rem', fontSize: '0.72rem', opacity: (!counterOfferDate || !counterOfferSlot || !counterOfferNote.trim() || counterOfferActing) ? 0.4 : 1 }}
+                  >
+                    {counterOfferActing ? 'Sending…' : 'Send proposal'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setArtistActionMode('none'); setCounterOfferDate(null); setCounterOfferSlot(null); setCounterOfferNote(''); }}
+                    className="btn-secondary"
+                    style={{ flex: 1, padding: '0.65rem', fontSize: '0.72rem' }}
+                  >
+                    Go back
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -1253,7 +1505,7 @@ export default function ArtistDashboard() {
                       <button
                         type="button"
                         key={booking.id}
-                        onClick={() => setSelectedBooking(isSelected ? null : booking)}
+                        onClick={() => { setSelectedBooking(isSelected ? null : booking); setArtistActionMode('none'); setCounterOfferDate(null); setCounterOfferSlot(null); setCounterOfferNote(''); }}
                         style={{
                           gridColumn: di + 2,
                           gridRow: `${rowStart} / span ${durationH}`,

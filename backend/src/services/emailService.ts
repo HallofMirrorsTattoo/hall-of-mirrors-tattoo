@@ -626,6 +626,121 @@ export async function sendRebookInvite(data: {
   });
 }
 
+export async function sendCounterOfferToClient(data: {
+  clientEmail: string;
+  clientName: string;
+  bookingReference: string;
+  proposedDate: string;
+  proposedTime: string;
+  note: string;
+  artistName?: string;
+}): Promise<void> {
+  const content = `
+    ${heading(`Your artist has proposed a new time.`)}
+    ${body(`Hi ${data.clientName} — ${data.artistName ?? 'your artist'} has suggested a different time for your upcoming session.`)}
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+      ${detail('Reference', data.bookingReference)}
+      ${detail('Proposed date', data.proposedDate)}
+      ${detail('Proposed time', data.proposedTime)}
+      ${data.artistName ? detail('Artist', data.artistName) : ''}
+    </table>
+    <div style="margin:24px 0;padding:16px 20px;border-left:2px solid #C9A84C;background:rgba(201,168,76,0.05);">
+      <p style="margin:0;font-size:14px;line-height:1.7;color:#EDE8D8;font-style:italic;">"${data.note}"</p>
+    </div>
+    ${body(`Log in to your dashboard to accept this time, suggest an alternative, or cancel your booking.`)}
+    ${ctaButton(`${FRONTEND_URL}/client/dashboard`, 'View your dashboard')}
+  `;
+  await send({
+    to: data.clientEmail,
+    from: { email: FROM_EMAIL, name: 'Hall of Mirrors Tattoo' },
+    subject: `Your artist has proposed a new time — ${data.bookingReference}`,
+    html: baseTemplate(content),
+  });
+}
+
+export async function sendClientCounterOfferToArtist(data: {
+  artistEmail: string;
+  clientName: string;
+  bookingReference: string;
+  proposedDate: string;
+  proposedTime: string;
+  note: string;
+}): Promise<void> {
+  const content = `
+    ${heading(`${data.clientName} has proposed a different time.`)}
+    ${body(`Your client has suggested an alternative time for their session.`)}
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+      ${detail('Reference', data.bookingReference)}
+      ${detail('Client', data.clientName)}
+      ${detail('Proposed date', data.proposedDate)}
+      ${detail('Proposed time', data.proposedTime)}
+    </table>
+    <div style="margin:24px 0;padding:16px 20px;border-left:2px solid #C9A84C;background:rgba(201,168,76,0.05);">
+      <p style="margin:0;font-size:14px;line-height:1.7;color:#EDE8D8;font-style:italic;">"${data.note}"</p>
+    </div>
+    ${body(`Log in to your dashboard to accept their proposal or suggest another time.`)}
+    ${ctaButton(`${FRONTEND_URL}/artist/dashboard`, 'View your dashboard')}
+  `;
+  await send({
+    to: data.artistEmail,
+    from: { email: FROM_EMAIL, name: 'Hall of Mirrors Tattoo' },
+    subject: `${data.clientName} has proposed a different time — ${data.bookingReference}`,
+    html: baseTemplate(content),
+  });
+}
+
+export async function sendOfferAcceptedToArtist(data: {
+  artistEmail: string;
+  clientName: string;
+  bookingReference: string;
+  confirmedDate: string;
+  confirmedTime: string;
+}): Promise<void> {
+  const content = `
+    ${heading(`${data.clientName} accepted the new time.`)}
+    ${body(`Great news — your client has accepted the proposed time. Their booking is now pending consent form completion.`)}
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+      ${detail('Reference', data.bookingReference)}
+      ${detail('Confirmed date', data.confirmedDate)}
+      ${detail('Confirmed time', data.confirmedTime)}
+    </table>
+    ${ctaButton(`${FRONTEND_URL}/artist/dashboard`, 'View your dashboard')}
+  `;
+  await send({
+    to: data.artistEmail,
+    from: { email: FROM_EMAIL, name: 'Hall of Mirrors Tattoo' },
+    subject: `${data.clientName} accepted the new time — ${data.bookingReference}`,
+    html: baseTemplate(content),
+  });
+}
+
+export async function sendOfferAcceptedToClient(data: {
+  clientEmail: string;
+  clientName: string;
+  bookingReference: string;
+  confirmedDate: string;
+  confirmedTime: string;
+  artistName?: string;
+}): Promise<void> {
+  const content = `
+    ${heading(`Your new appointment time is confirmed.`)}
+    ${body(`Hi ${data.clientName} — ${data.artistName ?? 'your artist'} has accepted your proposed time. Your session is confirmed for the details below.`)}
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+      ${detail('Reference', data.bookingReference)}
+      ${detail('Date', data.confirmedDate)}
+      ${detail('Time', data.confirmedTime)}
+      ${data.artistName ? detail('Artist', data.artistName) : ''}
+    </table>
+    ${ctaButton(`${FRONTEND_URL}/client/dashboard`, 'View your dashboard')}
+  `;
+  await send({
+    to: data.clientEmail,
+    from: { email: FROM_EMAIL, name: 'Hall of Mirrors Tattoo' },
+    subject: `Your new appointment time is confirmed — ${data.bookingReference}`,
+    html: baseTemplate(content),
+  });
+}
+
 export async function sendConsultationResponseToClient(data: {
   clientEmail: string;
   clientName: string;

@@ -9,6 +9,8 @@ import {
   sendRebookInvite,
   sendArtistCancellationToClient,
   sendArtistRescheduleToClient,
+  sendCounterOfferToClient,
+  sendOfferAcceptedToClient,
 } from '../services/emailService.js';
 
 const { Client } = pkg;
@@ -675,6 +677,153 @@ export async function sendRebookInviteByArtist(req: Request, res: Response) {
   } catch (error) {
     console.error('Rebook invite error:', error);
     res.status(500).json({ success: false, error: 'Failed to send invite' });
+  } finally {
+    await client.end();
+  }
+}
+
+function fmtTime(t: string): string {
+  const h = parseInt(t.substring(0, 2), 10);
+  return h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h - 12}pm`;
+}
+
+function fmtDate(d: string): string {
+  return new Date(d + 'T12:00:00').toLocaleDateString('en-GB', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  });
+}
+
+export async function artistCounterOffer(req: Request, res: Response) {
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  try {
+    if (!req.artist) return res.status(401).json({ success: false, error: 'Not authenticated' });
+
+    const { id } = req.params;
+    const { counter_offer_date, counter_offer_time, counter_offer_note } = req.body;
+
+    if (!counter_offer_date || !counter_offer_time || !counter_offer_note?.trim()) {
+      return res.status(400).json({ success: false, error: 'date, time, and note are required' });
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(counter_offer_date)) {
+      return res.status(400).json({ success: false, error: 'Invalid date format (YYYY-MM-DD)' });
+    }
+    if (!/^\d{2}:\d{2}$/.test(counter_offer_time)) {
+      return res.status(400).json({ success: false, error: 'Invalid time format (HH:MM)' });
+    }
+
+    await client.connect();
+
+    const result = await client.query(
+      `SELECT b.*, u.email, u.first_name, u.last_name,
+              a.full_name as artist_name, a.email as artist_email
+       FROM "Booking" b
+       JOIN "User" u ON b.user_id = u.id
+       LEFT JOIN "Artist" a ON b.artist_id = a.id
+       WHERE b.id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) return res.status(404).json({ success: false, error: 'Booking not found' });
+
+    const booking = result.rows[0];
+    if (booking.artist_id !== req.artist.id) return res.status(403).json({ success: false, error: 'Access denied' });
+
+    const allowedStatuses = ['pending_consent', 'counter_offered'];
+    if (!allowedStatuses.includes(booking.appointment_status)) {
+      return res.status(400).json({ success: false, error: 'Cannot counter-offer at this stage' });
+    }
+    if (booking.appointment_status === 'counter_offered' && booking.counter_offered_by !== 'client') {
+      return res.status(400).json({ success: false, error: 'A counter-offer is already pending the client' });
+    }
+
+    const updated = await client.query(
+      `UPDATE "Booking"
+       SET appointment_status = 'counter_offered',
+           counter_offer_date = $2,
+           counter_offer_time = $3,
+           counter_offer_note = $4,
+           counter_offered_by = 'artist',
+           updated_at = NOW()
+       WHERE id = $1 RETURNING *`,
+      [id, counter_offer_date, counter_offer_time, counter_offer_note.trim()]
+    );
+
+    sendCounterOfferToClient({
+      clientEmail: booking.email,
+      clientName: `${booking.first_name} ${booking.last_name}`,
+      bookingReference: booking.booking_reference,
+      proposedDate: fmtDate(counter_offer_date),
+      proposedTime: fmtTime(counter_offer_time),
+      note: counter_offer_note.trim(),
+      artistName: booking.artist_name ?? undefined,
+    }).catch((e) => console.error('[email] counter offer to client failed:', e));
+
+    res.json({ success: true, booking: updated.rows[0] });
+  } catch (error) {
+    console.error('Artist counter-offer error:', error);
+    res.status(500).json({ success: false, error: 'Failed to send counter-offer' });
+  } finally {
+    await client.end();
+  }
+}
+
+export async function artistAcceptClientOffer(req: Request, res: Response) {
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  try {
+    if (!req.artist) return res.status(401).json({ success: false, error: 'Not authenticated' });
+
+    const { id } = req.params;
+    await client.connect();
+
+    const result = await client.query(
+      `SELECT b.*, u.email, u.first_name, u.last_name,
+              a.full_name as artist_name, a.email as artist_email
+       FROM "Booking" b
+       JOIN "User" u ON b.user_id = u.id
+       LEFT JOIN "Artist" a ON b.artist_id = a.id
+       WHERE b.id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) return res.status(404).json({ success: false, error: 'Booking not found' });
+
+    const booking = result.rows[0];
+    if (booking.artist_id !== req.artist.id) return res.status(403).json({ success: false, error: 'Access denied' });
+
+    if (booking.appointment_status !== 'counter_offered' || booking.counter_offered_by !== 'client') {
+      return res.status(400).json({ success: false, error: 'No client counter-offer to accept' });
+    }
+
+    const updated = await client.query(
+      `UPDATE "Booking"
+       SET appointment_status = 'pending_consent',
+           appointment_date_time = (counter_offer_date::text || 'T' || counter_offer_time || ':00')::timestamp,
+           appointment_time = counter_offer_time,
+           counter_offer_date = NULL,
+           counter_offer_time = NULL,
+           counter_offer_note = NULL,
+           counter_offered_by = NULL,
+           updated_at = NOW()
+       WHERE id = $1 RETURNING *`,
+      [id]
+    );
+
+    const confirmedDate = fmtDate(booking.counter_offer_date.toISOString().split('T')[0]);
+    const confirmedTime = fmtTime(booking.counter_offer_time);
+
+    sendOfferAcceptedToClient({
+      clientEmail: booking.email,
+      clientName: `${booking.first_name} ${booking.last_name}`,
+      bookingReference: booking.booking_reference,
+      confirmedDate,
+      confirmedTime,
+      artistName: booking.artist_name ?? undefined,
+    }).catch((e) => console.error('[email] offer accepted to client failed:', e));
+
+    res.json({ success: true, booking: updated.rows[0] });
+  } catch (error) {
+    console.error('Artist accept offer error:', error);
+    res.status(500).json({ success: false, error: 'Failed to accept offer' });
   } finally {
     await client.end();
   }

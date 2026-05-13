@@ -5,6 +5,8 @@ import {
   getArtistBookingById,
   updateBookingStatusByArtist,
   sendRebookInviteByArtist,
+  artistCounterOffer,
+  artistAcceptClientOffer,
 } from '../controllers/bookingController.js';
 import { authMiddleware } from '../middleware/auth.js';
 
@@ -18,6 +20,8 @@ router.get('/bookings', authMiddleware, getArtistBookings);
 router.get('/bookings/:id', authMiddleware, getArtistBookingById);
 router.patch('/bookings/:id', authMiddleware, updateBookingStatusByArtist);
 router.post('/bookings/:id/rebook-invite', authMiddleware, sendRebookInviteByArtist);
+router.post('/bookings/:id/counter-offer', authMiddleware, artistCounterOffer);
+router.post('/bookings/:id/accept-offer', authMiddleware, artistAcceptClientOffer);
 router.get('/consultations', authMiddleware, getArtistConsultations);
 router.patch('/consultations/:id', authMiddleware, respondToConsultation);
 

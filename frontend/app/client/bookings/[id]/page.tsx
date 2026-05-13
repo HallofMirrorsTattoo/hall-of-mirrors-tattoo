@@ -37,9 +37,13 @@ interface Booking {
   updated_at: string;
   artist: Artist | null;
   design_ideas: DesignIdea[];
+  counter_offer_date: string | null;
+  counter_offer_time: string | null;
+  counter_offer_note: string | null;
+  counter_offered_by: string | null;
 }
 
-type Mode = 'view' | 'cancel-confirm' | 'reschedule';
+type Mode = 'view' | 'cancel-confirm' | 'reschedule' | 'counter-offer';
 
 function fmtTime(t: string): string {
   if (!t) return '';
@@ -66,6 +70,8 @@ function statusStyle(status: string): React.CSSProperties {
     return { background: 'rgba(154,144,130,0.1)', color: 'var(--text-mid)', border: '1px solid rgba(154,144,130,0.2)' };
   if (status === 'cancelled')
     return { background: 'rgba(239,68,68,0.08)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.2)' };
+  if (status === 'counter_offered')
+    return { background: 'rgba(201,168,76,0.15)', color: 'var(--gold)', border: '1px solid rgba(201,168,76,0.4)' };
   return { background: 'rgba(154,144,130,0.1)', color: 'var(--text-mid)', border: '1px solid rgba(154,144,130,0.2)' };
 }
 
@@ -97,6 +103,10 @@ export default function BookingDetailPage() {
   const [newDate, setNewDate] = useState<string | null>(null);
   const [newSlot, setNewSlot] = useState<string | null>(null);
   const [availData, setAvailData] = useState<AvailabilityData | null>(null);
+  const [counterDate, setCounterDate] = useState<string | null>(null);
+  const [counterSlot, setCounterSlot] = useState<string | null>(null);
+  const [counterNote, setCounterNote] = useState('');
+  const [counterAvailData, setCounterAvailData] = useState<AvailabilityData | null>(null);
 
   const bookingId = params.id as string;
 
@@ -181,6 +191,57 @@ export default function BookingDetailPage() {
     }
   };
 
+  const handleAcceptOffer = async () => {
+    setActing(true);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/client/bookings/${bookingId}/accept-offer`,
+        { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      if (!res.ok) throw new Error('Failed to accept offer');
+      setBooking(prev => prev ? {
+        ...prev,
+        appointment_status: 'pending_consent',
+        appointment_date: prev.counter_offer_date ?? prev.appointment_date,
+        appointment_time: prev.counter_offer_time ?? prev.appointment_time,
+        counter_offer_date: null, counter_offer_time: null,
+        counter_offer_note: null, counter_offered_by: null,
+      } : prev);
+      setMode('view');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to accept offer');
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const handleClientCounter = async () => {
+    if (!counterDate || !counterSlot || !counterNote.trim()) return;
+    setActing(true);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/client/bookings/${bookingId}/counter-offer`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+          body: JSON.stringify({ counter_offer_date: counterDate, counter_offer_time: counterSlot, counter_offer_note: counterNote.trim() }),
+        }
+      );
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed to send counter-offer'); }
+      setBooking(prev => prev ? {
+        ...prev,
+        counter_offer_date: counterDate, counter_offer_time: counterSlot,
+        counter_offer_note: counterNote.trim(), counter_offered_by: 'client',
+      } : prev);
+      setMode('view');
+      setCounterDate(null); setCounterSlot(null); setCounterNote('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send counter-offer');
+    } finally {
+      setActing(false);
+    }
+  };
+
   const wrap = (children: React.ReactNode) => (
     <ClientProtectedRoute>
       <div style={{ backgroundColor: 'var(--bg)', minHeight: '100vh', paddingTop: '8rem', paddingBottom: '5rem' }}>
@@ -203,7 +264,8 @@ export default function BookingDetailPage() {
   );
   if (!booking) return wrap(<p style={{ color: 'var(--text-mid)' }}>Booking not found.</p>);
 
-  const canAct = booking.appointment_status !== 'cancelled' && booking.appointment_status !== 'completed' && !isPast;
+  const isCounterOffered = booking.appointment_status === 'counter_offered';
+  const canAct = !isCounterOffered && booking.appointment_status !== 'cancelled' && booking.appointment_status !== 'completed' && !isPast;
   const canReschedule = canAct && booking.appointment_status !== 'rescheduled';
 
   return (
@@ -243,7 +305,7 @@ export default function BookingDetailPage() {
               {/* Status + actions */}
               <div className="card-premium">
                 <div className="card-premium-inner">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: canAct ? '1.5rem' : 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: (canAct || isCounterOffered) ? '1.5rem' : 0 }}>
                     <div>
                       <p style={{ ...label, marginBottom: '0.4rem' }}>Status</p>
                       <span style={{
@@ -266,7 +328,72 @@ export default function BookingDetailPage() {
                     )}
                   </div>
 
-                  {/* Action buttons */}
+                  {/* Artist proposed a new time — action required */}
+                  {isCounterOffered && booking.counter_offered_by === 'artist' && mode === 'view' && (
+                    <div>
+                      <div style={{ padding: '1rem 1.25rem', background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '0.5rem', marginBottom: '1.25rem' }}>
+                        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)', margin: '0 0 0.625rem' }}>
+                          Your artist has proposed a new time
+                        </p>
+                        <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--cream)', margin: '0 0 0.25rem', fontWeight: 500 }}>
+                          {booking.counter_offer_date
+                            ? new Date(`${booking.counter_offer_date}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+                            : '—'}
+                          {booking.counter_offer_time && ` at ${fmtTime(booking.counter_offer_time)}`}
+                        </p>
+                        {booking.counter_offer_note && (
+                          <blockquote style={{ margin: '0.75rem 0 0', padding: '0.625rem 0.875rem', borderLeft: '2px solid rgba(201,168,76,0.35)', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.65 }}>
+                            {booking.counter_offer_note}
+                          </blockquote>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        <button
+                          onClick={handleAcceptOffer}
+                          disabled={acting}
+                          className="btn-primary"
+                          style={{ fontSize: '0.8125rem', padding: '0.6rem 1.25rem', opacity: acting ? 0.6 : 1 }}
+                        >
+                          <span>{acting ? 'Accepting…' : 'Accept this time'}</span>
+                        </button>
+                        <button
+                          onClick={() => { setMode('counter-offer'); setCounterDate(null); setCounterSlot(null); setCounterNote(''); }}
+                          className="btn-secondary"
+                          style={{ fontSize: '0.8125rem', padding: '0.6rem 1.25rem' }}
+                        >
+                          Suggest another time
+                        </button>
+                        <button
+                          onClick={() => setMode('cancel-confirm')}
+                          className="btn-secondary"
+                          style={{ fontSize: '0.8125rem', padding: '0.6rem 1.25rem', color: '#fca5a5', borderColor: 'rgba(239,68,68,0.3)' }}
+                        >
+                          Cancel booking
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Client proposed — waiting for artist */}
+                  {isCounterOffered && booking.counter_offered_by === 'client' && mode === 'view' && (
+                    <div style={{ padding: '1rem 1.25rem', background: 'rgba(154,144,130,0.06)', border: '1px solid var(--border)', borderRadius: '0.5rem' }}>
+                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-mid)', margin: '0 0 0.5rem' }}>
+                        Awaiting artist response
+                      </p>
+                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)', margin: 0, lineHeight: 1.65 }}>
+                        You proposed{' '}
+                        <strong style={{ color: 'var(--cream)' }}>
+                          {booking.counter_offer_date
+                            ? new Date(`${booking.counter_offer_date}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+                            : '—'}
+                          {booking.counter_offer_time && ` at ${fmtTime(booking.counter_offer_time)}`}
+                        </strong>
+                        . Your artist will get back to you shortly.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Action buttons — normal statuses */}
                   {canAct && mode === 'view' && (
                     <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                       {canReschedule && (
@@ -492,6 +619,102 @@ export default function BookingDetailPage() {
                       </button>
                       <button
                         onClick={() => { setMode('view'); setNewDate(null); setNewSlot(null); }}
+                        className="btn-secondary"
+                        style={{ fontSize: '0.8125rem', padding: '0.6rem 1.25rem' }}
+                      >
+                        Go back
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Counter-offer form */}
+              {mode === 'counter-offer' && (
+                <div className="card-premium">
+                  <div className="card-premium-inner">
+                    <h2 style={{
+                      fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic',
+                      fontSize: '1.25rem', fontWeight: 400, color: 'var(--cream)', margin: '0 0 1rem',
+                    }}>
+                      Suggest a different time
+                    </h2>
+                    <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.65, margin: '0 0 1.5rem' }}>
+                      Choose a date and time that works better for you and add a short note for your artist.
+                    </p>
+
+                    {booking.artist ? (
+                      <>
+                        <AvailabilityCalendar
+                          artistId={booking.artist.id}
+                          selectedDate={counterDate}
+                          onDateSelect={(d) => { setCounterDate(d); setCounterSlot(null); }}
+                          onAvailabilityLoad={setCounterAvailData}
+                        />
+                        {counterDate && (
+                          <div style={{ marginTop: '1.5rem' }}>
+                            <TimeSlotPicker
+                              date={counterDate}
+                              selectedSlot={counterSlot}
+                              onSlotSelect={setCounterSlot}
+                              slotData={counterAvailData?.slotData}
+                            />
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                        <div>
+                          <p style={label}>New date</p>
+                          <input
+                            type="date"
+                            min={new Date().toISOString().split('T')[0]}
+                            value={counterDate ?? ''}
+                            onChange={e => { setCounterDate(e.target.value); setCounterSlot(null); }}
+                            style={{ width: '100%', padding: '0.625rem 0.875rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.375rem', color: 'var(--cream)', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem' }}
+                          />
+                        </div>
+                        {counterDate && (
+                          <div>
+                            <p style={label}>Start time</p>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '0.5rem' }}>
+                              {TIME_SLOTS.map(slot => (
+                                <button
+                                  key={slot.id}
+                                  onClick={() => setCounterSlot(slot.id)}
+                                  style={{ padding: '0.625rem 0.25rem', border: counterSlot === slot.id ? '1px solid var(--gold)' : '1px solid var(--border)', borderRadius: '0.5rem', background: counterSlot === slot.id ? 'rgba(201,168,76,0.13)' : 'transparent', cursor: 'pointer', fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: counterSlot === slot.id ? 'var(--gold)' : 'var(--text)' }}
+                                >
+                                  {slot.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div style={{ marginTop: '1.5rem' }}>
+                      <p style={label}>Note for your artist</p>
+                      <textarea
+                        value={counterNote}
+                        onChange={e => setCounterNote(e.target.value)}
+                        placeholder="Let your artist know why this time works better for you…"
+                        rows={3}
+                        style={{ width: '100%', resize: 'vertical', minHeight: '5rem', padding: '0.625rem 0.875rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.375rem', color: 'var(--cream)', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', lineHeight: 1.6 }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem', flexWrap: 'wrap' }}>
+                      <button
+                        onClick={handleClientCounter}
+                        disabled={!counterDate || !counterSlot || !counterNote.trim() || acting}
+                        className="btn-primary"
+                        style={{ fontSize: '0.8125rem', padding: '0.6rem 1.25rem', opacity: (!counterDate || !counterSlot || !counterNote.trim() || acting) ? 0.4 : 1 }}
+                      >
+                        <span>{acting ? 'Sending…' : 'Send proposal'}</span>
+                      </button>
+                      <button
+                        onClick={() => { setMode('view'); setCounterDate(null); setCounterSlot(null); setCounterNote(''); }}
                         className="btn-secondary"
                         style={{ fontSize: '0.8125rem', padding: '0.6rem 1.25rem' }}
                       >

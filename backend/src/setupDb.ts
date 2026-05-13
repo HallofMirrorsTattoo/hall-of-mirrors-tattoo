@@ -176,6 +176,10 @@ ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS notify_end_time BOOLEAN NOT NULL 
 ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMP;
 ALTER TABLE "Message" ADD COLUMN IF NOT EXISTS consultation_id TEXT;
 ALTER TABLE "Consultation" ADD COLUMN IF NOT EXISTS status_updated_at TIMESTAMP;
+ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS counter_offer_date DATE;
+ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS counter_offer_time TEXT;
+ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS counter_offer_note TEXT;
+ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS counter_offered_by TEXT;
 
 CREATE TABLE IF NOT EXISTS "MedicalHistory" (
     id TEXT PRIMARY KEY,

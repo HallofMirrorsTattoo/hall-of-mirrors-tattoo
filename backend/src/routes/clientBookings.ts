@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import pkg from 'pg';
 import { clientAuthMiddleware } from '../middleware/clientAuth.js';
+import { sendClientCounterOfferToArtist, sendOfferAcceptedToArtist } from '../services/emailService.js';
 
 const { Client } = pkg;
 const router = Router();
@@ -23,6 +24,8 @@ router.get('/', async (req: Request, res: Response) => {
               b.appointment_time, b.appointment_status,
               b.deposit_amount as deposit_price,
               b.final_price_estimate as final_price,
+              b.counter_offer_date, b.counter_offer_time,
+              b.counter_offer_note, b.counter_offered_by,
               b.created_at,
               a.full_name as artist_name, a.instagram_handle
        FROM "Booking" b
@@ -73,6 +76,8 @@ router.get('/:id', async (req: Request, res: Response) => {
               b.tattoo_description as design_notes,
               b.placement as tattoo_placement,
               b.estimated_duration_minutes as estimated_duration,
+              b.counter_offer_date, b.counter_offer_time,
+              b.counter_offer_note, b.counter_offered_by,
               b.created_at, b.updated_at,
               a.id as artist_id, a.full_name as artist_name, a.specialties, a.bio, a.instagram_handle
        FROM "Booking" b
@@ -197,6 +202,136 @@ router.patch('/:id', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Update booking error:', error);
     res.status(500).json({ success: false, error: 'Failed to update booking' });
+  } finally {
+    await client.end();
+  }
+});
+
+// POST /api/client/bookings/:id/counter-offer  (client proposes a different time)
+router.post('/:id/counter-offer', async (req: Request, res: Response) => {
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  try {
+    if (!req.user) return res.status(401).json({ success: false, error: 'Not authenticated' });
+
+    const { id } = req.params;
+    const { counter_offer_date, counter_offer_time, counter_offer_note } = req.body;
+
+    if (!counter_offer_date || !/^\d{4}-\d{2}-\d{2}$/.test(counter_offer_date)) {
+      return res.status(400).json({ success: false, error: 'counter_offer_date must be YYYY-MM-DD' });
+    }
+    if (!counter_offer_time || !/^\d{2}:\d{2}$/.test(counter_offer_time)) {
+      return res.status(400).json({ success: false, error: 'counter_offer_time must be HH:MM' });
+    }
+    if (!counter_offer_note || !counter_offer_note.trim()) {
+      return res.status(400).json({ success: false, error: 'A note explaining the counter-offer is required' });
+    }
+
+    await client.connect();
+
+    const ownerCheck = await client.query(
+      `SELECT b.id, b.appointment_status, b.counter_offered_by,
+              b.booking_reference, a.email as artist_email, a.full_name as artist_name
+       FROM "Booking" b
+       LEFT JOIN "User" u ON b.user_id = u.id
+       LEFT JOIN "Artist" a ON b.artist_id = a.id
+       WHERE b.id = $1 AND (b.user_id = $2 OR u.email = $3)`,
+      [id, req.user.id, req.user.email]
+    );
+
+    if (ownerCheck.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Booking not found' });
+    }
+
+    const booking = ownerCheck.rows[0];
+    if (booking.appointment_status !== 'counter_offered' || booking.counter_offered_by !== 'artist') {
+      return res.status(400).json({ success: false, error: 'No artist counter-offer to respond to' });
+    }
+
+    await client.query(
+      `UPDATE "Booking"
+       SET counter_offer_date = $1, counter_offer_time = $2, counter_offer_note = $3,
+           counter_offered_by = 'client', updated_at = NOW()
+       WHERE id = $4`,
+      [counter_offer_date, counter_offer_time, counter_offer_note.trim(), id]
+    );
+
+    if (booking.artist_email) {
+      const clientName = `${req.user.first_name || ''} ${req.user.last_name || ''}`.trim() || req.user.email;
+      sendClientCounterOfferToArtist({
+        artistEmail: booking.artist_email,
+        clientName,
+        bookingReference: booking.booking_reference,
+        proposedDate: counter_offer_date,
+        proposedTime: counter_offer_time,
+        note: counter_offer_note.trim(),
+      }).catch(() => {});
+    }
+
+    res.json({ success: true, message: 'Counter-offer sent to artist' });
+  } catch (error) {
+    console.error('Client counter-offer error:', error);
+    res.status(500).json({ success: false, error: 'Failed to send counter-offer' });
+  } finally {
+    await client.end();
+  }
+});
+
+// POST /api/client/bookings/:id/accept-offer  (client accepts artist's counter-offer)
+router.post('/:id/accept-offer', async (req: Request, res: Response) => {
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  try {
+    if (!req.user) return res.status(401).json({ success: false, error: 'Not authenticated' });
+
+    const { id } = req.params;
+    await client.connect();
+
+    const ownerCheck = await client.query(
+      `SELECT b.id, b.appointment_status, b.counter_offered_by,
+              b.counter_offer_date, b.counter_offer_time, b.booking_reference,
+              a.email as artist_email, a.full_name as artist_name
+       FROM "Booking" b
+       LEFT JOIN "User" u ON b.user_id = u.id
+       LEFT JOIN "Artist" a ON b.artist_id = a.id
+       WHERE b.id = $1 AND (b.user_id = $2 OR u.email = $3)`,
+      [id, req.user.id, req.user.email]
+    );
+
+    if (ownerCheck.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Booking not found' });
+    }
+
+    const booking = ownerCheck.rows[0];
+    if (booking.appointment_status !== 'counter_offered' || booking.counter_offered_by !== 'artist') {
+      return res.status(400).json({ success: false, error: 'No artist counter-offer to accept' });
+    }
+
+    await client.query(
+      `UPDATE "Booking"
+       SET appointment_date_time = (counter_offer_date::text || 'T' || counter_offer_time || ':00')::timestamp,
+           appointment_time = counter_offer_time,
+           appointment_status = 'pending_consent',
+           counter_offer_date = NULL, counter_offer_time = NULL,
+           counter_offer_note = NULL, counter_offered_by = NULL,
+           updated_at = NOW()
+       WHERE id = $1`,
+      [id]
+    );
+
+    if (booking.artist_email) {
+      const clientName = `${req.user.first_name || ''} ${req.user.last_name || ''}`.trim() || req.user.email;
+      sendOfferAcceptedToArtist({
+        artistEmail: booking.artist_email,
+        clientName,
+        bookingReference: booking.booking_reference,
+        confirmedDate: booking.counter_offer_date,
+        confirmedTime: booking.counter_offer_time,
+      }).catch(() => {});
+    }
+
+    res.json({ success: true, message: 'Offer accepted — booking updated' });
+  } catch (error) {
+    console.error('Client accept-offer error:', error);
+    res.status(500).json({ success: false, error: 'Failed to accept offer' });
   } finally {
     await client.end();
   }
