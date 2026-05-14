@@ -3,8 +3,37 @@ import AnimatedSection from '../components/AnimatedSection';
 
 export const metadata = {
   title: 'Our Artists | Hall of Mirrors Tattoo Studio Liverpool',
-  description: 'Meet the artists at Hall of Mirrors — a private tattoo studio on Castle Street, Liverpool. Robyn specialises in neo-traditional tattooing and bespoke custom designs. Book a consultation.',
+  description: 'Meet the artists at Hall of Mirrors — a private tattoo studio on Castle Street, Liverpool. Bespoke neo-traditional tattooing, colour realism, and custom design.',
 };
+
+interface Artist {
+  id: string;
+  full_name: string;
+  specialties: string | null;
+  years_experience: number | null;
+  bio: string | null;
+  instagram_handle: string | null;
+}
+
+const API = process.env.NEXT_PUBLIC_API_URL || 'https://hall-of-mirrors-tattoo-production.up.railway.app';
+
+async function fetchArtists(): Promise<Artist[]> {
+  try {
+    const res = await fetch(`${API}/api/artist`, { next: { revalidate: 3600 } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.artists ?? [];
+  } catch {
+    return [];
+  }
+}
+
+function toSlug(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+}
+
+const GALLERY_LABELS = ['Neo-Traditional', 'Cover-Up', 'Colour Work', 'Fine Detail', 'Portrait', 'Custom Design'];
+const ROMANS = ['I', 'II', 'III', 'IV', 'V', 'VI'];
 
 const styles = [
   {
@@ -29,14 +58,193 @@ const styles = [
   },
 ];
 
-const robynGallery = [
-  { roman: 'I',   label: 'Neo-Traditional' },
-  { roman: 'II',  label: 'Cover-Up' },
-  { roman: 'III', label: 'Colour Work' },
-  { roman: 'IV',  label: 'Fine Detail' },
-];
+function ArtistSection({ artist }: { artist: Artist }) {
+  const slug = toSlug(artist.full_name);
+  const igUrl = artist.instagram_handle
+    ? `https://instagram.com/${artist.instagram_handle.replace('@', '')}`
+    : null;
+  const firstName = artist.full_name.split(' ')[0];
+  const hasProfile = Boolean(artist.bio);
+  const specialtyTags = artist.specialties
+    ? artist.specialties.split(',').map((s) => s.trim()).filter(Boolean)
+    : [];
 
-export default function Portfolio() {
+  return (
+    <section className="px-6 pb-28 md:pb-40">
+      <div className="max-w-6xl mx-auto">
+        {!hasProfile && (
+          <div style={{ marginBottom: '2.5rem' }}>
+            <span style={{
+              fontFamily: '"DM Mono", monospace',
+              fontSize: '0.6875rem',
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase' as const,
+              color: 'var(--gold)',
+              border: '1px solid rgba(201,168,76,0.3)',
+              borderRadius: '0.25rem',
+              padding: '0.3rem 0.75rem',
+              backgroundColor: 'rgba(201,168,76,0.05)',
+            }}>
+              Coming Soon
+            </span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-20 items-start">
+          {/* Left — Bio */}
+          <AnimatedSection>
+            <p className="eyebrow">Resident Artist</p>
+            <h2 style={{
+              fontFamily: '"Cormorant Garamond", serif',
+              fontStyle: 'italic',
+              fontWeight: 300,
+              fontSize: 'clamp(4rem, 9vw, 7rem)',
+              color: 'var(--gold)',
+              lineHeight: 0.95,
+              letterSpacing: '-0.03em',
+              marginBottom: '1.75rem',
+            }}>
+              {firstName}
+            </h2>
+
+            {specialtyTags.length > 0 ? (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '2rem' }}>
+                {specialtyTags.map((tag) => (
+                  <span key={tag} style={{
+                    fontFamily: '"DM Mono", monospace',
+                    fontSize: '0.6875rem',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase' as const,
+                    color: 'var(--gold)',
+                    border: '1px solid rgba(201,168,76,0.25)',
+                    borderRadius: '0.25rem',
+                    padding: '0.3rem 0.7rem',
+                    backgroundColor: 'rgba(201,168,76,0.05)',
+                  }}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            ) : !hasProfile && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '2rem' }}>
+                <span style={{
+                  fontFamily: '"DM Mono", monospace',
+                  fontSize: '0.6875rem',
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase' as const,
+                  color: 'var(--text-low)',
+                  border: '1px solid rgba(201,168,76,0.1)',
+                  borderRadius: '0.25rem',
+                  padding: '0.3rem 0.7rem',
+                  backgroundColor: 'rgba(201,168,76,0.03)',
+                }}>
+                  Profile coming soon
+                </span>
+              </div>
+            )}
+
+            {artist.bio ? (
+              <p style={{ marginBottom: '2.5rem', whiteSpace: 'pre-line' }}>{artist.bio}</p>
+            ) : (
+              <p style={{ marginBottom: '2.5rem' }}>
+                {firstName} joins the Hall of Mirrors studio bringing their own distinct approach
+                to tattooing. Full artist profile and booking availability coming soon —
+                follow us on Instagram for updates.
+              </p>
+            )}
+
+            {artist.years_experience && (
+              <div style={{ display: 'flex', gap: '2.5rem', marginBottom: '2.5rem' }}>
+                <div>
+                  <p style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1.75rem', fontWeight: 400, color: 'var(--gold)', lineHeight: 1, marginBottom: '0.25rem' }}>
+                    {artist.years_experience}+
+                  </p>
+                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: 'var(--text-low)', maxWidth: 'none' }}>
+                    Years Experience
+                  </p>
+                </div>
+                <div>
+                  <p style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1.75rem', fontWeight: 400, color: 'var(--gold)', lineHeight: 1, marginBottom: '0.25rem' }}>
+                    100%
+                  </p>
+                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase' as const, color: 'var(--text-low)', maxWidth: 'none' }}>
+                    Custom Designs
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              {hasProfile ? (
+                <>
+                  <Link href={`/artists/${slug}`} className="btn-secondary">
+                    View full profile
+                  </Link>
+                  <Link href={`/booking?artist=${artist.id}`} className="btn-primary">
+                    <span>Book with {firstName}</span>
+                    <span className="btn-icon" aria-hidden="true">↗</span>
+                  </Link>
+                </>
+              ) : (
+                <Link href="/booking" className="btn-secondary">Get Notified</Link>
+              )}
+              {igUrl && (
+                <a href={igUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary">
+                  Instagram ↗
+                </a>
+              )}
+            </div>
+          </AnimatedSection>
+
+          {/* Right — Gallery grid */}
+          <AnimatedSection delay={180}>
+            {hasProfile ? (
+              <div className="grid grid-cols-2 gap-3">
+                {GALLERY_LABELS.slice(0, 4).map((label, i) => (
+                  <div
+                    key={label}
+                    className="card-premium relative overflow-hidden"
+                    style={{ minHeight: '240px', aspectRatio: '3/4' }}
+                  >
+                    <div className="card-premium-inner h-full flex flex-col items-center justify-center" style={{ background: 'linear-gradient(160deg, rgba(29,26,21,0.8) 0%, rgba(14,12,9,0.6) 100%)' }}>
+                      <span
+                        aria-hidden="true"
+                        style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '4rem', fontWeight: 300, color: 'var(--gold)', opacity: 0.06, lineHeight: 1, userSelect: 'none', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
+                      >
+                        {ROMANS[i]}
+                      </span>
+                      <p className="eyebrow" style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>{label}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="card-premium relative overflow-hidden" style={{ minHeight: '480px' }}>
+                <div className="card-premium-inner h-full flex flex-col items-center justify-center" style={{ background: 'linear-gradient(160deg, rgba(29,26,21,0.6) 0%, rgba(14,12,9,0.5) 100%)', minHeight: '480px' }}>
+                  <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '0.9375rem', color: 'rgba(201,168,76,0.3)', letterSpacing: '0.05em', textAlign: 'center', position: 'relative', zIndex: 1 }}>
+                    Artist profile coming soon
+                  </p>
+                </div>
+              </div>
+            )}
+            {hasProfile && (
+              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: 'var(--text-low)', textAlign: 'center', marginTop: '1rem' }}>
+                Photography coming soon ·{' '}
+                {igUrl ? (
+                  <a href={igUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(201,168,76,0.5)', textDecoration: 'none' }}>See work on Instagram ↗</a>
+                ) : 'See work on Instagram'}
+              </p>
+            )}
+          </AnimatedSection>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default async function Portfolio() {
+  const artists = await fetchArtists();
+
   return (
     <div style={{ backgroundColor: 'var(--bg)', minHeight: '100vh' }}>
 
@@ -66,252 +274,30 @@ export default function Portfolio() {
         </div>
       </section>
 
-      {/* ── ROBYN ─────────────────────────────────────────────────────────── */}
-      <section className="px-6 pb-28 md:pb-40">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-20 items-start">
-
-            {/* Left — Bio */}
-            <AnimatedSection>
-              <p className="eyebrow">Resident Artist</p>
-              <h2 style={{
-                fontFamily: '"Cormorant Garamond", serif',
-                fontStyle: 'italic',
-                fontWeight: 300,
-                fontSize: 'clamp(4rem, 9vw, 7rem)',
-                color: 'var(--gold)',
-                lineHeight: 0.95,
-                letterSpacing: '-0.03em',
-                marginBottom: '1.75rem',
-              }}>
-                Robyn
-              </h2>
-
-              {/* Specialty pills */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '2rem' }}>
-                {['Neo-Traditional', 'Cover-Ups', 'Colour Realism', 'Bespoke Design'].map((tag) => (
-                  <span
-                    key={tag}
-                    style={{
-                      fontFamily: '"DM Mono", monospace',
-                      fontSize: '0.6875rem',
-                      letterSpacing: '0.1em',
-                      textTransform: 'uppercase',
-                      color: 'var(--gold)',
-                      border: '1px solid rgba(201,168,76,0.25)',
-                      borderRadius: '0.25rem',
-                      padding: '0.3rem 0.7rem',
-                      backgroundColor: 'rgba(201,168,76,0.05)',
-                    }}
-                  >
-                    {tag}
-                  </span>
-                ))}
+      {/* ── ARTIST SECTIONS ───────────────────────────────────────────────── */}
+      {artists.map((artist, index) => (
+        <div key={artist.id}>
+          <ArtistSection artist={artist} />
+          {index < artists.length - 1 && (
+            <div className="max-w-5xl mx-auto px-6">
+              <div className="section-divider">
+                <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.35em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.35)' }}>HOM</span>
               </div>
-
-              <p style={{ marginBottom: '1.25rem' }}>
-                Robyn has been tattooing for over eight years, building a practice rooted in
-                neo-traditional technique — bold outlines, rich colour palettes, and imagery
-                drawn from art history, natural forms, and personal narrative. Based at Hall
-                of Mirrors on Castle Street, Liverpool, she works exclusively on custom,
-                bespoke designs. No flash, no off-the-shelf pieces.
-              </p>
-              <p style={{ marginBottom: '2.5rem' }}>
-                Every project starts with a detailed consultation. Robyn works closely with
-                each client to understand placement, style, and the story behind the piece
-                before anything is sketched.
-              </p>
-
-              {/* Stats */}
-              <div className="flex gap-10 mb-10">
-                {([
-                  { num: '8+',    label: 'Years' },
-                  { num: '100%',  label: 'Custom Designs' },
-                  { num: '1:1',   label: 'Every Client' },
-                ] as const).map((s) => (
-                  <div key={s.label}>
-                    <p style={{
-                      fontFamily: '"Cormorant Garamond", serif',
-                      fontSize: '1.75rem',
-                      fontWeight: 400,
-                      color: 'var(--gold)',
-                      lineHeight: 1,
-                      marginBottom: '0.25rem',
-                    }}>
-                      {s.num}
-                    </p>
-                    <p style={{
-                      fontFamily: '"DM Mono", monospace',
-                      fontSize: '0.75rem',
-                      letterSpacing: '0.15em',
-                      textTransform: 'uppercase',
-                      color: 'var(--text-low)',
-                      maxWidth: 'none',
-                    }}>
-                      {s.label}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              {/* CTAs */}
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <Link href="/booking" className="btn-primary">
-                  <span>Book with Robyn</span>
-                  <span className="btn-icon" aria-hidden="true">↗</span>
-                </Link>
-                <Link href="/booking" className="btn-secondary">Request Consultation</Link>
-              </div>
-            </AnimatedSection>
-
-            {/* Right — Gallery 2×2 */}
-            <AnimatedSection delay={180}>
-              <div className="grid grid-cols-2 gap-3">
-                {robynGallery.map((item) => (
-                  <div
-                    key={item.roman}
-                    className="card-premium relative overflow-hidden"
-                    style={{ minHeight: '240px', aspectRatio: '3/4' }}
-                  >
-                    <div className="card-premium-inner h-full flex flex-col items-center justify-center" style={{ background: 'linear-gradient(160deg, rgba(29,26,21,0.8) 0%, rgba(14,12,9,0.6) 100%)' }}>
-                      <span
-                        style={{
-                          fontFamily: '"Cormorant Garamond", serif',
-                          fontStyle: 'italic',
-                          fontSize: '4rem',
-                          fontWeight: 300,
-                          color: 'var(--gold)',
-                          opacity: 0.06,
-                          lineHeight: 1,
-                          userSelect: 'none',
-                          position: 'absolute',
-                          top: '50%',
-                          left: '50%',
-                          transform: 'translate(-50%, -50%)',
-                        }}
-                        aria-hidden="true"
-                      >
-                        {item.roman}
-                      </span>
-                      <p className="eyebrow" style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-                        {item.label}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </AnimatedSection>
-
-          </div>
+            </div>
+          )}
         </div>
-      </section>
+      ))}
 
-      {/* HOM Divider */}
-      <div className="max-w-5xl mx-auto px-6">
-        <div className="section-divider">
-          <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.35em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.35)' }}>HOM</span>
-        </div>
-      </div>
-
-      {/* ── CHRISTINA ─────────────────────────────────────────────────────── */}
-      <section className="px-6 py-28 md:py-40">
-        <div className="max-w-6xl mx-auto">
-
-          {/* Coming Soon badge */}
-          <div style={{ marginBottom: '2.5rem' }}>
-            <span style={{
-              fontFamily: '"DM Mono", monospace',
-              fontSize: '0.6875rem',
-              letterSpacing: '0.2em',
-              textTransform: 'uppercase',
-              color: 'var(--gold)',
-              border: '1px solid rgba(201,168,76,0.3)',
-              borderRadius: '0.25rem',
-              padding: '0.3rem 0.75rem',
-              backgroundColor: 'rgba(201,168,76,0.05)',
-            }}>
-              Coming Soon
-            </span>
+      {/* Fallback if API is down */}
+      {artists.length === 0 && (
+        <section className="px-6 pb-28">
+          <div className="max-w-6xl mx-auto" style={{ textAlign: 'center', padding: '4rem 0' }}>
+            <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+              Artist profiles loading…
+            </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-20 items-start">
-
-            {/* Left — Placeholder bio */}
-            <AnimatedSection>
-              <p className="eyebrow">Resident Artist</p>
-              <h2 style={{
-                fontFamily: '"Cormorant Garamond", serif',
-                fontStyle: 'italic',
-                fontWeight: 300,
-                fontSize: 'clamp(4rem, 9vw, 7rem)',
-                color: 'var(--gold)',
-                lineHeight: 0.95,
-                letterSpacing: '-0.03em',
-                marginBottom: '1.75rem',
-              }}>
-                Christina
-              </h2>
-
-              {/* Placeholder pill */}
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '2rem' }}>
-                <span style={{
-                  fontFamily: '"DM Mono", monospace',
-                  fontSize: '0.6875rem',
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  color: 'var(--text-low)',
-                  border: '1px solid rgba(201,168,76,0.1)',
-                  borderRadius: '0.25rem',
-                  padding: '0.3rem 0.7rem',
-                  backgroundColor: 'rgba(201,168,76,0.03)',
-                }}>
-                  Placeholder — Coming Soon
-                </span>
-              </div>
-
-              <p style={{ marginBottom: '2.5rem' }}>
-                Christina joins the Hall of Mirrors studio bringing her own distinct approach
-                to tattooing. Full artist profile and booking availability coming soon —
-                follow us on Instagram for updates.
-              </p>
-
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <Link href="/booking" className="btn-secondary">Get Notified</Link>
-              </div>
-            </AnimatedSection>
-
-            {/* Right — single large placeholder */}
-            <AnimatedSection delay={180}>
-              <div
-                className="card-premium relative overflow-hidden"
-                style={{ minHeight: '480px' }}
-              >
-                <div
-                  className="card-premium-inner h-full flex flex-col items-center justify-center"
-                  style={{
-                    background: 'linear-gradient(160deg, rgba(29,26,21,0.6) 0%, rgba(14,12,9,0.5) 100%)',
-                    minHeight: '480px',
-                  }}
-                >
-                  <p style={{
-                    fontFamily: '"Cormorant Garamond", serif',
-                    fontStyle: 'italic',
-                    fontSize: '0.9375rem',
-                    color: 'rgba(201,168,76,0.3)',
-                    letterSpacing: '0.05em',
-                    textAlign: 'center',
-                    position: 'relative',
-                    zIndex: 1,
-                  }}>
-                    Artist profile coming soon
-                  </p>
-                </div>
-              </div>
-            </AnimatedSection>
-
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* HOM Divider */}
       <div className="max-w-5xl mx-auto px-6">
