@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllActiveArtists, getArtistConsultations, respondToConsultation } from '../controllers/artistController.js';
+import { getAllActiveArtists, getArtistBySlug, getArtistConsultations, respondToConsultation, updateClientNotes } from '../controllers/artistController.js';
 import {
   getArtistBookings,
   getArtistBookingById,
@@ -26,5 +26,9 @@ router.post('/bookings/:id/accept-offer', authMiddleware, artistAcceptClientOffe
 router.post('/bookings/:id/price-offer', authMiddleware, artistPriceOffer);
 router.get('/consultations', authMiddleware, getArtistConsultations);
 router.patch('/consultations/:id', authMiddleware, respondToConsultation);
+router.patch('/clients/:userId/notes', authMiddleware, updateClientNotes);
+
+// Public slug route — must be last to avoid intercepting named routes above
+router.get('/:slug', getArtistBySlug);
 
 export default router;

@@ -13,7 +13,8 @@ export async function getArtistConsultations(req: Request, res: Response) {
     await client.connect();
     const result = await client.query(
       `SELECT c.consultation_id, c.message, c.preferred_dates, c.status, c.artist_response, c.created_at,
-              u.id as user_id, u.first_name, u.last_name, u.email
+              u.id as user_id, u.first_name, u.last_name, u.email,
+              (SELECT COUNT(*) FROM "Message" m WHERE m.consultation_id = c.consultation_id AND m.sender_type = 'client' AND m.read_at IS NULL)::int AS unread_count
        FROM "Consultation" c
        JOIN "User" u ON c.user_id = u.id
        WHERE c.artist_id = $1
@@ -96,6 +97,27 @@ export async function respondToConsultation(req: Request, res: Response) {
   }
 }
 
+export async function updateClientNotes(req: Request, res: Response) {
+  const db = new Client({ connectionString: process.env.DATABASE_URL });
+  try {
+    if (!req.artist) return res.status(401).json({ success: false, error: 'Not authenticated' });
+    const { userId } = req.params;
+    const { notes } = req.body;
+
+    await db.connect();
+    await db.query(
+      `UPDATE "User" SET artist_notes = $1 WHERE id = $2`,
+      [notes ?? null, userId]
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error('updateClientNotes error:', error);
+    res.status(500).json({ success: false, error: 'Failed to save notes' });
+  } finally {
+    await db.end();
+  }
+}
+
 export async function getAllActiveArtists(req: Request, res: Response) {
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
@@ -123,5 +145,34 @@ export async function getAllActiveArtists(req: Request, res: Response) {
     });
   } finally {
     await client.end();
+  }
+}
+
+function toSlug(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+}
+
+export async function getArtistBySlug(req: Request, res: Response) {
+  const db = new Client({ connectionString: process.env.DATABASE_URL });
+  try {
+    await db.connect();
+    const result = await db.query(
+      `SELECT id, full_name, specialties, years_experience, bio, instagram_handle
+       FROM "Artist" WHERE is_active = true ORDER BY full_name ASC`
+    );
+    const { slug } = req.params;
+    const artist = result.rows.find((a: any) => toSlug(a.full_name) === slug);
+    if (!artist) return res.status(404).json({ success: false, error: 'Artist not found' });
+
+    const bookingCount = await db.query(
+      `SELECT COUNT(*)::int AS total FROM "Booking" WHERE artist_id = $1 AND appointment_status IN ('confirmed','completed')`,
+      [artist.id]
+    );
+    res.json({ success: true, artist: { ...artist, booking_count: bookingCount.rows[0]?.total ?? 0 } });
+  } catch (error) {
+    console.error('getArtistBySlug error:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch artist' });
+  } finally {
+    await db.end();
   }
 }

@@ -2,7 +2,7 @@
 ### Hall of Mirrors Tattoo — Master Record
 
 **Last Updated:** 2026-05-14
-**Status:** Production live · All Phases 0–3 shipped · Phase 4+ roadmap active
+**Status:** Production live · Phases 0–5, 6.1, 6.4, 6.5 shipped · Phase 6.2+ roadmap active
 
 > This is the single source of truth for all past work, current state, and future plans.
 > Read this at the start of every session. Update it at the end of every session.
@@ -176,7 +176,7 @@ cd frontend && npm run dev
 
 ## Current State (2026-05-14)
 
-All Phases 0–3 are shipped and in production. The platform handles the full client journey: discovery → booking → consent → messaging → session → rebook.
+Phases 0–5, 6.1, 6.4, and 6.5 are shipped. Phase 5: automated emails + client notes + real unread badges. Phase 6.1: 3-step booking wizard. Phase 6.4: dynamic `/artists/[slug]` pages. Phase 6.5: sitemap, robots, OG image, JSON-LD schemas (LocalBusiness + Reviews).
 
 **Items still pending user action (not code blockers):**
 - [ ] Verify `studio@hallofmirrorstattoo.com` as SendGrid Single Sender
@@ -232,43 +232,43 @@ Files: booking detail backend response + artist dashboard panel
 
 ---
 
-### Phase 5 — Small Backend Additions
+### Phase 5 — Small Backend Additions ✅ Complete (2026-05-14)
 
-**5.1 Post-session review prompt email**
-48hrs after `completed`: send "How did it go? Leave Robyn a Google Review." link.
-- New column: `review_prompt_sent_at TIMESTAMPTZ` on Booking
-- Extend `reminderJob.ts` with check
-- New email: `sendReviewPromptToClient(booking, googleReviewUrl)`
-- Blocked on: Google Review URL (see Phase 8 — User Actions)
+**5.1 Post-session review prompt email** — BLOCKED on Google Review URL from Robyn (see Phase 8)
 
-**5.2 Weekly revenue summary email**
-Every Monday: sessions this week, estimated revenue, upcoming confirmed bookings.
-New email: `sendWeeklySummaryToArtist(stats)`
+**5.2 Weekly revenue summary email** ✅
+- `sendWeeklySummaryToArtist` added to `emailService.ts`
+- `sendWeeklySummaries()` in `reminderJob.ts` — Monday-only check, `weekly_summary_last_sent DATE` on Artist for idempotency
+- New column: `weekly_summary_last_sent DATE` on `Artist`
 
-**5.3 Pre-appointment intake check**
-3 days before: "Anything changed since your last visit? Any new medications or health changes?"
-- New column: `intake_sent_at TIMESTAMPTZ` on Booking
-- New email: `sendIntakeCheckToClient(booking)`
+**5.3 Pre-appointment intake check** ✅
+- `sendIntakeCheckToClient` added to `emailService.ts`
+- `sendIntakeChecks()` in `reminderJob.ts` — fires 3 days before, `intake_sent_at` prevents duplicates
+- New column: `intake_sent_at TIMESTAMP` on `Booking`
 
-**5.4 Client persistent notes (artist-side)**
-Artist saves notes about a *client* (not a booking) — e.g., "latex allergy", "prefers short sessions". Persists across all their bookings.
-- New column: `artist_notes TEXT` on `User` table
+**5.4 Client persistent notes (artist-side)** ✅
+- New column: `artist_notes TEXT` on `User` table (returned as `client_artist_notes` in booking queries)
 - New endpoint: `PATCH /api/artist/clients/:userId/notes`
-- Frontend: editable text area below private booking notes in artist detail panel
+- Frontend: "Client notes" textarea in artist booking detail panel, below private booking notes. Saves on User, not Booking. Persists across all bookings for that client.
 
-**5.5 Unread message count per thread**
-`read_at` already exists on Message. Expose per-thread unread count from messages endpoints. Drive "Consultations" tab badge from actual unread messages.
+**5.5 Unread message count per thread** ✅
+- `unread_count` subquery added to `getArtistConsultations` (count unread client → artist messages)
+- `unread_artist_count` subquery added to client consultations GET endpoint
+- Artist "Consultations" tab badge now = sum of real unread message counts
+- Client "Consultations" tab badge now = sum of unread artist messages across all threads
 
 ---
 
 ### Phase 6 — New Features (New DB Tables)
 
-**6.1 Multi-step booking form**
-Refactor `/booking` into a 3-step wizard:
-- Step 1: Your details (name, email, phone)
-- Step 2: Design + date/time
-- Step 3: Review & confirm (summary, cancellation policy acknowledgment, submit)
-No backend changes — same `POST /api/bookings`. Add progress indicator. Reduces mobile abandonment.
+**6.1 Multi-step booking form** ✅ Complete (2026-05-14)
+3-step wizard on `/booking`:
+- Step 1: Your details (name, email, phone) — validates before advancing
+- Step 2: Artist selector + calendar/slot picker + design fields
+- Step 3: Summary card, payment preference, policy acknowledgment checkbox, submit
+- Consultation mode stays 2-step (details → message)
+- `StepIndicator` component with gold active/done states, animated with `.tab-content`
+- No backend changes — same `POST /api/bookings`
 
 **6.2 Cancellation waitlist**
 Client joins waitlist for cancelled slots. When a confirmed booking cancels, notify waitlisted clients.
@@ -281,17 +281,20 @@ Edit hours, deposit amount, cancellation policy, social handles — currently ha
 - New endpoints: `GET/PATCH /api/artist/studio-settings`
 - New tab or page in artist dashboard
 
-**6.4 Per-artist portfolio page `/artists/[slug]`**
-Dynamic route: bio, specialties, years experience, Instagram, gallery placeholder, "Book with [name]" CTA.
-- Frontend only: `app/artists/[slug]/page.tsx` + `GET /api/artists/:slug`
-- `/portfolio` page already has static Robyn content — this makes it dynamic
+**6.4 Per-artist portfolio page `/artists/[slug]`** ✅ Complete (2026-05-14)
+- Server component at `app/artists/[slug]/page.tsx` — fetches from `GET /api/artist/:slug`
+- Backend: `getArtistBySlug` in `artistController.ts`, slug = `full_name.toLowerCase().replace(/\s+/g, '-')`
+- Shows portrait placeholder, bio, specialties, years experience, Instagram link, booking_count, gallery placeholder grid, "Book with [name]" CTA
+- Route ordering: `/:slug` registered LAST in `routes/artists.ts` — specific named routes (`/bookings`, `/consultations`) take priority
 
-**6.5 SEO foundations**
-- `app/sitemap.ts` — Next.js 14 dynamic sitemap
-- `app/robots.ts` — robots.txt
-- JSON-LD LocalBusiness schema on homepage
-- JSON-LD Review schema on `/testimonials`
-- `app/opengraph-image.tsx` — OG image
+**6.5 SEO foundations** ✅ Complete (2026-05-14)
+- `app/sitemap.ts` — dynamic sitemap, fetches artist slugs from API at build time
+- `app/robots.ts` — disallows `/client/` and `/artist/` (private portals)
+- `app/opengraph-image.tsx` — edge-rendered OG image with brand treatment
+- JSON-LD LocalBusiness + TattooShop schema injected in homepage
+- JSON-LD AggregateRating + Review schema injected in `/testimonials`
+- OpenGraph metadata added to homepage and testimonials
+- Metadata export added to testimonials page (was missing title/description)
 
 **6.6 Instagram portfolio embed**
 oEmbed API, no API key. Pull last 9 posts from Robyn's Instagram.

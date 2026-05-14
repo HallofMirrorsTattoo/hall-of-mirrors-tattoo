@@ -30,25 +30,72 @@ const BookingSchema = z.object({
 
 type BookingFormData = z.infer<typeof BookingSchema>;
 
-const eyebrow: React.CSSProperties = {
-  fontFamily: '"DM Mono", monospace',
-  fontSize: '0.75rem',
-  letterSpacing: '0.22em',
-  textTransform: 'uppercase',
-  color: 'rgba(201,168,76,0.85)',
-  display: 'block',
-  marginBottom: '1.25rem',
-};
+const mono: React.CSSProperties = { fontFamily: '"DM Mono", monospace' };
+const serif: React.CSSProperties = { fontFamily: '"Cormorant Garamond", serif' };
 
 const divider: React.CSSProperties = {
   border: 'none',
   borderTop: '1px solid var(--border)',
-  margin: '1.5rem 0',
+  margin: '1.75rem 0',
 };
+
+function fmtSlot(slot: string): string {
+  const h = parseInt(slot.substring(0, 2), 10);
+  if (h < 12) return `${h}am`;
+  if (h === 12) return '12pm';
+  return `${h - 12}pm`;
+}
+
+function StepIndicator({ step, total, labels }: { step: number; total: number; labels: string[] }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, marginBottom: '2rem' }}>
+      {Array.from({ length: total }, (_, i) => {
+        const n = i + 1;
+        const active = n === step;
+        const done = n < step;
+        return (
+          <div key={n} style={{ display: 'flex', alignItems: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.375rem' }}>
+              <div style={{
+                width: '2rem', height: '2rem', borderRadius: '50%',
+                border: `1px solid ${active || done ? 'var(--gold)' : 'var(--border)'}`,
+                background: done ? 'var(--gold)' : active ? 'rgba(201,168,76,0.12)' : 'transparent',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.25s ease',
+              }}>
+                {done ? (
+                  <span style={{ ...mono, fontSize: '0.75rem', color: 'var(--bg)' }}>✓</span>
+                ) : (
+                  <span style={{ ...mono, fontSize: '0.72rem', color: active ? 'var(--gold)' : 'var(--text-low)' }}>{n}</span>
+                )}
+              </div>
+              <span style={{ ...mono, fontSize: '0.6rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: active ? 'var(--gold)' : done ? 'rgba(201,168,76,0.5)' : 'var(--text-low)', whiteSpace: 'nowrap' }}>
+                {labels[i]}
+              </span>
+            </div>
+            {n < total && (
+              <div style={{ width: '3.5rem', height: '1px', background: n < step ? 'var(--gold)' : 'var(--border)', margin: '0 0.375rem 1.25rem', opacity: 0.5, transition: 'background 0.25s ease' }} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '0.75rem 0', borderBottom: '1px solid var(--border)', gap: '1rem' }}>
+      <span style={{ ...mono, fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', flexShrink: 0 }}>{label}</span>
+      <span style={{ fontSize: '0.875rem', color: 'var(--text)', textAlign: 'right', lineHeight: 1.5 }}>{value}</span>
+    </div>
+  );
+}
 
 export default function BookingPage() {
   const { user, accessToken, activate } = useClientAuth();
   const [formMode, setFormMode] = useState<'booking' | 'consultation'>('booking');
+  const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting]   = useState(false);
   const [submitStatus, setSubmitStatus]   = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage]   = useState('');
@@ -61,9 +108,8 @@ export default function BookingPage() {
   const [confirmedSlot, setConfirmedSlot]         = useState<string | null>(null);
   const [confirmedArtist, setConfirmedArtist]     = useState('');
 
-  // Captured form data for post-booking account activation
+  // Post-booking account activation
   const [capturedEmail, setCapturedEmail]           = useState('');
-  // firstName/lastName/phone captured for future use (e.g. pre-filling profile)
   const [, setCapturedFirstName] = useState('');
   const [, setCapturedLastName]  = useState('');
   const [, setCapturedPhone]     = useState('');
@@ -72,6 +118,7 @@ export default function BookingPage() {
   const [activationError, setActivationError]       = useState('');
 
   const [paymentMethod, setPaymentMethod]          = useState<'cash' | 'card'>('cash');
+  const [policyAccepted, setPolicyAccepted]        = useState(false);
 
   // Availability state
   const [selectedArtistId, setSelectedArtistId]   = useState('');
@@ -81,7 +128,7 @@ export default function BookingPage() {
   const [dateError, setDateError]                 = useState('');
   const [slotError, setSlotError]                 = useState('');
 
-  const { register, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<BookingFormData>({
+  const { register, handleSubmit, formState: { errors }, reset, setValue, watch, trigger, getValues } = useForm<BookingFormData>({
     resolver: zodResolver(BookingSchema),
   });
 
@@ -104,6 +151,13 @@ export default function BookingPage() {
     setSelectedSlot(null);
     setAvailabilityData(null);
   }, [watchedArtistId]);
+
+  // Reset wizard step when switching modes
+  useEffect(() => {
+    setStep(1);
+    setDateError('');
+    setSlotError('');
+  }, [formMode]);
 
   useEffect(() => {
     const fetchArtists = async () => {
@@ -134,13 +188,39 @@ export default function BookingPage() {
     setSlotError('');
   };
 
+  const nextStep = async () => {
+    if (step === 1) {
+      const ok = await trigger(['clientName', 'clientEmail', 'clientPhone']);
+      if (!ok) return;
+    }
+    if (step === 2 && formMode === 'booking') {
+      const ok = await trigger(['tattooDesignDescription', 'estimatedSize', 'estimatedPlacement']);
+      if (!ok) return;
+      let valid = true;
+      if (!selectedDate) { setDateError('Please select a date.'); valid = false; }
+      if (selectedArtistId && selectedDate && !selectedSlot) { setSlotError('Please select a time slot.'); valid = false; }
+      if (!valid) return;
+    }
+    if (step === 2 && formMode === 'consultation') {
+      const ok = await trigger(['tattooDesignDescription']);
+      if (!ok) return;
+    }
+    setStep((s) => s + 1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const prevStep = () => {
+    setStep((s) => s - 1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const onSubmit = async (data: BookingFormData) => {
-    // Date validation only required for booking mode
+    // Final date validation guard (shouldn't normally fail — already checked in nextStep)
     if (formMode === 'booking') {
       let valid = true;
       if (!selectedDate) { setDateError('Please select a date.'); valid = false; }
       if (selectedArtistId && !selectedSlot) { setSlotError('Please select a time slot.'); valid = false; }
-      if (!valid) return;
+      if (!valid) { setStep(2); return; }
     }
 
     setIsSubmitting(true);
@@ -149,7 +229,6 @@ export default function BookingPage() {
 
     try {
       if (formMode === 'consultation') {
-        // Consultation mode: requires login for messaging capability
         if (!user) {
           throw new Error('Please log in or create an account to request a consultation — this enables direct messaging with Robyn.');
         }
@@ -195,7 +274,6 @@ export default function BookingPage() {
         setConfirmedSlot(selectedSlot);
         setConfirmedArtist(artists.find((a) => a.id === data.artistId)?.full_name ?? '');
 
-        // Capture form data before reset() clears it
         setCapturedEmail(data.clientEmail);
         const [fn, ...ln] = data.clientName.split(' ');
         setCapturedFirstName(fn || '');
@@ -210,6 +288,8 @@ export default function BookingPage() {
       setSelectedDate(null);
       setSelectedSlot(null);
       setSelectedArtistId('');
+      setStep(1);
+      setPolicyAccepted(false);
     } catch (error) {
       setSubmitStatus('error');
       setErrorMessage(error instanceof Error ? error.message : 'Something went wrong. Please try again.');
@@ -219,6 +299,13 @@ export default function BookingPage() {
   };
 
   const hasArtist = Boolean(selectedArtistId);
+  const vals = getValues();
+  const selectedArtistName = artists.find((a) => a.id === selectedArtistId)?.full_name;
+
+  const TOTAL_STEPS = formMode === 'booking' ? 3 : 2;
+  const STEP_LABELS = formMode === 'booking'
+    ? ['Your details', 'Design & date', 'Review']
+    : ['Your details', 'Your idea'];
 
   return (
     <div style={{ backgroundColor: 'var(--bg)', minHeight: '100vh' }}>
@@ -238,7 +325,7 @@ export default function BookingPage() {
         <div style={{ maxWidth: '40rem', textAlign: 'center', position: 'relative', zIndex: 1 }}>
           <p className="eyebrow" style={{ marginBottom: '1.25rem' }}>Book Your Session</p>
           <h1 style={{
-            fontFamily: '"Cormorant Garamond", serif',
+            ...serif,
             fontStyle: 'italic',
             fontWeight: 300,
             fontSize: 'clamp(2.75rem, 7vw, 5rem)',
@@ -254,14 +341,14 @@ export default function BookingPage() {
             We&apos;ll confirm your booking within 24 hours.
           </p>
           {user && (
-            <p style={{ marginTop: '1rem', fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.5)' }}>
+            <p style={{ marginTop: '1rem', ...mono, fontSize: '0.72rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.5)' }}>
               Booking as {user.first_name} {user.last_name}
             </p>
           )}
         </div>
       </section>
 
-      {/* Confirmation card — shown after successful submit */}
+      {/* Confirmation card */}
       {submitStatus === 'success' && (
         <section style={{ padding: '0 1.5rem 5rem' }}>
           <div style={{ maxWidth: '40rem', margin: '0 auto' }}>
@@ -270,7 +357,7 @@ export default function BookingPage() {
                 <div style={{ width: '3rem', height: '3rem', borderRadius: '50%', border: '1px solid rgba(201,168,76,0.4)', background: 'rgba(201,168,76,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.75rem', fontSize: '1.25rem' }}>
                   ✓
                 </div>
-                <h2 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '2.25rem', color: 'var(--cream)', letterSpacing: '-0.02em', lineHeight: 1.1, margin: '0 0 0.75rem' }}>
+                <h2 style={{ ...serif, fontStyle: 'italic', fontWeight: 300, fontSize: '2.25rem', color: 'var(--cream)', letterSpacing: '-0.02em', lineHeight: 1.1, margin: '0 0 0.75rem' }}>
                   {formMode === 'consultation' ? 'Consultation requested.' : 'Request submitted.'}
                 </h2>
                 <p style={{ color: 'var(--text-mid)', fontSize: '0.9375rem', lineHeight: 1.7, maxWidth: '30ch', margin: '0 auto 2rem' }}>
@@ -279,42 +366,38 @@ export default function BookingPage() {
                     : 'We\'ll review and confirm within 24 hours. Check your email for a copy of this request.'}
                 </p>
 
-                {/* Detail summary */}
                 <div style={{ textAlign: 'left', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', padding: '1.25rem 0', margin: '0 0 2rem', display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
                   {confirmedRef && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                      <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)' }}>Reference</span>
-                      <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.8rem', color: 'var(--gold)', letterSpacing: '0.05em' }}>{confirmedRef}</span>
+                      <span style={{ ...mono, fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)' }}>Reference</span>
+                      <span style={{ ...mono, fontSize: '0.8rem', color: 'var(--gold)', letterSpacing: '0.05em' }}>{confirmedRef}</span>
                     </div>
                   )}
                   {confirmedDate && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem' }}>
-                      <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', flexShrink: 0 }}>Requested date</span>
+                      <span style={{ ...mono, fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', flexShrink: 0 }}>Requested date</span>
                       <span style={{ fontSize: '0.875rem', color: 'var(--text)', textAlign: 'right' }}>
                         {new Date(`${confirmedDate}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                        {confirmedSlot && (() => {
-                          const h = parseInt(confirmedSlot.substring(0, 2), 10);
-                          return ` · ${h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h - 12}pm`}`;
-                        })()}
+                        {confirmedSlot && ` · ${fmtSlot(confirmedSlot)}`}
                       </span>
                     </div>
                   )}
                   {confirmedArtist && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                      <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)' }}>Artist</span>
+                      <span style={{ ...mono, fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)' }}>Artist</span>
                       <span style={{ fontSize: '0.875rem', color: 'var(--text)' }}>{confirmedArtist}</span>
                     </div>
                   )}
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <Link href="/client/dashboard" style={{ display: 'block', padding: '0.875rem', background: 'var(--gold)', color: 'var(--bg)', fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', textDecoration: 'none', borderRadius: '0.375rem', textAlign: 'center', fontWeight: 600 }}>
+                  <Link href="/client/dashboard" style={{ display: 'block', padding: '0.875rem', background: 'var(--gold)', color: 'var(--bg)', ...mono, fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', textDecoration: 'none', borderRadius: '0.375rem', textAlign: 'center', fontWeight: 600 }}>
                     View your dashboard
                   </Link>
                   <button
                     type="button"
                     onClick={() => setSubmitStatus('idle')}
-                    style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-low)', fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.875rem', borderRadius: '0.375rem', cursor: 'pointer', width: '100%' }}
+                    style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-low)', ...mono, fontSize: '0.72rem', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.875rem', borderRadius: '0.375rem', cursor: 'pointer', width: '100%' }}
                   >
                     Book another session
                   </button>
@@ -325,15 +408,15 @@ export default function BookingPage() {
         </section>
       )}
 
-      {/* Account activation panel — shown after guest booking if not logged in */}
+      {/* Account activation panel */}
       {submitStatus === 'success' && !user && formMode === 'booking' && activationState !== 'done' && activationState !== 'dismissed' && (
         <section style={{ padding: '0 1.5rem 5rem' }}>
           <div style={{ maxWidth: '40rem', margin: '0 auto' }}>
             <div style={{ background: 'var(--surface)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '0.75rem', padding: '2rem 2rem 1.75rem' }}>
-              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', margin: '0 0 0.75rem' }}>
+              <p style={{ ...mono, fontSize: '0.68rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', margin: '0 0 0.75rem' }}>
                 Optional — but recommended
               </p>
-              <h3 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1.75rem', color: 'var(--cream)', lineHeight: 1.1, margin: '0 0 0.75rem' }}>
+              <h3 style={{ ...serif, fontStyle: 'italic', fontWeight: 300, fontSize: '1.75rem', color: 'var(--cream)', lineHeight: 1.1, margin: '0 0 0.75rem' }}>
                 Message your artist directly
               </h3>
               <p style={{ fontSize: '0.875rem', color: 'var(--text-mid)', lineHeight: 1.7, margin: '0 0 1.5rem', maxWidth: '44ch' }}>
@@ -376,7 +459,7 @@ export default function BookingPage() {
                     color: activationPw.length >= 8 ? 'var(--bg)' : 'var(--text-low)',
                     border: activationPw.length >= 8 ? 'none' : '1px solid var(--border)',
                     borderRadius: '0.5rem',
-                    fontFamily: '"DM Mono", monospace',
+                    ...mono,
                     fontSize: '0.72rem',
                     letterSpacing: '0.12em',
                     textTransform: 'uppercase',
@@ -393,333 +476,379 @@ export default function BookingPage() {
               <button
                 type="button"
                 onClick={() => setActivationState('dismissed')}
-                style={{ marginTop: '1rem', background: 'none', border: 'none', padding: 0, fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-low)', cursor: 'pointer', display: 'block' }}
+                style={{ marginTop: '1rem', background: 'none', border: 'none', padding: 0, ...mono, fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-low)', cursor: 'pointer', display: 'block' }}
               >
-                I'll do this later
+                I&apos;ll do this later
               </button>
             </div>
           </div>
         </section>
       )}
 
-      {/* Success message when activation done */}
+      {/* Account created success banner */}
       {submitStatus === 'success' && activationState === 'done' && (
         <section style={{ padding: '0 1.5rem 5rem' }}>
           <div style={{ maxWidth: '40rem', margin: '0 auto' }}>
             <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: '0.75rem', padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <span style={{ color: 'var(--gold)', fontSize: '1.25rem' }}>✓</span>
               <div>
-                <p style={{ margin: 0, fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--gold)' }}>Account created</p>
-                <p style={{ margin: '0.25rem 0 0', fontSize: '0.8125rem', color: 'var(--text-mid)' }}>You're now logged in. Head to your dashboard to track this booking.</p>
+                <p style={{ margin: 0, ...mono, fontSize: '0.72rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--gold)' }}>Account created</p>
+                <p style={{ margin: '0.25rem 0 0', fontSize: '0.8125rem', color: 'var(--text-mid)' }}>You&apos;re now logged in. Head to your dashboard to track this booking.</p>
               </div>
             </div>
           </div>
         </section>
       )}
 
-      {/* Form */}
+      {/* ── Wizard Form ── */}
       {submitStatus !== 'success' && (
-      <section style={{ padding: '0 1.5rem 3rem' }}>
-        <div style={{ maxWidth: '40rem', margin: '0 auto' }}>
-          <div className="card-premium">
-            <div className="card-premium-inner">
+        <section style={{ padding: '0 1.5rem 3rem' }}>
+          <div style={{ maxWidth: '40rem', margin: '0 auto' }}>
+            <div className="card-premium">
+              <div className="card-premium-inner">
 
-              {submitStatus === 'error' && (
-                <div style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '0.5rem' }}>
-                  <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: 'var(--error-text)', fontWeight: 500, margin: 0 }}>
-                    {errorMessage}
-                  </p>
-                </div>
-              )}
-
-              {/* ── Mode toggle ── */}
-              <div style={{ display: 'flex', gap: '0.375rem', marginBottom: '2rem', padding: '0.3rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '2rem' }}>
-                {(['booking', 'consultation'] as const).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => setFormMode(m)}
-                    style={{ flex: 1, padding: '0.625rem 1rem', background: formMode === m ? 'var(--gold)' : 'transparent', color: formMode === m ? 'var(--bg)' : 'var(--text-mid)', border: 'none', borderRadius: '2rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', fontWeight: formMode === m ? 600 : 400, cursor: 'pointer', transition: 'all 0.2s ease' }}
-                  >
-                    {m === 'booking' ? 'Book a session' : 'Request a consultation'}
-                  </button>
-                ))}
-              </div>
-              {formMode === 'consultation' && (
-                <div style={{ padding: '0.875rem 1rem', background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: '0.5rem', marginBottom: '1.5rem' }}>
-                  <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-mid)', lineHeight: 1.6 }}>
-                    No date needed — just describe your idea. Robyn will get back to you and you&apos;ll be able to message directly from your dashboard.
-                    {!user && <><br /><span style={{ color: 'rgba(201,168,76,0.8)' }}> Please <a href="/client/login" style={{ color: 'var(--gold)' }}>log in</a> first to enable messaging.</span></>}
-                  </p>
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-
-                {/* ── Section 1: Personal info ── */}
-                <span style={eyebrow}>01 — Your details</span>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
-                  <div>
-                    <label htmlFor="clientName">Full Name</label>
-                    <input {...register('clientName')} type="text" id="clientName" placeholder="Your name"
-                      style={errors.clientName ? { borderColor: 'rgba(239,68,68,0.5)' } : {}} />
-                    {errors.clientName && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.clientName.message}</p>}
-                  </div>
-
-                  <div>
-                    <label htmlFor="clientEmail">Email</label>
-                    <input {...register('clientEmail')} type="email" id="clientEmail" placeholder="your@email.com"
-                      style={errors.clientEmail ? { borderColor: 'rgba(239,68,68,0.5)' } : {}} />
-                    {errors.clientEmail && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.clientEmail.message}</p>}
-                  </div>
-
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <label htmlFor="clientPhone">Phone Number</label>
-                    <input {...register('clientPhone')} type="tel" id="clientPhone" placeholder="+44 7911 123456"
-                      style={errors.clientPhone ? { borderColor: 'rgba(239,68,68,0.5)' } : {}} />
-                    {errors.clientPhone && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.clientPhone.message}</p>}
-                  </div>
+                {/* Mode toggle */}
+                <div style={{ display: 'flex', gap: '0.375rem', marginBottom: '2rem', padding: '0.3rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '2rem' }}>
+                  {(['booking', 'consultation'] as const).map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setFormMode(m)}
+                      style={{ flex: 1, padding: '0.625rem 1rem', background: formMode === m ? 'var(--gold)' : 'transparent', color: formMode === m ? 'var(--bg)' : 'var(--text-mid)', border: 'none', borderRadius: '2rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', fontWeight: formMode === m ? 600 : 400, cursor: 'pointer', transition: 'all 0.2s ease' }}
+                    >
+                      {m === 'booking' ? 'Book a session' : 'Request a consultation'}
+                    </button>
+                  ))}
                 </div>
 
-                <hr style={divider} />
-
-                {/* ── Section 2: Artist ── */}
-                <span style={eyebrow}>02 — Choose your artist</span>
-
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <label htmlFor="artistId">Preferred Artist</label>
-                  <select {...register('artistId')} id="artistId" disabled={loadingArtists}>
-                    <option value="">No preference — studio assigns</option>
-                    {artists.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.full_name}{a.specialties ? ` — ${a.specialties}` : ''}
-                      </option>
-                    ))}
-                  </select>
-                  {loadingArtists && (
-                    <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.1em', color: 'var(--text-low)', marginTop: '0.375rem' }}>Loading artists…</p>
-                  )}
-                  {hasArtist && (
-                    <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.08em', color: 'rgba(201,168,76,0.55)', marginTop: '0.5rem' }}>
-                      Showing live availability for this artist
+                {formMode === 'consultation' && (
+                  <div style={{ padding: '0.875rem 1rem', background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: '0.5rem', marginBottom: '1.5rem' }}>
+                    <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-mid)', lineHeight: 1.6 }}>
+                      No date needed — just describe your idea. Robyn will get back to you and you&apos;ll be able to message directly from your dashboard.
+                      {!user && <><br /><span style={{ color: 'rgba(201,168,76,0.8)' }}> Please <a href="/client/login" style={{ color: 'var(--gold)' }}>log in</a> first to enable messaging.</span></>}
                     </p>
-                  )}
-                </div>
-
-                <hr style={divider} />
-
-                {/* ── Section 3: Date (booking mode only) ── */}
-                {formMode === 'booking' && <><span style={eyebrow}>03 — Select a date</span>
-
-                {hasArtist ? (
-                  <>
-                    <div style={{
-                      padding: '1.5rem',
-                      background: 'rgba(14,12,9,0.5)',
-                      border: `1px solid ${dateError ? 'rgba(239,68,68,0.4)' : 'var(--border)'}`,
-                      borderRadius: '0.625rem',
-                      marginBottom: selectedDate ? '1.25rem' : '0',
-                    }}>
-                      <AvailabilityCalendar
-                        artistId={selectedArtistId}
-                        selectedDate={selectedDate}
-                        onDateSelect={handleDateSelect}
-                        onAvailabilityLoad={setAvailabilityData}
-                      />
-                    </div>
-                    {dateError && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem', marginBottom: '1rem' }}>{dateError}</p>}
-
-                    {/* ── Slot picker appears after date selection ── */}
-                    {selectedDate && (
-                      <div style={{
-                        padding: '1.5rem',
-                        background: 'rgba(14,12,9,0.5)',
-                        border: `1px solid ${slotError ? 'rgba(239,68,68,0.4)' : 'rgba(201,168,76,0.14)'}`,
-                        borderRadius: '0.625rem',
-                        marginBottom: '0',
-                        animation: 'fadeUp 0.3s ease forwards',
-                      }}>
-                        <TimeSlotPicker
-                          date={selectedDate}
-                          selectedSlot={selectedSlot}
-                          onSlotSelect={handleSlotSelect}
-                          slotData={availabilityData?.slotData}
-                        />
-                        {slotError && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.75rem' }}>{slotError}</p>}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <div style={{ marginBottom: dateError ? '0.375rem' : '0' }}>
-                      <label htmlFor="fallbackDate">Preferred Date</label>
-                      <input
-                        id="fallbackDate"
-                        type="date"
-                        min={new Date().toISOString().split('T')[0]}
-                        value={selectedDate ?? ''}
-                        onChange={(e) => {
-                          setSelectedDate(e.target.value || null);
-                          setDateError('');
-                        }}
-                        style={dateError ? { borderColor: 'rgba(239,68,68,0.5)' } : {}}
-                      />
-                    </div>
-                    {dateError && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{dateError}</p>}
-                    <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.08em', color: 'var(--text-low)', marginTop: '0.5rem' }}>
-                      Select an artist above to choose from available time slots.
-                    </p>
-                  </>
-                )}
-
-                <hr style={divider} /></>}
-
-                {/* ── Section 4: Design info ── */}
-                <span style={eyebrow}>{formMode === 'booking' ? '04' : '03'} — Your tattoo</span>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '0' }}>
-                  <div>
-                    <label htmlFor="tattooDesignDescription">Design Description</label>
-                    <textarea {...register('tattooDesignDescription')} id="tattooDesignDescription"
-                      placeholder="Describe your tattoo idea, inspiration, specific elements you want included…"
-                      rows={5}
-                      style={errors.tattooDesignDescription ? { borderColor: 'rgba(239,68,68,0.5)' } : {}} />
-                    {errors.tattooDesignDescription && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.tattooDesignDescription.message}</p>}
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-                    <div>
-                      <label htmlFor="estimatedSize">Estimated Size</label>
-                      <select {...register('estimatedSize')} id="estimatedSize"
-                        style={errors.estimatedSize ? { borderColor: 'rgba(239,68,68,0.5)' } : {}}>
-                        <option value="">Select size</option>
-                        <option value="small">Small (2–3 in)</option>
-                        <option value="medium">Medium (3–6 in)</option>
-                        <option value="large">Large (6–12 in)</option>
-                        <option value="xlarge">Extra Large (12+ in)</option>
-                      </select>
-                      {errors.estimatedSize && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.estimatedSize.message}</p>}
-                    </div>
-
-                    <div>
-                      <label htmlFor="estimatedPlacement">Body Placement</label>
-                      <input {...register('estimatedPlacement')} type="text" id="estimatedPlacement"
-                        placeholder="e.g., upper arm, chest…"
-                        style={errors.estimatedPlacement ? { borderColor: 'rgba(239,68,68,0.5)' } : {}} />
-                      {errors.estimatedPlacement && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.estimatedPlacement.message}</p>}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label htmlFor="referralSource">How did you find us? <span style={{ color: 'var(--text-low)', fontWeight: 400 }}>(Optional)</span></label>
-                    <input {...register('referralSource')} type="text" id="referralSource" placeholder="Instagram, Google, referral…" />
-                  </div>
-
-                  <div>
-                    <label htmlFor="notes">Additional Notes <span style={{ color: 'var(--text-low)', fontWeight: 400 }}>(Optional)</span></label>
-                    <textarea {...register('notes')} id="notes" placeholder="Anything else we should know…" rows={3} />
-                  </div>
-
-                  <div>
-                    <label htmlFor="clientBudget">Approximate budget <span style={{ color: 'var(--text-low)', fontWeight: 400 }}>(Optional)</span></label>
-                    <div style={{ position: 'relative' }}>
-                      <span style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', fontFamily: '"DM Mono", monospace', fontSize: '0.875rem', color: 'var(--text-low)', pointerEvents: 'none' }}>£</span>
-                      <input {...register('clientBudget')} type="number" id="clientBudget" min="0" step="1" placeholder="e.g. 200" style={{ paddingLeft: '1.75rem' }} />
-                    </div>
-                  </div>
-                </div>
-
-                <hr style={divider} />
-
-                {/* Selected summary — booking mode only */}
-                {formMode === 'booking' && (selectedDate || selectedSlot) && (
-                  <div style={{
-                    padding: '0.875rem 1rem',
-                    background: 'rgba(201,168,76,0.06)',
-                    border: '1px solid rgba(201,168,76,0.18)',
-                    borderRadius: '0.5rem',
-                    marginBottom: '1.25rem',
-                  }}>
-                    <p style={{ margin: 0, fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.65)' }}>
-                      Your selected appointment
-                    </p>
-                    {selectedDate && (
-                      <p style={{ margin: '0.375rem 0 0', fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1rem', fontWeight: 300, color: 'var(--cream)' }}>
-                        {new Date(`${selectedDate}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                        {selectedSlot && (
-                          <span style={{ color: 'var(--gold)', marginLeft: '0.5rem' }}>
-                            {(() => {
-                              const h = parseInt(selectedSlot.substring(0, 2), 10);
-                              const lbl = h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h - 12}pm`;
-                              return `· starting ${lbl}`;
-                            })()}
-                          </span>
-                        )}
-                      </p>
-                    )}
                   </div>
                 )}
 
-                {/* Payment preference — only shown for booking mode */}
-                {formMode === 'booking' && (
-                  <div style={{ marginBottom: '1.25rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.625rem' }}>How would you like to pay your deposit?</label>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod('cash')}
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: paymentMethod === 'cash' ? 'rgba(201,168,76,0.1)' : 'transparent', border: `1px solid ${paymentMethod === 'cash' ? 'var(--gold)' : 'var(--border)'}`, borderRadius: '0.5rem', cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.2s, background 0.2s' }}
-                      >
-                        <span style={{ width: '1rem', height: '1rem', borderRadius: '50%', border: `2px solid ${paymentMethod === 'cash' ? 'var(--gold)' : 'var(--border)'}`, background: paymentMethod === 'cash' ? 'var(--gold)' : 'transparent', flexShrink: 0, position: 'relative' }}>
-                          {paymentMethod === 'cash' && <span style={{ position: 'absolute', inset: '2px', background: 'var(--bg)', borderRadius: '50%' }} />}
-                        </span>
+                {/* Step indicator */}
+                <StepIndicator step={step} total={TOTAL_STEPS} labels={STEP_LABELS} />
+
+                {submitStatus === 'error' && (
+                  <div style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '0.5rem' }}>
+                    <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: 'var(--error-text)', fontWeight: 500, margin: 0 }}>
+                      {errorMessage}
+                    </p>
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+
+                  {/* ── Step 1: Your details ── */}
+                  {step === 1 && (
+                    <div key="step-1" className="tab-content">
+                      <p style={{ ...mono, fontSize: '0.68rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.85)', marginBottom: '1.5rem' }}>01 — Your details</p>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
                         <div>
-                          <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: paymentMethod === 'cash' ? 'var(--cream)' : 'var(--text)', fontWeight: paymentMethod === 'cash' ? 500 : 400 }}>Cash on the day</p>
-                          <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.775rem', color: 'var(--text-low)', lineHeight: 1.4 }}>Pay your deposit in cash when you arrive</p>
+                          <label htmlFor="clientName">Full Name</label>
+                          <input {...register('clientName')} type="text" id="clientName" placeholder="Your name"
+                            style={errors.clientName ? { borderColor: 'rgba(239,68,68,0.5)' } : {}} />
+                          {errors.clientName && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.clientName.message}</p>}
                         </div>
+
+                        <div>
+                          <label htmlFor="clientEmail">Email</label>
+                          <input {...register('clientEmail')} type="email" id="clientEmail" placeholder="your@email.com"
+                            style={errors.clientEmail ? { borderColor: 'rgba(239,68,68,0.5)' } : {}} />
+                          {errors.clientEmail && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.clientEmail.message}</p>}
+                        </div>
+
+                        <div style={{ gridColumn: '1 / -1' }}>
+                          <label htmlFor="clientPhone">Phone Number</label>
+                          <input {...register('clientPhone')} type="tel" id="clientPhone" placeholder="+44 7911 123456"
+                            style={errors.clientPhone ? { borderColor: 'rgba(239,68,68,0.5)' } : {}} />
+                          {errors.clientPhone && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.clientPhone.message}</p>}
+                        </div>
+                      </div>
+
+                      <button type="button" onClick={nextStep} className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                        <span>Continue</span>
+                        <span className="btn-icon" aria-hidden="true">→</span>
                       </button>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: 'transparent', border: '1px solid var(--border)', borderRadius: '0.5rem', opacity: 0.45, cursor: 'default' }}>
-                        <span style={{ width: '1rem', height: '1rem', borderRadius: '50%', border: '2px solid var(--border)', flexShrink: 0 }} />
-                        <div>
-                          <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: 'var(--text)' }}>Online by card</p>
-                          <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.775rem', color: 'var(--text-low)', lineHeight: 1.4 }}>Coming soon</p>
-                        </div>
+                    </div>
+                  )}
+
+                  {/* ── Step 2: Design + date (booking) or message (consultation) ── */}
+                  {step === 2 && (
+                    <div key="step-2" className="tab-content">
+                      {formMode === 'booking' ? (
+                        <>
+                          <p style={{ ...mono, fontSize: '0.68rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.85)', marginBottom: '1.5rem' }}>02 — Design &amp; date</p>
+
+                          {/* Artist */}
+                          <div style={{ marginBottom: '1.5rem' }}>
+                            <label htmlFor="artistId">Preferred Artist</label>
+                            <select {...register('artistId')} id="artistId" disabled={loadingArtists}>
+                              <option value="">No preference — studio assigns</option>
+                              {artists.map((a) => (
+                                <option key={a.id} value={a.id}>
+                                  {a.full_name}{a.specialties ? ` — ${a.specialties}` : ''}
+                                </option>
+                              ))}
+                            </select>
+                            {loadingArtists && (
+                              <p style={{ ...mono, fontSize: '0.72rem', letterSpacing: '0.1em', color: 'var(--text-low)', marginTop: '0.375rem' }}>Loading artists…</p>
+                            )}
+                            {hasArtist && (
+                              <p style={{ ...mono, fontSize: '0.72rem', letterSpacing: '0.08em', color: 'rgba(201,168,76,0.55)', marginTop: '0.5rem' }}>
+                                Showing live availability for this artist
+                              </p>
+                            )}
+                          </div>
+
+                          <hr style={divider} />
+
+                          {/* Date picker */}
+                          <p style={{ ...mono, fontSize: '0.68rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', marginBottom: '0.875rem' }}>Select a date</p>
+
+                          {hasArtist ? (
+                            <>
+                              <div style={{ padding: '1.5rem', background: 'rgba(14,12,9,0.5)', border: `1px solid ${dateError ? 'rgba(239,68,68,0.4)' : 'var(--border)'}`, borderRadius: '0.625rem', marginBottom: selectedDate ? '1.25rem' : '0' }}>
+                                <AvailabilityCalendar
+                                  artistId={selectedArtistId}
+                                  selectedDate={selectedDate}
+                                  onDateSelect={handleDateSelect}
+                                  onAvailabilityLoad={setAvailabilityData}
+                                />
+                              </div>
+                              {dateError && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem', marginBottom: '1rem' }}>{dateError}</p>}
+                              {selectedDate && (
+                                <div style={{ padding: '1.5rem', background: 'rgba(14,12,9,0.5)', border: `1px solid ${slotError ? 'rgba(239,68,68,0.4)' : 'rgba(201,168,76,0.14)'}`, borderRadius: '0.625rem', marginBottom: '0', animation: 'fadeUp 0.3s ease forwards' }}>
+                                  <TimeSlotPicker
+                                    date={selectedDate}
+                                    selectedSlot={selectedSlot}
+                                    onSlotSelect={handleSlotSelect}
+                                    slotData={availabilityData?.slotData}
+                                  />
+                                  {slotError && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.75rem' }}>{slotError}</p>}
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <div style={{ marginBottom: dateError ? '0.375rem' : '0' }}>
+                                <label htmlFor="fallbackDate">Preferred Date</label>
+                                <input
+                                  id="fallbackDate"
+                                  type="date"
+                                  min={new Date().toISOString().split('T')[0]}
+                                  value={selectedDate ?? ''}
+                                  onChange={(e) => { setSelectedDate(e.target.value || null); setDateError(''); }}
+                                  style={dateError ? { borderColor: 'rgba(239,68,68,0.5)' } : {}}
+                                />
+                              </div>
+                              {dateError && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{dateError}</p>}
+                              <p style={{ ...mono, fontSize: '0.72rem', letterSpacing: '0.08em', color: 'var(--text-low)', marginTop: '0.5rem' }}>
+                                Select an artist above to choose from available time slots.
+                              </p>
+                            </>
+                          )}
+
+                          <hr style={divider} />
+
+                          {/* Design fields */}
+                          <p style={{ ...mono, fontSize: '0.68rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', marginBottom: '0.875rem' }}>Your tattoo</p>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '1.25rem' }}>
+                            <div>
+                              <label htmlFor="tattooDesignDescription">Design Description</label>
+                              <textarea {...register('tattooDesignDescription')} id="tattooDesignDescription"
+                                placeholder="Describe your tattoo idea, inspiration, specific elements you want included…"
+                                rows={4}
+                                style={errors.tattooDesignDescription ? { borderColor: 'rgba(239,68,68,0.5)' } : {}} />
+                              {errors.tattooDesignDescription && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.tattooDesignDescription.message}</p>}
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+                              <div>
+                                <label htmlFor="estimatedSize">Estimated Size</label>
+                                <select {...register('estimatedSize')} id="estimatedSize" style={errors.estimatedSize ? { borderColor: 'rgba(239,68,68,0.5)' } : {}}>
+                                  <option value="">Select size</option>
+                                  <option value="small">Small (2–3 in)</option>
+                                  <option value="medium">Medium (3–6 in)</option>
+                                  <option value="large">Large (6–12 in)</option>
+                                  <option value="xlarge">Extra Large (12+ in)</option>
+                                </select>
+                                {errors.estimatedSize && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.estimatedSize.message}</p>}
+                              </div>
+                              <div>
+                                <label htmlFor="estimatedPlacement">Body Placement</label>
+                                <input {...register('estimatedPlacement')} type="text" id="estimatedPlacement"
+                                  placeholder="e.g., upper arm, chest…"
+                                  style={errors.estimatedPlacement ? { borderColor: 'rgba(239,68,68,0.5)' } : {}} />
+                                {errors.estimatedPlacement && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.estimatedPlacement.message}</p>}
+                              </div>
+                            </div>
+
+                            <div>
+                              <label htmlFor="referralSource">How did you find us? <span style={{ color: 'var(--text-low)', fontWeight: 400 }}>(Optional)</span></label>
+                              <input {...register('referralSource')} type="text" id="referralSource" placeholder="Instagram, Google, referral…" />
+                            </div>
+
+                            <div>
+                              <label htmlFor="notes">Additional Notes <span style={{ color: 'var(--text-low)', fontWeight: 400 }}>(Optional)</span></label>
+                              <textarea {...register('notes')} id="notes" placeholder="Anything else we should know…" rows={3} />
+                            </div>
+
+                            <div>
+                              <label htmlFor="clientBudget">Approximate budget <span style={{ color: 'var(--text-low)', fontWeight: 400 }}>(Optional)</span></label>
+                              <div style={{ position: 'relative' }}>
+                                <span style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', ...mono, fontSize: '0.875rem', color: 'var(--text-low)', pointerEvents: 'none' }}>£</span>
+                                <input {...register('clientBudget')} type="number" id="clientBudget" min="0" step="1" placeholder="e.g. 200" style={{ paddingLeft: '1.75rem' }} />
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        /* Consultation step 2 */
+                        <>
+                          <p style={{ ...mono, fontSize: '0.68rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.85)', marginBottom: '1.5rem' }}>02 — Your idea</p>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '1.25rem' }}>
+                            <div>
+                              <label htmlFor="artistId">Preferred Artist</label>
+                              <select {...register('artistId')} id="artistId" disabled={loadingArtists}>
+                                <option value="">No preference — studio assigns</option>
+                                {artists.map((a) => (
+                                  <option key={a.id} value={a.id}>{a.full_name}{a.specialties ? ` — ${a.specialties}` : ''}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label htmlFor="tattooDesignDescription">Describe your idea</label>
+                              <textarea {...register('tattooDesignDescription')} id="tattooDesignDescription"
+                                placeholder="Style, size, placement, references, inspiration — the more detail the better…"
+                                rows={6}
+                                style={errors.tattooDesignDescription ? { borderColor: 'rgba(239,68,68,0.5)' } : {}} />
+                              {errors.tattooDesignDescription && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.tattooDesignDescription.message}</p>}
+                            </div>
+                            <div>
+                              <label htmlFor="notes">Anything else? <span style={{ color: 'var(--text-low)', fontWeight: 400 }}>(Optional)</span></label>
+                              <textarea {...register('notes')} id="notes" placeholder="Questions, budget, availability…" rows={2} />
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      <div style={{ display: 'flex', gap: '0.75rem' }}>
+                        <button type="button" onClick={prevStep} className="btn-secondary" style={{ flexShrink: 0, padding: '0.75rem 1.25rem' }}>
+                          ← Back
+                        </button>
+                        {formMode === 'consultation' ? (
+                          <button type="submit" disabled={isSubmitting} className="btn-primary" style={{ flex: 1, justifyContent: 'center', opacity: isSubmitting ? 0.7 : 1 }}>
+                            <span>{isSubmitting ? 'Sending…' : 'Send consultation request'}</span>
+                            <span className="btn-icon" aria-hidden="true">↗</span>
+                          </button>
+                        ) : (
+                          <button type="button" onClick={nextStep} className="btn-primary" style={{ flex: 1, justifyContent: 'center' }}>
+                            <span>Review booking</span>
+                            <span className="btn-icon" aria-hidden="true">→</span>
+                          </button>
+                        )}
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="btn-primary"
-                  style={{ width: '100%', justifyContent: 'center', opacity: isSubmitting ? 0.7 : 1 }}
-                >
-                  <span>{isSubmitting ? 'Submitting…' : formMode === 'consultation' ? 'Request Consultation' : 'Request Booking'}</span>
-                  <span className="btn-icon" aria-hidden="true">↗</span>
-                </button>
+                  {/* ── Step 3: Review & confirm (booking only) ── */}
+                  {step === 3 && formMode === 'booking' && (
+                    <div key="step-3" className="tab-content">
+                      <p style={{ ...mono, fontSize: '0.68rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.85)', marginBottom: '1.5rem' }}>03 — Review &amp; confirm</p>
 
-                <p style={{ textAlign: 'center', fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.06em', color: 'var(--text-low)', marginTop: '0.875rem', lineHeight: 1.6 }}>
-                  Cancellations within 48 hours of your appointment may be subject to a cancellation fee.
-                </p>
+                      {/* Summary card */}
+                      <div style={{ background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '1.25rem 1.5rem', marginBottom: '1.75rem' }}>
+                        <p style={{ ...mono, fontSize: '0.65rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.5)', margin: '0 0 0.75rem' }}>Your booking summary</p>
+                        <SummaryRow label="Name" value={vals.clientName || '—'} />
+                        <SummaryRow label="Email" value={vals.clientEmail || '—'} />
+                        <SummaryRow label="Phone" value={vals.clientPhone || '—'} />
+                        {selectedArtistName && <SummaryRow label="Artist" value={selectedArtistName} />}
+                        {selectedDate && (
+                          <SummaryRow
+                            label="Date"
+                            value={`${new Date(`${selectedDate}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}${selectedSlot ? ` · ${fmtSlot(selectedSlot)}` : ''}`}
+                          />
+                        )}
+                        <SummaryRow label="Placement" value={vals.estimatedPlacement || '—'} />
+                        <SummaryRow label="Size" value={vals.estimatedSize ? ({ small: 'Small (2–3 in)', medium: 'Medium (3–6 in)', large: 'Large (6–12 in)', xlarge: 'Extra Large (12+ in)' })[vals.estimatedSize] || vals.estimatedSize : '—'} />
+                        {vals.tattooDesignDescription && (
+                          <SummaryRow label="Design" value={vals.tattooDesignDescription.length > 80 ? vals.tattooDesignDescription.substring(0, 80) + '…' : vals.tattooDesignDescription} />
+                        )}
+                      </div>
 
-                <p style={{ textAlign: 'center', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-low)', marginTop: '0.75rem' }}>
-                  Have questions?{' '}
-                  <Link href="/consultation" style={{ color: 'var(--gold)', transition: 'color 0.25s ease' }}
-                    onMouseEnter={(e) => { (e.target as HTMLElement).style.color = 'var(--gold-bright)'; }}
-                    onMouseLeave={(e) => { (e.target as HTMLElement).style.color = 'var(--gold)'; }}
-                  >
-                    Schedule a free consultation
-                  </Link>{' '}
-                  first.
-                </p>
+                      {/* Payment preference */}
+                      <div style={{ marginBottom: '1.75rem' }}>
+                        <label style={{ display: 'block', marginBottom: '0.625rem' }}>How would you like to pay your deposit?</label>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => setPaymentMethod('cash')}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: paymentMethod === 'cash' ? 'rgba(201,168,76,0.1)' : 'transparent', border: `1px solid ${paymentMethod === 'cash' ? 'var(--gold)' : 'var(--border)'}`, borderRadius: '0.5rem', cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.2s, background 0.2s' }}
+                          >
+                            <span style={{ width: '1rem', height: '1rem', borderRadius: '50%', border: `2px solid ${paymentMethod === 'cash' ? 'var(--gold)' : 'var(--border)'}`, background: paymentMethod === 'cash' ? 'var(--gold)' : 'transparent', flexShrink: 0, position: 'relative' }}>
+                              {paymentMethod === 'cash' && <span style={{ position: 'absolute', inset: '2px', background: 'var(--bg)', borderRadius: '50%' }} />}
+                            </span>
+                            <div>
+                              <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: paymentMethod === 'cash' ? 'var(--cream)' : 'var(--text)', fontWeight: paymentMethod === 'cash' ? 500 : 400 }}>Cash on the day</p>
+                              <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.775rem', color: 'var(--text-low)', lineHeight: 1.4 }}>Pay your deposit in cash when you arrive</p>
+                            </div>
+                          </button>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: 'transparent', border: '1px solid var(--border)', borderRadius: '0.5rem', opacity: 0.45, cursor: 'default' }}>
+                            <span style={{ width: '1rem', height: '1rem', borderRadius: '50%', border: '2px solid var(--border)', flexShrink: 0 }} />
+                            <div>
+                              <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: 'var(--text)' }}>Online by card</p>
+                              <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.775rem', color: 'var(--text-low)', lineHeight: 1.4 }}>Coming soon</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
 
-              </form>
+                      {/* Cancellation policy acknowledgment */}
+                      <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer', marginBottom: '1.75rem', padding: '1rem', background: 'rgba(201,168,76,0.04)', border: `1px solid ${policyAccepted ? 'rgba(201,168,76,0.3)' : 'var(--border)'}`, borderRadius: '0.5rem', transition: 'border-color 0.2s' }}>
+                        <input
+                          type="checkbox"
+                          checked={policyAccepted}
+                          onChange={(e) => setPolicyAccepted(e.target.checked)}
+                          style={{ marginTop: '0.1rem', accentColor: 'var(--gold)', width: '1rem', height: '1rem', flexShrink: 0 }}
+                        />
+                        <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.6 }}>
+                          I understand that cancellations within 48 hours of my appointment may be subject to a cancellation fee, and that this booking is subject to artist confirmation.
+                        </span>
+                      </label>
+
+                      <div style={{ display: 'flex', gap: '0.75rem' }}>
+                        <button type="button" onClick={prevStep} className="btn-secondary" style={{ flexShrink: 0, padding: '0.75rem 1.25rem' }}>
+                          ← Back
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={isSubmitting || !policyAccepted}
+                          className="btn-primary"
+                          style={{ flex: 1, justifyContent: 'center', opacity: (isSubmitting || !policyAccepted) ? 0.55 : 1 }}
+                        >
+                          <span>{isSubmitting ? 'Submitting…' : 'Confirm booking request'}</span>
+                          <span className="btn-icon" aria-hidden="true">↗</span>
+                        </button>
+                      </div>
+
+                      <p style={{ textAlign: 'center', ...mono, fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--text-low)', marginTop: '1rem', lineHeight: 1.6 }}>
+                        We&apos;ll review and confirm within 24 hours
+                      </p>
+                    </div>
+                  )}
+
+                </form>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
       )}
 
     </div>

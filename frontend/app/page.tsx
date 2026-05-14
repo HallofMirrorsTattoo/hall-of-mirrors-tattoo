@@ -6,6 +6,36 @@ import AnimatedSection from './components/AnimatedSection';
 export const metadata = {
   title: 'Hall of Mirrors Tattoo Studio | Liverpool City Centre',
   description: 'Hall of Mirrors is a private tattoo studio on Castle Street, Liverpool. Specialising in neo-traditional tattoos, custom bespoke designs, colour realism, and cover-up work. Book online.',
+  openGraph: {
+    title: 'Hall of Mirrors Tattoo Studio | Liverpool',
+    description: 'Bespoke neo-traditional tattoos in Liverpool city centre. Book online.',
+    url: 'https://hall-of-mirrors-tattoo.vercel.app',
+    type: 'website' as const,
+  },
+};
+
+const localBusinessJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': ['LocalBusiness', 'TattooShop'],
+  name: 'Hall of Mirrors Tattoo Studio',
+  description: 'Bespoke neo-traditional tattoos. Private studio on Castle Street, Liverpool city centre.',
+  url: 'https://hall-of-mirrors-tattoo.vercel.app',
+  email: 'studio@hallofmirrorstattoo.com',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: 'Suite 3, 34 Castle Street',
+    addressLocality: 'Liverpool',
+    postalCode: 'L2 0NR',
+    addressCountry: 'GB',
+  },
+  geo: {
+    '@type': 'GeoCoordinates',
+    latitude: 53.4068,
+    longitude: -2.9934,
+  },
+  openingHours: ['Mo-Sa 10:00-18:00'],
+  priceRange: '££',
+  image: 'https://hall-of-mirrors-tattoo.vercel.app/opengraph-image.png',
 };
 
 const cornerStyles: Record<string, string> = {
@@ -18,6 +48,10 @@ const cornerStyles: Record<string, string> = {
 export default function Home() {
   return (
     <div className="w-full">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}
+      />
 
       {/* ── HERO ─────────────────────────────────────────────────────────────── */}
       <div className="sticky top-0 z-0 w-full -mt-24 md:-mt-32" style={{ height: '100dvh' }}>

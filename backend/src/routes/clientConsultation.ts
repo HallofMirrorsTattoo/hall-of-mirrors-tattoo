@@ -90,7 +90,8 @@ router.get('/', async (req: Request, res: Response) => {
     const result = await client.query(
       `SELECT c.consultation_id, c.artist_id, c.message, c.preferred_dates, c.status, c.artist_response, c.created_at, c.updated_at,
               a.full_name as artist_name, a.specialties, a.instagram_handle,
-              (SELECT COUNT(*) FROM "Message" m WHERE m.consultation_id = c.consultation_id AND m.sender_type = 'artist')::int AS artist_message_count
+              (SELECT COUNT(*) FROM "Message" m WHERE m.consultation_id = c.consultation_id AND m.sender_type = 'artist')::int AS artist_message_count,
+              (SELECT COUNT(*) FROM "Message" m WHERE m.consultation_id = c.consultation_id AND m.sender_type = 'artist' AND m.read_at IS NULL)::int AS unread_artist_count
        FROM "Consultation" c
        LEFT JOIN "Artist" a ON c.artist_id = a.id
        WHERE c.user_id = $1

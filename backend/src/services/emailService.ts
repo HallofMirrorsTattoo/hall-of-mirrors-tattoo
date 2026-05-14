@@ -795,6 +795,92 @@ export async function sendPriceAcceptedToArtist(data: {
   });
 }
 
+export async function sendWeeklySummaryToArtist(data: {
+  artistEmail: string;
+  artistName: string;
+  weekLabel: string;
+  sessionsCompleted: number;
+  sessionsConfirmed: number;
+  estimatedRevenue: number;
+  upcomingBookings: Array<{ clientName: string; date: string; time: string; duration: string }>;
+}): Promise<void> {
+  const upcomingRows = data.upcomingBookings.length > 0
+    ? data.upcomingBookings.map((b) => detail(b.clientName, `${b.date} at ${b.time} · ${b.duration}`)).join('')
+    : `<tr><td colspan="2" style="padding:12px 0;border-bottom:1px solid #2A2520;font-size:13px;color:#635C52;">No upcoming confirmed bookings</td></tr>`;
+
+  const content = `
+    ${heading(`Your week ahead.`)}
+    ${body(`Good morning, ${data.artistName}. Here's your weekly summary for <strong style="color:var(--cream);">${data.weekLabel}</strong>.`)}
+    <div style="margin:24px 0;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div style="padding:20px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:4px;text-align:center;">
+        <p style="margin:0 0 4px;font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(201,168,76,0.5);">Sessions this week</p>
+        <p style="margin:0;font-family:Georgia,serif;font-style:italic;font-size:2rem;font-weight:400;color:#C9A84C;">${data.sessionsCompleted + data.sessionsConfirmed}</p>
+        <p style="margin:4px 0 0;font-family:'Courier New',monospace;font-size:10px;color:#635C52;">${data.sessionsCompleted} completed · ${data.sessionsConfirmed} upcoming</p>
+      </div>
+      <div style="padding:20px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:4px;text-align:center;">
+        <p style="margin:0 0 4px;font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(201,168,76,0.5);">Est. revenue</p>
+        <p style="margin:0;font-family:Georgia,serif;font-style:italic;font-size:2rem;font-weight:400;color:#C9A84C;">£${data.estimatedRevenue.toLocaleString()}</p>
+        <p style="margin:4px 0 0;font-family:'Courier New',monospace;font-size:10px;color:#635C52;">at £150/hr · estimate only</p>
+      </div>
+    </div>
+    ${data.upcomingBookings.length > 0 ? `
+    <p style="margin:0 0 8px;font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(201,168,76,0.5);">Confirmed this week</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+      ${upcomingRows}
+    </table>` : ''}
+    ${ctaButton(`${FRONTEND_URL}/artist/dashboard`, 'Open Dashboard')}
+  `;
+
+  await send({
+    to: data.artistEmail,
+    from: { email: FROM_EMAIL, name: 'Hall of Mirrors Booking System' },
+    subject: `Weekly summary — ${data.weekLabel}`,
+    html: baseTemplate(content),
+  });
+}
+
+export async function sendIntakeCheckToClient(data: {
+  clientEmail: string;
+  clientName: string;
+  bookingReference: string;
+  appointmentDate: Date;
+  startTime?: string;
+  artistName?: string;
+}): Promise<void> {
+  const dateStr = new Intl.DateTimeFormat('en-GB', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+  }).format(data.appointmentDate);
+
+  const timeDisplay = data.startTime ? formatHour(data.startTime) : '';
+
+  const content = `
+    ${heading(`Your session is in 3 days.`)}
+    ${body(`Hi ${data.clientName} — your tattoo session with ${data.artistName ?? 'Robyn'} is coming up on <strong style="color:var(--cream);">${dateStr}${timeDisplay ? ` at ${timeDisplay}` : ''}</strong>.`)}
+    <div style="margin:24px 0;padding:20px 24px;border-left:2px solid rgba(201,168,76,0.35);background:rgba(201,168,76,0.04);">
+      <p style="margin:0 0 8px;font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(201,168,76,0.5);">Quick check-in</p>
+      <p style="margin:0;font-size:14px;line-height:1.75;color:#9A9082;">Has anything changed since you last filled in your health form? Any new medications, medical procedures, or health changes we should know about?</p>
+    </div>
+    ${body(`If everything is the same, no action needed — just reply to this email or message us in your dashboard if you have anything to flag.`)}
+    <div style="margin:24px 0;padding:16px 20px;border:1px solid #2A2520;border-radius:4px;">
+      <p style="margin:0 0 8px;font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(201,168,76,0.5);">To prepare</p>
+      <ul style="margin:0;padding-left:16px;font-size:13px;line-height:1.9;color:#9A9082;">
+        <li>Eat a full meal before your appointment</li>
+        <li>Stay well hydrated the day before and morning of</li>
+        <li>Wear clothing that gives easy access to the area being tattooed</li>
+        <li>Avoid alcohol for at least 24 hours beforehand</li>
+      </ul>
+    </div>
+    ${ctaButton(`${FRONTEND_URL}/client/dashboard`, 'View Your Dashboard')}
+  `;
+
+  await send({
+    to: data.clientEmail,
+    from: { email: FROM_EMAIL, name: 'Hall of Mirrors Tattoo' },
+    subject: `Your session is in 3 days — ${data.bookingReference}`,
+    html: baseTemplate(content),
+  });
+}
+
 export async function sendConsultationResponseToClient(data: {
   clientEmail: string;
   clientName: string;

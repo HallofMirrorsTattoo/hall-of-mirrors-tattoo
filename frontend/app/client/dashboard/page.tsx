@@ -47,9 +47,9 @@ export default function ClientDashboardPage() {
         if (!res.ok) return;
         const data = await res.json();
         const consultations = data.consultations || [];
-        const badge = consultations.filter((c: { status: string; artist_message_count: number }) =>
-          c.status !== 'declined' && c.artist_message_count > 0
-        ).length;
+        const badge = consultations.reduce((sum: number, c: { status: string; unread_artist_count: number }) =>
+          sum + (c.status !== 'declined' ? (c.unread_artist_count ?? 0) : 0), 0
+        );
         updateBadge('consultations', badge);
       } catch { /* non-critical */ }
     })();

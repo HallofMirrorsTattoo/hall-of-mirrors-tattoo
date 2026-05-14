@@ -1,6 +1,11 @@
 import Link from 'next/link';
 import AnimatedSection from '../components/AnimatedSection';
 
+export const metadata = {
+  title: 'Client Reviews | Hall of Mirrors Tattoo Studio Liverpool',
+  description: 'Read what clients say about Hall of Mirrors Tattoo Studio in Liverpool. Specialising in neo-traditional and custom bespoke tattoos.',
+};
+
 const reviews = [
   {
     id: 1,
@@ -31,8 +36,32 @@ const reviews = [
 export default function Testimonials() {
   const avgRating = (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1);
 
+  const reviewJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: 'Hall of Mirrors Tattoo Studio',
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: avgRating,
+      reviewCount: reviews.length,
+      bestRating: 5,
+      worstRating: 1,
+    },
+    review: reviews.map((r) => ({
+      '@type': 'Review',
+      author: { '@type': 'Person', name: r.name },
+      reviewRating: { '@type': 'Rating', ratingValue: r.rating, bestRating: 5 },
+      reviewBody: r.text,
+      datePublished: r.date,
+    })),
+  };
+
   return (
     <div style={{ backgroundColor: 'var(--bg)', minHeight: '100vh' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(reviewJsonLd) }}
+      />
       <div style={{ maxWidth: '52rem', margin: '0 auto', padding: '2rem 1.5rem 5rem' }}>
 
         <AnimatedSection className="mb-16">
