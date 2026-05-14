@@ -264,6 +264,37 @@ CREATE TABLE IF NOT EXISTS "Message" (
     FOREIGN KEY (booking_id) REFERENCES "Booking"(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS "Message_booking_id_idx" ON "Message"(booking_id);
+
+CREATE TABLE IF NOT EXISTS "FlashDay" (
+    id TEXT PRIMARY KEY,
+    artist_id TEXT NOT NULL,
+    event_date DATE NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (artist_id) REFERENCES "Artist"(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS "FlashDay_artist_id_idx" ON "FlashDay"(artist_id);
+CREATE INDEX IF NOT EXISTS "FlashDay_event_date_idx" ON "FlashDay"(event_date);
+
+CREATE TABLE IF NOT EXISTS "FlashSlot" (
+    id TEXT PRIMARY KEY,
+    flash_day_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    price_pence INTEGER NOT NULL,
+    image_url TEXT,
+    is_available BOOLEAN NOT NULL DEFAULT TRUE,
+    claimed_by_user_id TEXT,
+    claimed_by_name TEXT,
+    claimed_by_email TEXT,
+    claimed_by_phone TEXT,
+    claimed_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (flash_day_id) REFERENCES "FlashDay"(id) ON DELETE CASCADE,
+    FOREIGN KEY (claimed_by_user_id) REFERENCES "User"(id) ON DELETE SET NULL
+);
+CREATE INDEX IF NOT EXISTS "FlashSlot_flash_day_id_idx" ON "FlashSlot"(flash_day_id);
 `;
 
 export async function setupDatabase() {

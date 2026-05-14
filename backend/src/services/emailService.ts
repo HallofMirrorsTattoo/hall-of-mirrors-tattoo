@@ -905,3 +905,65 @@ export async function sendConsultationResponseToClient(data: {
     html: baseTemplate(content),
   });
 }
+
+export async function sendFlashSlotClaimed(data: {
+  clientName: string;
+  clientEmail: string;
+  slotTitle: string;
+  pricePence: number;
+  eventDate: Date | string | null;
+  dayTitle: string | null;
+  artistName: string | null;
+}): Promise<void> {
+  const priceStr = data.pricePence ? `£${(data.pricePence / 100).toFixed(0)}` : '';
+  const dateStr = data.eventDate
+    ? new Intl.DateTimeFormat('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(data.eventDate))
+    : '';
+  const artistName = data.artistName ?? 'Robyn';
+
+  const clientContent = `
+    ${heading(`You've claimed a flash design.`)}
+    ${body(`Hi ${data.clientName} — you've successfully claimed <strong style="color:var(--cream);">${data.slotTitle}</strong>${priceStr ? ` (${priceStr})` : ''} from ${data.dayTitle ?? 'the flash day'}${dateStr ? ` on ${dateStr}` : ''}.`)}
+    <div style="margin:24px 0;padding:20px 24px;border-left:2px solid rgba(201,168,76,0.35);background:rgba(201,168,76,0.04);">
+      <p style="margin:0 0 8px;font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(201,168,76,0.5);">What happens next</p>
+      <p style="margin:0;font-size:14px;line-height:1.75;color:#9A9082;">${artistName} will be in touch to confirm your appointment time and answer any questions. Keep an eye on your inbox.</p>
+    </div>
+    ${body(`If you need to get in touch before then, feel free to reply to this email.`)}
+    ${ctaButton(`${FRONTEND_URL}/flash`, 'View Flash Days')}
+  `;
+
+  await send({
+    to: data.clientEmail,
+    from: { email: FROM_EMAIL, name: 'Hall of Mirrors Tattoo' },
+    subject: `Flash design claimed — ${data.slotTitle}`,
+    html: baseTemplate(clientContent),
+  });
+
+  // Studio notification
+  const studioContent = `
+    ${heading(`New flash design claimed.`)}
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;border-collapse:collapse;">
+      ${[
+        ['Design', data.slotTitle],
+        ['Price', priceStr || '—'],
+        ['Flash Day', data.dayTitle ?? '—'],
+        ['Date', dateStr || '—'],
+        ['Claimed by', data.clientName],
+        ['Email', data.clientEmail],
+      ].map(([label, value]) => `
+        <tr>
+          <td style="padding:10px 0;border-bottom:1px solid #2A2520;font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(201,168,76,0.5);width:130px;">${label}</td>
+          <td style="padding:10px 0;border-bottom:1px solid #2A2520;font-size:14px;color:#EDE8D8;">${value}</td>
+        </tr>
+      `).join('')}
+    </table>
+    ${ctaButton(`${FRONTEND_URL}/artist/dashboard`, 'Open Dashboard')}
+  `;
+
+  await send({
+    to: STUDIO_EMAIL,
+    from: { email: FROM_EMAIL, name: 'Hall of Mirrors Booking System' },
+    subject: `Flash claimed: ${data.slotTitle} — ${data.clientName}`,
+    html: baseTemplate(studioContent),
+  });
+}

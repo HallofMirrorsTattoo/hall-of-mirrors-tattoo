@@ -2,7 +2,7 @@
 ### Hall of Mirrors Tattoo — Master Record
 
 **Last Updated:** 2026-05-14
-**Status:** Production live · Phases 0–5, 6.1, 6.4, 6.5 shipped · Phase 6.2+ roadmap active
+**Status:** Production live · Phases 0–5, 6.1, 6.4, 6.5, 7.3 shipped · Phase 6.2+ roadmap active
 
 > This is the single source of truth for all past work, current state, and future plans.
 > Read this at the start of every session. Update it at the end of every session.
@@ -320,11 +320,15 @@ More effective than email for same-day nudges.
 - New service: `smsService.ts` wrapping Twilio REST
 - Env vars: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`
 
-**7.3 Flash day sign-up**
-Robyn uploads pre-drawn designs for a specific date at fixed prices. Clients claim a slot.
-- New tables: `FlashDay(id, date, description)`, `FlashSlot(id, flash_day_id, image_url, title, price, booked_by_user_id)`
-- New page: `/flash` — gallery with "Claim this design" CTA
-- Artist: "Flash Days" tab to upload designs and manage claims
+**7.3 Flash day sign-up** ✅ Complete (2026-05-14)
+- New tables: `FlashDay`, `FlashSlot` (in `setupDb.ts`)
+- `backend/src/routes/flash.ts` — `publicFlashRouter` (GET /api/flash, POST /api/flash/:slotId/claim) + `artistFlashRouter` (full CRUD at /api/artist/flash)
+- Atomic claim: UPDATE WHERE is_available = TRUE guards against race conditions
+- Image upload: Supabase Storage under `design-ideas/flash/` prefix (reuses existing bucket)
+- Email: `sendFlashSlotClaimed` — confirmation to client + studio notification
+- `/flash` public page — hero, countdown badges, slot grid, claim modal with validation
+- Artist dashboard "Flash Days" tab — create/delete days, add/delete/release slots, view claim details
+- "Flash Days" added to site nav (Header.tsx)
 
 **7.4 Gift vouchers**
 Stripe purchase → unique code emailed to recipient → redeemable against deposit.

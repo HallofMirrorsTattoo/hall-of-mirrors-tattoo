@@ -13,6 +13,7 @@ import clientConsultationRouter from './routes/clientConsultation.js';
 import consentRouter from './routes/consent.js';
 import availabilityRouter from './routes/availability.js';
 import { clientMessagesRouter, artistMessagesRouter, clientConsultationMessagesRouter, artistConsultationMessagesRouter } from './routes/messages.js';
+import { publicFlashRouter, artistFlashRouter } from './routes/flash.js';
 import { setupDatabase } from './setupDb.js';
 import { startReminderJob } from './jobs/reminderJob.js';
 
@@ -77,6 +78,8 @@ app.use('/api/client/messages', clientMessagesRouter);
 app.use('/api/artist/messages', artistMessagesRouter);
 app.use('/api/client/consultation-messages', clientConsultationMessagesRouter);
 app.use('/api/artist/consultation-messages', artistConsultationMessagesRouter);
+app.use('/api/flash', publicFlashRouter);
+app.use('/api/artist/flash', artistFlashRouter);
 
 // Error handler middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
