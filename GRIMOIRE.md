@@ -2,7 +2,7 @@
 ### Hall of Mirrors Tattoo — Master Record
 
 **Last Updated:** 2026-05-14
-**Status:** Production live · Phases 0–5, 6.1, 6.3, 6.4, 6.5, 6.7, 7.3 shipped · Studio/artist data separation complete · Portfolio photos live · Phase 6.2+ roadmap active
+**Status:** Production live · Phases 0–5, 6.1, 6.3, 6.4, 6.5, 6.7, 7.3 shipped · Settings view/edit mode · Studio seed fix · Portfolio cache 60s · Phase 6.2+ roadmap active
 
 > This is the single source of truth for all past work, current state, and future plans.
 > Read this at the start of every session. Update it at the end of every session.
@@ -218,13 +218,22 @@ Phases 0–5, 6.1, 6.3, 6.4, 6.5, 7.3 shipped plus the full studio/artist data s
 - `/artists/[slug]`: `GalleryGrid` component — shows real photos if uploaded, falls back to labelled placeholders
 - `/portfolio`: shows `cover_photo` as large portrait image when available, falls back to placeholder card grid
 
+**Settings view/edit mode + Studio seed fix** (commit `d48e7b8`):
+- Settings tab UX fully rebuilt — each section now renders saved values as read-only view by default with an "Edit" button; clicking Edit unlocks fields for that section only; Save commits + returns to view; Cancel re-fetches from DB and discards
+- Root cause of settings not persisting: `Studio` table had no seed row so all PATCHes hit `UPDATE ... WHERE id = (SELECT id ...) RETURNING *` with 0 matching rows, returning 200 OK but saving nothing
+- Fix: `setupDb.ts` now seeds a Studio row with `id = 'hom-studio'` on every server start (`ON CONFLICT DO NOTHING`); PATCH route has fallback upsert if row still missing
+- Removed optimistic "✓ SAVED" flash — view mode showing live DB values makes saved state self-evident
+- Portfolio page ISR cache reduced from 3600s → 60s; artist slug page same — photos appear on public site within ~1 minute of upload instead of up to 1 hour
+- Note: if photos still don't appear after 60–90s, check Supabase Storage → `design-ideas` bucket → ensure `anon` SELECT policy is enabled (public read access)
+
 **Items still pending user action (not code blockers):**
 - [ ] Verify `studio@hallofmirrorstattoo.com` as SendGrid Single Sender
 - [ ] Confirm `FRONTEND_URL=https://hall-of-mirrors-tattoo.vercel.app` in Railway env vars
 - [ ] Add Christina (need: name, email, password) — she can fill bio/specialties/instagram/photos herself via dashboard
 - [ ] Robyn to fill in Studio Settings → Social & About (Instagram + TikTok handles → auto-wires to footer)
 - [ ] Robyn to fill in Studio Settings → Contact & Location (address, phone) → auto-wires to About page JSON-LD
-- [ ] Robyn to upload portfolio photos via Dashboard → Portfolio tab → instantly live on artist page + portfolio page
+- [ ] Robyn to upload portfolio photos via Dashboard → Portfolio tab → appear on site within ~1 min
+- [ ] Check Supabase Storage `design-ideas` bucket has public read (anon SELECT policy) if photos don't surface
 
 ---
 
