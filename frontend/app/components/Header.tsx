@@ -143,6 +143,7 @@ export default function Header() {
             style={{ color: 'rgba(242,237,224,0.8)' }}
             onClick={() => setIsOpen(!isOpen)}
             aria-label={isOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={isOpen}
           >
             <svg
               className="absolute transition-all duration-400"
@@ -166,6 +167,7 @@ export default function Header() {
       {isOpen && (
         <div
           className="fixed inset-0 top-20 md:hidden z-30"
+          style={{ animation: 'fadeIn 0.18s ease both' }}
           onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false); }}
         >
           <div
@@ -174,6 +176,7 @@ export default function Header() {
               background: 'rgba(14,12,9,0.96)',
               backdropFilter: 'blur(32px)',
               border: '1px solid rgba(201,168,76,0.14)',
+              animation: 'tabFadeIn 0.22s cubic-bezier(0.22,1,0.36,1) both',
             }}
           >
             <ul className="space-y-5">

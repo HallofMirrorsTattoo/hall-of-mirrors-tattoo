@@ -252,8 +252,18 @@ export default function ConsentFormPage() {
 
   if (authLoading || pageLoading) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center" style={{ background: 'var(--bg)' }}>
-        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-low)' }}>Loading</p>
+      <div style={{ background: 'var(--bg)', minHeight: '100dvh', paddingTop: '7rem', paddingBottom: '6rem' }}>
+        <div style={{ maxWidth: '720px', margin: '0 auto', padding: '0 1.5rem' }}>
+          <div className="skeleton" style={{ height: '0.65rem', width: '5.5rem', marginBottom: '1.5rem' }} />
+          <div className="skeleton" style={{ height: '0.6rem', width: '9rem', marginBottom: '1rem' }} />
+          <div className="skeleton" style={{ height: '3.25rem', width: '55%', marginBottom: '3rem', borderRadius: '0.5rem' }} />
+          <div className="skeleton" style={{ height: '8rem', borderRadius: '0.75rem', marginBottom: '3rem' }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} className="skeleton" style={{ height: '2.75rem', borderRadius: '0.375rem' }} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -302,7 +312,7 @@ export default function ConsentFormPage() {
 
         {/* Back link + heading */}
         <div style={{ marginBottom: '3rem' }}>
-          <Link href="/client/dashboard" style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--gold)', opacity: 0.5, textDecoration: 'none', display: 'inline-block', marginBottom: '1.5rem' }}>
+          <Link href="/client/dashboard" style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--gold)', opacity: 0.7, textDecoration: 'none', display: 'inline-block', marginBottom: '1.5rem', transition: 'opacity 0.2s ease' }}>
             ← Dashboard
           </Link>
           <p className="eyebrow" style={{ marginBottom: '0.75rem' }}>Before your appointment</p>

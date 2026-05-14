@@ -1459,7 +1459,9 @@ export default function ArtistDashboard() {
   if (authLoading) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center" style={{ background: 'var(--bg)' }}>
-        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-low)' }}>Loading</p>
+        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.35)' }}>
+          Hall of Mirrors
+        </p>
       </div>
     );
   }

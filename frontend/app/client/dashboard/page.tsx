@@ -77,7 +77,7 @@ export default function ClientDashboardPage() {
                 Welcome back{user?.first_name ? `, ${user.first_name}` : ''}
               </h1>
               <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.6 }}>
-                Manage your bookings, messages, and consent forms
+                Your bookings, consultations, and creative space
               </p>
             </div>
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexShrink: 0, marginTop: '0.5rem' }}>
@@ -161,10 +161,10 @@ export default function ClientDashboardPage() {
                     Have a question?
                   </h3>
                   <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
-                    Message Robyn from the Consultations tab — she&apos;ll reply as soon as possible.
+                    Open a consultation and Robyn will reply directly. You can message back and forth from there.
                   </p>
                   <button onClick={() => setActiveTab('consultations')} className="btn-secondary">
-                    Open Consultations
+                    Consultations
                   </button>
                 </div>
               </div>

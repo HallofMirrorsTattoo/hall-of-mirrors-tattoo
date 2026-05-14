@@ -30,8 +30,8 @@ export default function ArtistLogin() {
   if (isLoading) {
     return (
       <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg)' }}>
-        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6875rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
-          Loading...
+        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6875rem', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.35)' }}>
+          Hall of Mirrors
         </p>
       </div>
     );
@@ -104,7 +104,8 @@ export default function ArtistLogin() {
                 className="btn-primary w-full justify-center"
                 style={{ opacity: isSubmitting ? 0.7 : 1, marginTop: '0.5rem' }}
               >
-                <span>{isSubmitting ? 'Signing in...' : 'Sign In'}</span>
+                <span>{isSubmitting ? 'Signing in...' : 'Sign in'}</span>
+                {!isSubmitting && <span className="btn-icon" aria-hidden="true">→</span>}
               </button>
             </form>
 

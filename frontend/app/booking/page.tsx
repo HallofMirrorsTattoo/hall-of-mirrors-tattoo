@@ -576,7 +576,7 @@ export default function BookingPage() {
                 <hr style={divider} /></>}
 
                 {/* ── Section 4: Design info ── */}
-                <span style={eyebrow}>04 — Your tattoo</span>
+                <span style={eyebrow}>{formMode === 'booking' ? '04' : '03'} — Your tattoo</span>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '0' }}>
                   <div>

@@ -345,9 +345,20 @@ export default function BookingDetailPage() {
   );
 
   if (loading) return wrap(
-    <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
-      Loading...
-    </p>
+    <div>
+      <div className="skeleton" style={{ height: '0.65rem', width: '6rem', marginBottom: '2.5rem', borderRadius: '0.25rem' }} />
+      <div style={{ marginBottom: '3rem' }}>
+        <div className="skeleton" style={{ height: '3rem', width: '50%', marginBottom: '0.75rem', borderRadius: '0.375rem' }} />
+        <div className="skeleton" style={{ height: '0.6rem', width: '8rem', borderRadius: '0.25rem' }} />
+      </div>
+      <div className="skeleton" style={{ height: '5rem', borderRadius: '0.75rem', marginBottom: '2rem' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="skeleton" style={{ height: '4.5rem', borderRadius: '0.5rem' }} />
+        ))}
+      </div>
+      <div className="skeleton" style={{ height: '8rem', borderRadius: '0.75rem' }} />
+    </div>
   );
   if (error) return wrap(
     <div style={{ padding: '1.25rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '0.5rem' }}>

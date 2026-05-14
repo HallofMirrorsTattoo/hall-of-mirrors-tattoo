@@ -106,9 +106,10 @@ export default function ForgotPasswordPage() {
               type="submit"
               disabled={loading}
               className="btn-primary"
-              style={{ width: '100%', padding: '0.875rem', opacity: loading ? 0.6 : 1, cursor: loading ? 'default' : 'pointer' }}
+              style={{ width: '100%', justifyContent: 'center', padding: '0.875rem', opacity: loading ? 0.6 : 1, cursor: loading ? 'default' : 'pointer' }}
             >
-              {loading ? 'Sending...' : 'Send reset link'}
+              <span>{loading ? 'Sending...' : 'Send reset link'}</span>
+              {!loading && <span className="btn-icon" aria-hidden="true">→</span>}
             </button>
 
             <p style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-mid)', margin: 0 }}>

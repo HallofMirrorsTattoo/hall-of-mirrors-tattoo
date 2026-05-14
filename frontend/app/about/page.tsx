@@ -44,9 +44,9 @@ export default function About() {
                 natural forms, and personal narrative.
               </p>
               <p style={{ marginBottom: '1.25rem' }}>
-                Specialising in neo-traditional tattooing with a passion for bold colour,
-                fine line detail, and bespoke designs tailored to each client. Robyn&apos;s
-                full biography is coming soon.
+                Every piece is drawn from what the client brings to the chair — their
+                stories, references, and vision — translated into something that will
+                last a lifetime. Robyn&apos;s full biography is coming soon.
               </p>
 
               {/* Stats */}

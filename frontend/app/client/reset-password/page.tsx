@@ -130,9 +130,10 @@ function ResetPasswordForm() {
               type="submit"
               disabled={loading || !token || !email}
               className="btn-primary"
-              style={{ width: '100%', padding: '0.875rem', opacity: (loading || !token || !email) ? 0.6 : 1, cursor: (loading || !token || !email) ? 'default' : 'pointer' }}
+              style={{ width: '100%', justifyContent: 'center', padding: '0.875rem', opacity: (loading || !token || !email) ? 0.6 : 1, cursor: (loading || !token || !email) ? 'default' : 'pointer' }}
             >
-              {loading ? 'Updating...' : 'Set new password'}
+              <span>{loading ? 'Updating...' : 'Set new password'}</span>
+              {!loading && token && email && <span className="btn-icon" aria-hidden="true">→</span>}
             </button>
 
             <p style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-mid)', margin: 0 }}>

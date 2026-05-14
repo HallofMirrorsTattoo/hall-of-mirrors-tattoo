@@ -91,7 +91,8 @@ export default function ClientLoginPage() {
                 className="btn-primary w-full justify-center"
                 style={{ opacity: isLoading ? 0.7 : 1, marginTop: '0.5rem' }}
               >
-                <span>{isLoading ? 'Logging in...' : 'Login'}</span>
+                <span>{isLoading ? 'Logging in...' : 'Log in'}</span>
+                {!isLoading && <span className="btn-icon" aria-hidden="true">→</span>}
               </button>
             </form>
 

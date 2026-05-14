@@ -187,8 +187,18 @@ export default function ClientProfilePage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center" style={{ background: 'var(--bg)' }}>
-        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-low)' }}>Loading</p>
+      <div style={{ background: 'var(--bg)', minHeight: '100dvh', paddingTop: '7rem', paddingBottom: '5rem' }}>
+        <div style={{ maxWidth: '680px', margin: '0 auto', padding: '0 1.5rem' }}>
+          <div className="skeleton" style={{ height: '0.65rem', width: '5rem', marginBottom: '1.5rem' }} />
+          <div className="skeleton" style={{ height: '0.6rem', width: '7rem', marginBottom: '0.75rem' }} />
+          <div className="skeleton" style={{ height: '2.75rem', width: '45%', marginBottom: '3rem', borderRadius: '0.5rem' }} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
+            {[1, 2, 3, 4].map(i => <div key={i} className="skeleton" style={{ height: '3rem', borderRadius: '0.5rem' }} />)}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {[1, 2, 3].map(i => <div key={i} className="skeleton" style={{ height: '3rem', borderRadius: '0.5rem' }} />)}
+          </div>
+        </div>
       </div>
     );
   }
@@ -197,7 +207,7 @@ export default function ClientProfilePage() {
     <div className="min-h-[100dvh]" style={{ background: 'var(--bg)', paddingTop: '7rem', paddingBottom: '5rem' }}>
       <div style={{ maxWidth: '680px', margin: '0 auto', padding: '0 1.5rem' }}>
         <div style={{ marginBottom: '3rem' }}>
-          <Link href="/client/dashboard" style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--gold)', opacity: 0.5, textDecoration: 'none', display: 'inline-block', marginBottom: '1.5rem' }}>
+          <Link href="/client/dashboard" style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--gold)', opacity: 0.7, textDecoration: 'none', display: 'inline-block', marginBottom: '1.5rem', transition: 'opacity 0.2s ease' }}>
             ← Dashboard
           </Link>
           <p className="eyebrow" style={{ marginBottom: '0.75rem' }}>Your account</p>
@@ -272,7 +282,8 @@ export default function ClientProfilePage() {
             className="btn-primary"
             style={{ padding: '0.875rem 2.5rem', opacity: saving ? 0.6 : 1, cursor: saving ? 'default' : 'pointer' }}
           >
-            {saving ? 'Saving...' : 'Save changes'}
+            <span>{saving ? 'Saving...' : 'Save changes'}</span>
+            {!saving && <span className="btn-icon" aria-hidden="true">→</span>}
           </button>
         </form>
 
