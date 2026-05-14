@@ -388,6 +388,83 @@ export default async function Portfolio() {
         </div>
       </div>
 
+      {/* ── FLASH DAYS ────────────────────────────────────────────────────── */}
+      <section className="px-6 py-20 md:py-28">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20 items-center">
+            <AnimatedSection>
+              <p className="eyebrow" style={{ marginBottom: '1rem' }}>Flash Days</p>
+              <h2 style={{
+                fontFamily: '"Cormorant Garamond", serif',
+                fontStyle: 'italic',
+                fontWeight: 300,
+                fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
+                color: 'var(--cream)',
+                letterSpacing: '-0.025em',
+                lineHeight: 1.0,
+                marginBottom: '1.5rem',
+              }}>
+                One day.<br />Original designs.
+              </h2>
+              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.8, maxWidth: '44ch', marginBottom: '2rem' }}>
+                Occasionally our artists host flash days — special events where a collection
+                of pre-drawn designs is available at a fixed price. Each design is unique,
+                first come first served. Once claimed, it&apos;s gone.
+              </p>
+              <Link href="/flash" className="btn-secondary">
+                See upcoming flash days ↗
+              </Link>
+            </AnimatedSection>
+
+            <AnimatedSection delay={150}>
+              <div style={{
+                border: '1px solid var(--border)',
+                borderRadius: '0.375rem',
+                padding: '2.5rem',
+                background: 'var(--surface)',
+                position: 'relative',
+                overflow: 'hidden',
+              }}>
+                <div aria-hidden="true" style={{
+                  position: 'absolute', inset: 0,
+                  background: 'radial-gradient(ellipse 70% 60% at 50% 50%, rgba(201,168,76,0.04) 0%, transparent 70%)',
+                  pointerEvents: 'none',
+                }} />
+                {[
+                  { label: 'Pre-drawn designs', detail: 'Ready to go — no waiting on custom artwork.' },
+                  { label: 'Fixed price', detail: 'No surprises. Each design is priced up front.' },
+                  { label: 'Limited availability', detail: 'Every design is one of a kind. Claim it or lose it.' },
+                ].map((item) => (
+                  <div key={item.label} style={{ paddingBottom: '1.25rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border)' }}>
+                    <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.65)', marginBottom: '0.3rem' }}>
+                      {item.label}
+                    </p>
+                    <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-mid)', lineHeight: 1.6, maxWidth: 'none' }}>
+                      {item.detail}
+                    </p>
+                  </div>
+                ))}
+                <div style={{ paddingBottom: 0, marginBottom: 0 }}>
+                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.65)', marginBottom: '0.3rem' }}>
+                    Announced via Instagram
+                  </p>
+                  <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-mid)', lineHeight: 1.6, maxWidth: 'none' }}>
+                    Follow us to be first to know when the next flash day drops.
+                  </p>
+                </div>
+              </div>
+            </AnimatedSection>
+          </div>
+        </div>
+      </section>
+
+      {/* HOM Divider */}
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="section-divider">
+          <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.35em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.35)' }}>HOM</span>
+        </div>
+      </div>
+
       {/* ── BOTTOM CTA ────────────────────────────────────────────────────── */}
       <section className="px-6 py-28 md:py-40">
         <div className="max-w-3xl mx-auto text-center">
@@ -425,7 +502,7 @@ export default async function Portfolio() {
                 <span>Book Appointment</span>
                 <span className="btn-icon" aria-hidden="true">↗</span>
               </Link>
-              <Link href="/services" className="btn-secondary">Learn More</Link>
+              <Link href="/about" className="btn-secondary">About the Studio</Link>
             </div>
           </AnimatedSection>
         </div>

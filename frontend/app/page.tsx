@@ -478,7 +478,7 @@ export default function Home() {
             </div>
 
             <AnimatedSection delay={300} className="mt-12 text-center">
-              <Link href="/services" className="btn-secondary">All Services &amp; Pricing</Link>
+              <Link href="/about" className="btn-secondary">About the Studio</Link>
             </AnimatedSection>
 
           </div>

@@ -112,7 +112,7 @@ export default async function Footer() {
               {[
                 { href: '/booking',      label: 'Book Appointment' },
                 { href: '/portfolio',    label: 'Portfolio' },
-                { href: '/services',     label: 'Services' },
+                { href: '/flash',        label: 'Flash Days' },
                 { href: '/consultation', label: 'Consultation' },
                 { href: '/about',        label: 'About' },
               ].map(({ href, label }) => (

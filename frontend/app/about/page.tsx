@@ -317,6 +317,109 @@ export default async function About() {
         </div>
       </div>
 
+      {/* ── WHAT WE OFFER ──────────────────────────────────────────────── */}
+      <section className="px-6 py-20 md:py-28">
+        <div className="max-w-6xl mx-auto">
+          <AnimatedSection style={{ marginBottom: '3rem' }}>
+            <p className="eyebrow">What we offer</p>
+            <h2 style={{
+              fontFamily: '"Cormorant Garamond", serif',
+              fontStyle: 'italic',
+              fontWeight: 300,
+              fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
+              color: 'var(--cream)',
+              letterSpacing: '-0.025em',
+              lineHeight: 1.0,
+              marginTop: '0.75rem',
+            }}>
+              Every appointment, by design
+            </h2>
+          </AnimatedSection>
+          <div style={{ borderTop: '1px solid var(--border)' }}>
+            {([
+              {
+                n: '01',
+                title: 'Bespoke Custom Tattoo',
+                body: 'The foundation of what we do. Every custom tattoo at Hall of Mirrors is drawn from scratch — no flash, no clip art, no compromises. We work through your idea together, from rough concept to polished design, before anything touches your skin. Neo-traditional our speciality, though we work across styles.',
+              },
+              {
+                n: '02',
+                title: 'Free Consultation',
+                body: "Not sure where to start? Book a free consultation at our Castle Street studio. We'll talk through your idea, suitable placement, approximate sizing, and what the design process involves. Most of our clients start here — there's no obligation and no pressure.",
+              },
+              {
+                n: '03',
+                title: 'Cover-Up & Rework',
+                body: "Specialist cover-up tattoos for existing work you want transformed — whether it's a name, an old design that's lost its meaning, or simply a tattoo that was never quite right. Cover-up work requires a consultation first so we can assess the existing ink and recommend the best approach.",
+              },
+              {
+                n: '04',
+                title: 'Touch-Ups & Aftercare',
+                body: 'We stand behind our work. If a healed tattoo needs a touch-up — colour refresh, line sharpening — get in touch. Touch-ups on Hall of Mirrors work are handled case-by-case. We also provide detailed aftercare guidance with every appointment.',
+              },
+            ]).map((item, i) => (
+              <AnimatedSection
+                key={item.n}
+                delay={i * 80}
+                style={{ borderBottom: '1px solid var(--border)' }}
+              >
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '5.5rem 1px 1fr',
+                  alignItems: 'start',
+                  gap: '0 2.5rem',
+                  padding: '2.5rem 0',
+                }}>
+                  <span style={{
+                    fontFamily: '"Cormorant Garamond", serif',
+                    fontStyle: 'italic',
+                    fontSize: 'clamp(2.25rem, 4.5vw, 3.5rem)',
+                    fontWeight: 300,
+                    color: 'var(--gold)',
+                    opacity: 0.35,
+                    lineHeight: 1,
+                    textAlign: 'right',
+                  }}>
+                    {item.n}
+                  </span>
+                  <span style={{ width: '1px', alignSelf: 'stretch', backgroundColor: 'var(--border)' }} aria-hidden="true" />
+                  <div style={{ paddingTop: '0.25rem' }}>
+                    <h3 style={{
+                      fontFamily: '"Cormorant Garamond", serif',
+                      fontStyle: 'italic',
+                      fontSize: 'clamp(1.375rem, 3vw, 2rem)',
+                      fontWeight: 300,
+                      color: 'var(--cream)',
+                      lineHeight: 1.2,
+                      marginBottom: '0.75rem',
+                    }}>
+                      {item.title}
+                    </h3>
+                    <p style={{ fontSize: '0.9rem', maxWidth: '55ch', color: 'var(--text-mid)', lineHeight: 1.75 }}>
+                      {item.body}
+                    </p>
+                  </div>
+                </div>
+              </AnimatedSection>
+            ))}
+          </div>
+          <AnimatedSection delay={350} style={{ marginTop: '3rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <Link href="/booking" className="btn-primary">
+              <span>Book Appointment</span>
+              <span className="btn-icon" aria-hidden="true">↗</span>
+            </Link>
+            <Link href="/booking?mode=consultation" className="btn-secondary">Request a Consultation</Link>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* HOM Divider */}
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="section-divider">
+          <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.35em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.35)' }}>HOM</span>
+        </div>
+      </div>
+
       {/* ── STUDIO INFO STRIP ──────────────────────────────────────────── */}
       <section className="px-6 py-20 md:py-28">
         <div className="max-w-6xl mx-auto">
