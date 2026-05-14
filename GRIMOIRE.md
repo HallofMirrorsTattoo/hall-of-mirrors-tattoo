@@ -2,7 +2,7 @@
 ### Hall of Mirrors Tattoo — Master Record
 
 **Last Updated:** 2026-05-14
-**Status:** Production live · Phases 0–5, 6.1, 6.3, 6.4, 6.5, 7.3 shipped · Phase 6.2+ roadmap active
+**Status:** Production live · Phases 0–5, 6.1, 6.3, 6.4, 6.5, 7.3 shipped · Studio/artist data separation complete · Phase 6.2+ roadmap active
 
 > This is the single source of truth for all past work, current state, and future plans.
 > Read this at the start of every session. Update it at the end of every session.
@@ -176,13 +176,43 @@ cd frontend && npm run dev
 
 ## Current State (2026-05-14)
 
-Phases 0–5, 6.1, 6.4, and 6.5 are shipped. Phase 5: automated emails + client notes + real unread badges. Phase 6.1: 3-step booking wizard. Phase 6.4: dynamic `/artists/[slug]` pages. Phase 6.5: sitemap, robots, OG image, JSON-LD schemas (LocalBusiness + Reviews).
+Phases 0–5, 6.1, 6.3, 6.4, 6.5, 7.3 shipped plus the full studio/artist data separation work below.
+
+**Studio settings wired to frontend** (commits `036bf46`, `c45dad8`):
+- `GET /api/studio-settings` public endpoint — no auth, returns all public studio fields
+- `frontend/lib/studioSettings.ts` — shared `StudioSettings` type + `getStudioSettings()` server-side fetch (1h ISR cache)
+- Footer: async server component, address + social links live from `Studio` table
+- About page: address from DB; `about_section` surfaces here if Robyn writes it in Studio Settings
+- Booking step 3: deposit amount note + cancellation hours dynamically from DB
+
+**Artist profile separated from studio settings** (commit `c45dad8`):
+- `PATCH /api/artist/profile` — authenticated; updates `full_name`, `bio`, `specialties`, `years_experience`, `instagram_handle` on own Artist row only
+- Dashboard Settings tab now has two clearly separated sections:
+  - **Your Profile** (top) — artist-specific fields, feeds `/artists/[slug]` and `/portfolio`
+  - **Studio Settings** (below) — studio-wide fields, feeds footer, about page, booking policy copy
+
+**Portfolio page fully dynamic** (commit `46666eb`):
+- `/portfolio` is now an async server component; fetches from `GET /api/artist` (1h cache)
+- All artist content (bio, specialty pills, years experience, Instagram link) comes from `Artist` table
+- Artists with bio → full section with gallery grid + "View full profile" + booking CTAs
+- Artists without bio → "Coming Soon" state
+- No hardcoded artist names anywhere in the file
+
+**About page rewritten** (commit `2e291d5`):
+- Studio-focused throughout — no individual artist names
+- New copy: studio story, "The Hall of Mirrors Approach" (3 pillars: craft, bespoke, consultation)
+- Stats updated: "2 Resident Artists / 100% Bespoke / Private by Appointment"
+- CTA changed to "Meet Our Artists" → `/portfolio`
+- Proper `metadata` export (title, description, OpenGraph) — location + keyword optimised
+- `TattooParlor` JSON-LD structured data populated from studio settings (address, phone, socials)
+- Eyebrow: "The Studio" (was "The Artist"); h1: "Where craft becomes permanent"
 
 **Items still pending user action (not code blockers):**
 - [ ] Verify `studio@hallofmirrorstattoo.com` as SendGrid Single Sender
 - [ ] Confirm `FRONTEND_URL=https://hall-of-mirrors-tattoo.vercel.app` in Railway env vars
-- [ ] Add Christina (need: name, email, password, bio, instagram)
-- [ ] Add real Instagram + TikTok URLs to footer
+- [ ] Add Christina (need: name, email, password) — she can fill bio/specialties/instagram herself via dashboard
+- [ ] Robyn to fill in Studio Settings → Social & About (Instagram + TikTok handles → auto-wires to footer)
+- [ ] Robyn to fill in Studio Settings → Contact & Location (address, phone) → auto-wires to About page JSON-LD
 
 ---
 
@@ -277,11 +307,17 @@ Client joins waitlist for cancelled slots. When a confirmed booking cancels, not
 - New email: `sendWaitlistNotification(user, booking)`
 
 **6.3 Studio settings page** ✅ Complete (2026-05-14, commit `f962a7a`)
-- `backend/src/routes/studioSettings.ts` — `GET/PATCH /api/artist/studio-settings` behind `authMiddleware`; no new DB tables (Studio table already had all columns)
+- `backend/src/routes/studioSettings.ts` — `GET/PATCH /api/artist/studio-settings` (authenticated) + `GET /api/studio-settings` (public); no new DB tables (Studio table already had all columns)
 - Allowlist-based PATCH: only known fields accepted, dynamic `SET` clauses built from request body
-- Settings tab added to artist dashboard (`'settings'` in tab union)
-- Four save-independent sections: Contact & Location, Opening Hours (Mon–Sun time pickers + Closed button), Booking Policy (deposit £, cancellation notice hours), Social & About (Instagram/Facebook/TikTok handles + about textarea)
-- `settingsSaved` flash confirmation (3s) after each section save; per-section save prevents cross-section data loss
+- Settings tab added to artist dashboard (`'settings'` in tab union) — now 7 tabs total
+- Five save-independent cards in Settings tab:
+  - **Your Profile** (artist-specific) — full_name, bio, specialties, years_experience, instagram_handle; saves to `Artist` table via `PATCH /api/artist/profile`; "Appears on your public artist page" note
+  - **Contact & Location** (studio) — studio_name, email, phone, postcode, address
+  - **Opening Hours** (studio) — Mon–Sun time pickers + Closed button clears both times
+  - **Booking Policy** (studio) — deposit £, cancellation notice hours
+  - **Social & About** (studio) — Instagram/Facebook/TikTok handles + about_section textarea
+- Studio social handles (Studio table) are separate from artist Instagram (Artist table) — can be same or different accounts
+- `settingsSaved` / `profileSaved` flash confirmation (3s) after each section save
 
 **6.4 Per-artist portfolio page `/artists/[slug]`** ✅ Complete (2026-05-14)
 - Server component at `app/artists/[slug]/page.tsx` — fetches from `GET /api/artist/:slug`
@@ -415,14 +451,14 @@ frontend/app/
 ├── globals.css                   ENTIRE design system (tokens, utilities, keyframes)
 ├── page.tsx                      Homepage (Server Component)
 ├── booking/page.tsx              Booking form (mode toggle: session / consultation)
-├── portfolio/page.tsx            Artists page: Robyn + Christina
+├── portfolio/page.tsx            Artists page: fully dynamic from GET /api/artist — bio, specialties, socials, coming-soon state
 ├── services/page.tsx             4 services, studio credentials, SEO metadata
-├── about/page.tsx                Studio/artist bio
+├── about/page.tsx                Studio identity — story, vision, credentials, JSON-LD TattooParlor schema (no artist names)
 ├── contact/page.tsx              Contact form
 ├── aftercare/page.tsx            Aftercare instructions
 ├── artist/
 │   ├── login/page.tsx
-│   └── dashboard/page.tsx        5 tabs: Bookings, Calendar, Consultations, Availability, Stats
+│   └── dashboard/page.tsx        7 tabs: Bookings, Calendar, Consultations, Availability, Stats, Flash Days, Settings
 ├── client/
 │   ├── login/page.tsx
 │   ├── signup/page.tsx           Pre-fills email from ?email= param
@@ -439,12 +475,18 @@ frontend/app/
 │   └── bookings/[id]/page.tsx    Full booking workspace
 └── components/
     ├── Header.tsx                Dark glass nav, scroll opacity, mobile menu
-    ├── Footer.tsx                Editorial 12-col grid
+    ├── Footer.tsx                Async server component — address + social links live from Studio table
     ├── ShopCarousel.tsx          Ken Burns carousel
     ├── AnimatedSection.tsx       IntersectionObserver scroll reveal wrapper
     ├── CursorGlow.tsx            Tracks mouse → --cursor-x/--cursor-y
     ├── AvailabilityCalendar.tsx  Custom obsidian/gold calendar
     └── TimeSlotPicker.tsx        12×1hr slot grid
+
+frontend/lib/
+├── studioSettings.ts             StudioSettings type + getStudioSettings() — server-side fetch, 1h ISR cache
+├── authContext.tsx               Artist JWT context
+├── clientAuthContext.tsx         Client JWT context
+└── clientProtectedRoute.tsx      Client-side auth guard
 
 backend/src/
 ├── index.ts                      Express app, middleware, route mounting
