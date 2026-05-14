@@ -437,8 +437,8 @@ export default function ArtistDashboard() {
     } catch { /* non-critical */ }
   };
 
-  const saveProfile = async () => {
-    if (!accessToken) return;
+  const saveProfile = async (): Promise<boolean> => {
+    if (!accessToken) return false;
     setProfileSaving(true);
     setProfileError('');
     try {
@@ -453,9 +453,14 @@ export default function ArtistDashboard() {
           instagram_handle: profile.instagram_handle,
         }),
       });
-      if (!res.ok) throw new Error('Save failed');
-    } catch {
-      setProfileError('Failed to save profile. Please try again.');
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? 'Save failed');
+      }
+      return true;
+    } catch (err: any) {
+      setProfileError(err.message ?? 'Failed to save profile. Please try again.');
+      return false;
     } finally {
       setProfileSaving(false);
     }
@@ -560,8 +565,8 @@ export default function ArtistDashboard() {
     }
   };
 
-  const saveSettings = async (fields: Partial<StudioSettings>) => {
-    if (!accessToken) return;
+  const saveSettings = async (fields: Partial<StudioSettings>): Promise<boolean> => {
+    if (!accessToken) return false;
     setSettingsSaving(true);
     setSettingsError('');
     try {
@@ -570,11 +575,16 @@ export default function ArtistDashboard() {
         headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(fields),
       });
-      if (!res.ok) throw new Error('Save failed');
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? 'Save failed');
+      }
       const data = await res.json();
       setSettings(prev => ({ ...prev, ...fields, ...data }));
-    } catch {
-      setSettingsError('Failed to save settings. Please try again.');
+      return true;
+    } catch (err: any) {
+      setSettingsError(err.message ?? 'Failed to save settings. Please try again.');
+      return false;
     } finally {
       setSettingsSaving(false);
     }
@@ -3632,7 +3642,7 @@ export default function ArtistDashboard() {
             title: string,
             viewContent: React.ReactNode,
             editContent: React.ReactNode,
-            onSave: () => void,
+            onSave: () => Promise<boolean> | boolean | void,
             onCancel?: () => void,
           ) => {
             const isEditing = editingSection === sectionKey;
@@ -3647,7 +3657,7 @@ export default function ArtistDashboard() {
                   <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
                     <button style={CANCEL_BTN} onClick={() => { (onCancel ?? fetchSettings)(); setEditingSection(null); }}>Cancel</button>
                     <button
-                      onClick={() => { onSave(); setEditingSection(null); }}
+                      onClick={async () => { const ok = await onSave(); if (ok !== false) setEditingSection(null); }}
                       disabled={settingsSaving || profileSaving}
                       className="btn-primary"
                       style={{ fontSize: '0.8125rem', padding: '0.5625rem 1.375rem', opacity: (settingsSaving || profileSaving) ? 0.7 : 1 }}
