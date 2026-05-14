@@ -25,6 +25,7 @@ const BookingSchema = z.object({
   referralSource:          z.string().optional(),
   notes:                   z.string().optional(),
   artistId:                z.string().optional(),
+  clientBudget:            z.preprocess(v => v === '' || v === undefined || v === null ? undefined : Number(v), z.number().positive().optional()),
 });
 
 type BookingFormData = z.infer<typeof BookingSchema>;
@@ -170,6 +171,7 @@ export default function BookingPage() {
         const payload: Record<string, unknown> = {
           ...data,
           artistId: data.artistId || undefined,
+          clientBudget: data.clientBudget || undefined,
         };
         if (selectedDate) {
           payload.appointmentDate = selectedDate;
@@ -614,6 +616,14 @@ export default function BookingPage() {
                   <div>
                     <label htmlFor="notes">Additional Notes <span style={{ color: 'var(--text-low)', fontWeight: 400 }}>(Optional)</span></label>
                     <textarea {...register('notes')} id="notes" placeholder="Anything else we should know…" rows={3} />
+                  </div>
+
+                  <div>
+                    <label htmlFor="clientBudget">Approximate budget <span style={{ color: 'var(--text-low)', fontWeight: 400 }}>(Optional)</span></label>
+                    <div style={{ position: 'relative' }}>
+                      <span style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', fontFamily: '"DM Mono", monospace', fontSize: '0.875rem', color: 'var(--text-low)', pointerEvents: 'none' }}>£</span>
+                      <input {...register('clientBudget')} type="number" id="clientBudget" min="0" step="1" placeholder="e.g. 200" style={{ paddingLeft: '1.75rem' }} />
+                    </div>
                   </div>
                 </div>
 

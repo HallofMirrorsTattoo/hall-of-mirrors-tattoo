@@ -86,6 +86,10 @@ interface Booking {
   counter_offer_time?: string | null;
   counter_offer_note?: string | null;
   counter_offered_by?: string | null;
+  final_price_estimate?: number | null;
+  client_budget?: number | null;
+  price_offer_status?: string;
+  price_offer_note?: string | null;
 }
 
 interface Consultation {
@@ -195,6 +199,21 @@ export default function ArtistDashboard() {
   const [bookingChatError, setBookingChatError] = useState('');
   const bookingChatPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const bookingChatAreaRef = useRef<HTMLDivElement>(null);
+
+  // Inline booking detail thread (separate from messages-tab chat above)
+  interface DetailMsg { id: string; sender_type: 'artist' | 'client'; body: string; created_at: string; }
+  const [detailMsgs, setDetailMsgs] = useState<DetailMsg[]>([]);
+  const [detailDraft, setDetailDraft] = useState('');
+  const [detailSending, setDetailSending] = useState(false);
+  const [detailMsgError, setDetailMsgError] = useState('');
+  const detailAreaRef = useRef<HTMLDivElement>(null);
+  const detailPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Price offer state
+  const [priceOfferAmount, setPriceOfferAmount] = useState('');
+  const [priceOfferNote, setPriceOfferNote] = useState('');
+  const [priceOfferActing, setPriceOfferActing] = useState(false);
+  const [priceOfferError, setPriceOfferError] = useState('');
 
   // Calendar state
   const [calWeekStart, setCalWeekStart] = useState<Date>(() => getMonday(new Date()));
@@ -583,6 +602,78 @@ export default function ArtistDashboard() {
     }
   };
 
+  const handleArtistPriceOffer = async () => {
+    if (!selectedBooking || !priceOfferAmount.trim()) return;
+    setPriceOfferActing(true);
+    setPriceOfferError('');
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/artist/bookings/${selectedBooking.id}/price-offer`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+          body: JSON.stringify({ final_price_estimate: parseFloat(priceOfferAmount), price_offer_note: priceOfferNote.trim() || undefined }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send price offer');
+      const price = parseFloat(priceOfferAmount);
+      const note = priceOfferNote.trim() || null;
+      setBookings(prev => prev.map(b => b.id === selectedBooking.id ? { ...b, final_price_estimate: price, price_offer_status: 'offered', price_offer_note: note } : b));
+      setSelectedBooking(prev => prev ? { ...prev, final_price_estimate: price, price_offer_status: 'offered', price_offer_note: note } : prev);
+      setPriceOfferAmount('');
+      setPriceOfferNote('');
+    } catch (e) {
+      setPriceOfferError(e instanceof Error ? e.message : 'Failed to send price offer');
+    } finally {
+      setPriceOfferActing(false);
+    }
+  };
+
+  const fetchDetailMsgs = useCallback(async (bookingId: string) => {
+    if (!accessToken) return;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/messages/${bookingId}`, { headers: { Authorization: `Bearer ${accessToken}` } });
+      const data = await res.json();
+      if (res.ok) setDetailMsgs(data.messages || []);
+    } catch { /* non-critical */ }
+  }, [accessToken]);
+
+  // Inline detail thread: driven by selectedBooking (must be after fetchDetailMsgs declaration)
+  useEffect(() => {
+    if (detailPollRef.current) clearInterval(detailPollRef.current);
+    if (!selectedBooking?.id) { setDetailMsgs([]); return; }
+    fetchDetailMsgs(selectedBooking.id);
+    detailPollRef.current = setInterval(() => { if (selectedBooking?.id) fetchDetailMsgs(selectedBooking.id); }, 30_000);
+    return () => { if (detailPollRef.current) clearInterval(detailPollRef.current); };
+  }, [selectedBooking?.id, fetchDetailMsgs]);
+
+  useEffect(() => {
+    const el = detailAreaRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [detailMsgs]);
+
+  const sendDetailMsg = async () => {
+    if (!detailDraft.trim() || detailSending || !selectedBooking?.id) return;
+    setDetailSending(true);
+    setDetailMsgError('');
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/messages/${selectedBooking.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ body: detailDraft.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send');
+      setDetailMsgs(prev => [...prev, data.message]);
+      setDetailDraft('');
+    } catch (e) {
+      setDetailMsgError(e instanceof Error ? e.message : 'Failed to send message');
+    } finally {
+      setDetailSending(false);
+    }
+  };
+
   const handleConsultAction = async () => {
     if (!consultActionId) return;
     const colonIdx = consultActionId.lastIndexOf(':');
@@ -626,7 +717,7 @@ export default function ArtistDashboard() {
       <button
         key={booking.id}
         type="button"
-        onClick={() => { setSelectedBooking(isSelected ? null : booking); setArtistActionMode('none'); setCounterOfferDate(null); setCounterOfferSlot(null); setCounterOfferNote(''); }}
+        onClick={() => { setSelectedBooking(isSelected ? null : booking); setArtistActionMode('none'); setCounterOfferDate(null); setCounterOfferSlot(null); setCounterOfferNote(''); setPriceOfferAmount(''); setPriceOfferNote(''); setPriceOfferError(''); }}
         style={{
           display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center',
           gap: '1rem', width: '100%', padding: '1.25rem 1.5rem',
@@ -683,7 +774,7 @@ export default function ArtistDashboard() {
           <h3 style={{ margin: 0, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.375rem', fontWeight: 300, color: 'var(--cream)' }}>
             Booking details
           </h3>
-          <button onClick={() => { setSelectedBooking(null); setArtistActionMode('none'); setCounterOfferDate(null); setCounterOfferSlot(null); setCounterOfferNote(''); }} style={{ background: 'none', border: 'none', color: 'var(--text-low)', cursor: 'pointer', fontSize: '1.25rem', lineHeight: 1 }}>×</button>
+          <button onClick={() => { setSelectedBooking(null); setArtistActionMode('none'); setCounterOfferDate(null); setCounterOfferSlot(null); setCounterOfferNote(''); setPriceOfferAmount(''); setPriceOfferNote(''); setPriceOfferError(''); }} style={{ background: 'none', border: 'none', color: 'var(--text-low)', cursor: 'pointer', fontSize: '1.25rem', lineHeight: 1 }}>×</button>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '1.75rem' }}>
@@ -726,6 +817,66 @@ export default function ArtistDashboard() {
             </div>
           ))}
         </div>
+
+        {/* Price offer */}
+        {selectedBooking.appointment_status !== 'cancelled' && (
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem', marginBottom: '1.25rem' }}>
+            <span style={{ ...labelStyle, marginBottom: '0.75rem' }}>Price estimate</span>
+            {selectedBooking.client_budget && (
+              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.08em', color: 'rgba(201,168,76,0.55)', marginBottom: '0.75rem' }}>
+                Client budget: £{selectedBooking.client_budget}
+              </p>
+            )}
+            {selectedBooking.price_offer_status === 'accepted' && (
+              <div style={{ padding: '0.75rem 1rem', background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '0.5rem', marginBottom: '0.875rem' }}>
+                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(34,197,94,0.8)', margin: '0 0 0.25rem' }}>Price accepted</p>
+                <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '1rem', color: 'var(--cream)', margin: 0, fontWeight: 500 }}>£{selectedBooking.final_price_estimate}</p>
+              </div>
+            )}
+            {selectedBooking.price_offer_status === 'offered' && (
+              <div style={{ padding: '0.75rem 1rem', background: 'rgba(201,168,76,0.07)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: '0.5rem', marginBottom: '0.875rem' }}>
+                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)', margin: '0 0 0.25rem' }}>Awaiting client acceptance</p>
+                <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '1rem', color: 'var(--cream)', margin: 0, fontWeight: 500 }}>£{selectedBooking.final_price_estimate}</p>
+                {selectedBooking.price_offer_note && (
+                  <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text)', margin: '0.5rem 0 0', fontStyle: 'italic', lineHeight: 1.65 }}>&ldquo;{selectedBooking.price_offer_note}&rdquo;</p>
+                )}
+              </div>
+            )}
+            {selectedBooking.price_offer_status !== 'accepted' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontFamily: '"DM Mono", monospace', fontSize: '0.875rem', color: 'var(--text-low)', pointerEvents: 'none' }}>£</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder={selectedBooking.final_price_estimate ? String(selectedBooking.final_price_estimate) : 'Enter amount'}
+                    value={priceOfferAmount}
+                    onChange={e => setPriceOfferAmount(e.target.value)}
+                    style={{ width: '100%', paddingLeft: '1.75rem' }}
+                  />
+                </div>
+                <textarea
+                  value={priceOfferNote}
+                  onChange={e => setPriceOfferNote(e.target.value)}
+                  placeholder="Optional note (e.g. includes touch-up session)…"
+                  rows={2}
+                  style={{ width: '100%', resize: 'vertical' }}
+                />
+                {priceOfferError && <p style={{ margin: 0, fontSize: '0.8125rem', color: '#f87171' }}>{priceOfferError}</p>}
+                <button
+                  type="button"
+                  onClick={handleArtistPriceOffer}
+                  disabled={!priceOfferAmount.trim() || priceOfferActing}
+                  className="btn-primary"
+                  style={{ width: '100%', padding: '0.7rem', opacity: (!priceOfferAmount.trim() || priceOfferActing) ? 0.5 : 1, cursor: (!priceOfferAmount.trim() || priceOfferActing) ? 'default' : 'pointer' }}
+                >
+                  {priceOfferActing ? 'Sending…' : selectedBooking.price_offer_status === 'offered' ? 'Re-send price offer' : 'Send price offer to client'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Private notes — not visible to client */}
         <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem', marginBottom: '1.25rem' }}>
@@ -888,17 +1039,30 @@ export default function ArtistDashboard() {
             {artistActionMode === 'none' && (
               <div>
                 <div style={{ padding: '1rem 1.125rem', background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '0.5rem', marginBottom: '1rem' }}>
-                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)', margin: '0 0 0.5rem' }}>
+                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)', margin: '0 0 0.75rem' }}>
                     Client proposed a new time
                   </p>
-                  <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--cream)', margin: '0 0 0.25rem', fontWeight: 500 }}>
-                    {selectedBooking.counter_offer_date
-                      ? new Date(`${selectedBooking.counter_offer_date}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-                      : '—'}
-                    {selectedBooking.counter_offer_time && ` at ${fmtH(parseInt(selectedBooking.counter_offer_time.substring(0, 2), 10))}`}
-                  </p>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <div>
+                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-low)', margin: '0 0 0.25rem' }}>Original</p>
+                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)', margin: 0, lineHeight: 1.4 }}>
+                        {new Date(selectedBooking.appointment_date_time).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
+                        {selectedBooking.appointment_time && ` at ${fmtH(parseInt(selectedBooking.appointment_time.substring(0, 2), 10))}`}
+                      </p>
+                    </div>
+                    <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', color: 'var(--text-low)' }}>→</span>
+                    <div>
+                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)', margin: '0 0 0.25rem' }}>Proposed</p>
+                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--cream)', margin: 0, fontWeight: 500, lineHeight: 1.4 }}>
+                        {selectedBooking.counter_offer_date
+                          ? new Date(`${String(selectedBooking.counter_offer_date).substring(0, 10)}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+                          : '—'}
+                        {selectedBooking.counter_offer_time && ` at ${fmtH(parseInt(selectedBooking.counter_offer_time.substring(0, 2), 10))}`}
+                      </p>
+                    </div>
+                  </div>
                   {selectedBooking.counter_offer_note && (
-                    <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)', margin: '0.5rem 0 0', lineHeight: 1.65, fontStyle: 'italic' }}>
+                    <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)', margin: '0.5rem 0 0', lineHeight: 1.65, fontStyle: 'italic', borderTop: '1px solid rgba(201,168,76,0.15)', paddingTop: '0.625rem' }}>
                       &ldquo;{selectedBooking.counter_offer_note}&rdquo;
                     </p>
                   )}
@@ -985,18 +1149,35 @@ export default function ArtistDashboard() {
         {selectedBooking.appointment_status === 'counter_offered' && selectedBooking.counter_offered_by === 'artist' && (
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
             <div style={{ padding: '1rem 1.125rem', background: 'rgba(154,144,130,0.06)', border: '1px solid var(--border)', borderRadius: '0.5rem' }}>
-              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-mid)', margin: '0 0 0.375rem' }}>
+              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-mid)', margin: '0 0 0.75rem' }}>
                 Awaiting client response
               </p>
-              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)', margin: 0, lineHeight: 1.65 }}>
-                You proposed{' '}
-                <strong style={{ color: 'var(--cream)' }}>
-                  {selectedBooking.counter_offer_date
-                    ? new Date(`${selectedBooking.counter_offer_date}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
-                    : '—'}
-                  {selectedBooking.counter_offer_time && ` at ${fmtH(parseInt(selectedBooking.counter_offer_time.substring(0, 2), 10))}`}
-                </strong>
-                . Waiting for the client to accept or respond.
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '0.5rem', alignItems: 'center', marginBottom: '0.625rem' }}>
+                <div>
+                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-low)', margin: '0 0 0.25rem' }}>Original</p>
+                  <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)', margin: 0, lineHeight: 1.4 }}>
+                    {new Date(selectedBooking.appointment_date_time).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
+                    {selectedBooking.appointment_time && ` at ${fmtH(parseInt(selectedBooking.appointment_time.substring(0, 2), 10))}`}
+                  </p>
+                </div>
+                <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', color: 'var(--text-low)' }}>→</span>
+                <div>
+                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.55)', margin: '0 0 0.25rem' }}>Your proposal</p>
+                  <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--cream)', margin: 0, fontWeight: 500, lineHeight: 1.4 }}>
+                    {selectedBooking.counter_offer_date
+                      ? new Date(`${String(selectedBooking.counter_offer_date).substring(0, 10)}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+                      : '—'}
+                    {selectedBooking.counter_offer_time && ` at ${fmtH(parseInt(selectedBooking.counter_offer_time.substring(0, 2), 10))}`}
+                  </p>
+                </div>
+              </div>
+              {selectedBooking.counter_offer_note && (
+                <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)', margin: '0.625rem 0 0', lineHeight: 1.65, fontStyle: 'italic', borderTop: '1px solid var(--border)', paddingTop: '0.625rem' }}>
+                  &ldquo;{selectedBooking.counter_offer_note}&rdquo;
+                </p>
+              )}
+              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8rem', color: 'var(--text-low)', margin: '0.625rem 0 0', lineHeight: 1.5 }}>
+                Waiting for the client to accept or respond.
               </p>
             </div>
           </div>
@@ -1140,6 +1321,55 @@ export default function ArtistDashboard() {
             )}
           </div>
         )}
+
+        {/* Inline message thread */}
+        <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
+          <span style={{ ...labelStyle, marginBottom: '0.875rem' }}>Messages</span>
+          <div
+            ref={detailAreaRef}
+            style={{ height: '14rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '0.75rem', background: 'rgba(14,12,9,0.4)', border: '1px solid var(--border)', borderRadius: '0.5rem', marginBottom: '0.75rem' }}
+          >
+            {detailMsgs.length === 0 ? (
+              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-low)', textAlign: 'center', paddingTop: '3rem', margin: 0 }}>
+                No messages yet
+              </p>
+            ) : (
+              detailMsgs.map((msg) => {
+                const isArtist = msg.sender_type === 'artist';
+                return (
+                  <div key={msg.id} style={{ display: 'flex', justifyContent: isArtist ? 'flex-end' : 'flex-start' }}>
+                    <div style={{ maxWidth: '78%', padding: '0.5rem 0.75rem', borderRadius: isArtist ? '0.875rem 0.875rem 0.2rem 0.875rem' : '0.875rem 0.875rem 0.875rem 0.2rem', background: isArtist ? 'rgba(201,168,76,0.13)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isArtist ? 'rgba(201,168,76,0.3)' : 'var(--border)'}` }}>
+                      <p style={{ margin: 0, fontSize: '0.8125rem', color: isArtist ? 'var(--cream)' : 'var(--text)', lineHeight: 1.6, wordBreak: 'break-word' }}>{msg.body}</p>
+                      <p style={{ margin: '0.2rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.06em', color: isArtist ? 'rgba(201,168,76,0.4)' : 'var(--text-low)', textAlign: isArtist ? 'right' : 'left' }}>
+                        {new Date(msg.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+          {detailMsgError && <p style={{ margin: '0 0 0.375rem', fontSize: '0.75rem', color: '#f87171' }}>{detailMsgError}</p>}
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+            <textarea
+              value={detailDraft}
+              onChange={(e) => setDetailDraft(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDetailMsg(); } }}
+              placeholder="Message client… (Enter to send)"
+              rows={2}
+              style={{ flex: 1, resize: 'none', padding: '0.5rem 0.75rem', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '0.375rem', color: 'var(--cream)', fontSize: '0.875rem', lineHeight: 1.5, fontFamily: '"DM Sans", sans-serif', outline: 'none' }}
+            />
+            <button
+              type="button"
+              onClick={sendDetailMsg}
+              disabled={!detailDraft.trim() || detailSending}
+              className="btn-primary"
+              style={{ padding: '0.5rem 0.875rem', flexShrink: 0, opacity: (!detailDraft.trim() || detailSending) ? 0.5 : 1, cursor: (!detailDraft.trim() || detailSending) ? 'default' : 'pointer' }}
+            >
+              {detailSending ? '…' : '→'}
+            </button>
+          </div>
+        </div>
       </div>
     );
   };
@@ -1509,7 +1739,7 @@ export default function ArtistDashboard() {
                       <button
                         type="button"
                         key={booking.id}
-                        onClick={() => { setSelectedBooking(isSelected ? null : booking); setArtistActionMode('none'); setCounterOfferDate(null); setCounterOfferSlot(null); setCounterOfferNote(''); }}
+                        onClick={() => { setSelectedBooking(isSelected ? null : booking); setArtistActionMode('none'); setCounterOfferDate(null); setCounterOfferSlot(null); setCounterOfferNote(''); setPriceOfferAmount(''); setPriceOfferNote(''); setPriceOfferError(''); }}
                         style={{
                           gridColumn: di + 2,
                           gridRow: `${rowStart} / span ${durationH}`,

@@ -11,6 +11,8 @@ import {
   sendArtistRescheduleToClient,
   sendCounterOfferToClient,
   sendOfferAcceptedToClient,
+  sendPriceOfferToClient,
+  sendPriceAcceptedToArtist,
 } from '../services/emailService.js';
 
 const { Client } = pkg;
@@ -30,6 +32,7 @@ const CreateBookingSchema = z.object({
   referralSource: z.string().optional(),
   notes: z.string().optional(),
   artistId: z.string().optional(),
+  clientBudget: z.coerce.number().positive().optional(),
 }).refine(
   (d) => d.appointmentDate || d.preferredDate,
   { message: 'Please select a date', path: ['appointmentDate'] }
@@ -147,8 +150,8 @@ export async function createBooking(req: Request, res: Response) {
       `INSERT INTO "Booking" (
         id, studio_id, user_id, artist_id, appointment_date_time, appointment_time,
         appointment_status, tattoo_description, placement, estimated_size, artist_notes,
-        deposit_amount, balance_due, booking_reference, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())`,
+        deposit_amount, balance_due, booking_reference, client_budget, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), NOW())`,
       [
         bookingId,
         'default-studio',
@@ -164,6 +167,7 @@ export async function createBooking(req: Request, res: Response) {
         '0',
         '0',
         bookingReference,
+        validatedData.clientBudget ?? null,
       ]
     );
 
@@ -824,6 +828,63 @@ export async function artistAcceptClientOffer(req: Request, res: Response) {
   } catch (error) {
     console.error('Artist accept offer error:', error);
     res.status(500).json({ success: false, error: 'Failed to accept offer' });
+  } finally {
+    await client.end();
+  }
+}
+
+export async function artistPriceOffer(req: Request, res: Response) {
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  try {
+    if (!req.artist) return res.status(401).json({ success: false, error: 'Not authenticated' });
+
+    const { id } = req.params;
+    const { final_price_estimate, price_offer_note } = req.body;
+
+    const price = parseFloat(final_price_estimate);
+    if (!price || price <= 0) {
+      return res.status(400).json({ success: false, error: 'final_price_estimate must be a positive number' });
+    }
+
+    await client.connect();
+
+    const result = await client.query(
+      `SELECT b.*, u.email, u.first_name, u.last_name,
+              a.full_name as artist_name
+       FROM "Booking" b
+       JOIN "User" u ON b.user_id = u.id
+       LEFT JOIN "Artist" a ON b.artist_id = a.id
+       WHERE b.id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) return res.status(404).json({ success: false, error: 'Booking not found' });
+    const booking = result.rows[0];
+    if (booking.artist_id !== req.artist.id) return res.status(403).json({ success: false, error: 'Access denied' });
+
+    const updated = await client.query(
+      `UPDATE "Booking"
+       SET final_price_estimate = $2,
+           price_offer_status = 'offered',
+           price_offer_note = $3,
+           updated_at = NOW()
+       WHERE id = $1 RETURNING *`,
+      [id, price, price_offer_note?.trim() || null]
+    );
+
+    sendPriceOfferToClient({
+      artistName: booking.artist_name ?? 'Your artist',
+      clientEmail: booking.email,
+      clientName: `${booking.first_name} ${booking.last_name}`,
+      bookingReference: booking.booking_reference,
+      price,
+      note: price_offer_note?.trim() || undefined,
+    }).catch((e) => console.error('[email] price offer to client failed:', e));
+
+    res.json({ success: true, booking: updated.rows[0] });
+  } catch (error) {
+    console.error('Artist price offer error:', error);
+    res.status(500).json({ success: false, error: 'Failed to send price offer' });
   } finally {
     await client.end();
   }

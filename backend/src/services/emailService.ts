@@ -741,6 +741,60 @@ export async function sendOfferAcceptedToClient(data: {
   });
 }
 
+export async function sendPriceOfferToClient(data: {
+  artistName: string;
+  clientEmail: string;
+  clientName: string;
+  bookingReference: string;
+  price: number;
+  note?: string;
+}): Promise<void> {
+  const noteBlock = data.note
+    ? `<div style="margin:16px 0;padding:16px 20px;border-left:2px solid #C9A84C;background:rgba(201,168,76,0.05);"><p style="margin:0;font-size:15px;line-height:1.75;color:#EDE8D8;font-style:italic;">"${data.note}"</p><p style="margin:8px 0 0;font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(201,168,76,0.5);">— ${data.artistName}</p></div>`
+    : '';
+  const content = `
+    ${heading(`${data.artistName} has offered a price for your session.`)}
+    ${body(`Hi ${data.clientName} — ${data.artistName} has reviewed your booking request and set an estimated price. Log in to view the details and accept.`)}
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+      ${detail('Reference', data.bookingReference)}
+      ${detail('Artist', data.artistName)}
+      ${detail('Price estimate', `£${data.price}`)}
+    </table>
+    ${noteBlock}
+    ${ctaButton(`${FRONTEND_URL}/client/bookings/${data.bookingReference}`, 'View and accept →')}
+  `;
+  await send({
+    to: data.clientEmail,
+    from: { email: FROM_EMAIL, name: 'Hall of Mirrors Tattoo' },
+    subject: `Price offer for your session — ${data.bookingReference}`,
+    html: baseTemplate(content),
+  });
+}
+
+export async function sendPriceAcceptedToArtist(data: {
+  artistEmail: string;
+  clientName: string;
+  bookingReference: string;
+  price: number;
+}): Promise<void> {
+  const content = `
+    ${heading(`${data.clientName} has accepted the price.`)}
+    ${body(`Great news — your client has accepted the price estimate for their session.`)}
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+      ${detail('Reference', data.bookingReference)}
+      ${detail('Client', data.clientName)}
+      ${detail('Agreed price', `£${data.price}`)}
+    </table>
+    ${ctaButton(`${FRONTEND_URL}/artist/dashboard`, 'View your dashboard')}
+  `;
+  await send({
+    to: data.artistEmail,
+    from: { email: FROM_EMAIL, name: 'Hall of Mirrors Tattoo' },
+    subject: `${data.clientName} accepted the price — ${data.bookingReference}`,
+    html: baseTemplate(content),
+  });
+}
+
 export async function sendConsultationResponseToClient(data: {
   clientEmail: string;
   clientName: string;

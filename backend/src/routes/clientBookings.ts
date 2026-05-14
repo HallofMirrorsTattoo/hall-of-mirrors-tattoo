@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import pkg from 'pg';
 import { clientAuthMiddleware } from '../middleware/clientAuth.js';
-import { sendClientCounterOfferToArtist, sendOfferAcceptedToArtist } from '../services/emailService.js';
+import { sendClientCounterOfferToArtist, sendOfferAcceptedToArtist, sendPriceAcceptedToArtist } from '../services/emailService.js';
 
 const { Client } = pkg;
 const router = Router();
@@ -78,6 +78,7 @@ router.get('/:id', async (req: Request, res: Response) => {
               b.estimated_duration_minutes as estimated_duration,
               b.counter_offer_date, b.counter_offer_time,
               b.counter_offer_note, b.counter_offered_by,
+              b.client_budget, b.price_offer_status, b.price_offer_note,
               b.created_at, b.updated_at,
               a.id as artist_id, a.full_name as artist_name, a.specialties, a.bio, a.instagram_handle
        FROM "Booking" b
@@ -123,6 +124,9 @@ router.get('/:id', async (req: Request, res: Response) => {
         counter_offer_time: booking.counter_offer_time ?? null,
         counter_offer_note: booking.counter_offer_note ?? null,
         counter_offered_by: booking.counter_offered_by ?? null,
+        client_budget: booking.client_budget ?? null,
+        price_offer_status: booking.price_offer_status ?? 'none',
+        price_offer_note: booking.price_offer_note ?? null,
         artist: booking.artist_id ? {
           id: booking.artist_id,
           name: booking.artist_name,
@@ -336,6 +340,59 @@ router.post('/:id/accept-offer', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Client accept-offer error:', error);
     res.status(500).json({ success: false, error: 'Failed to accept offer' });
+  } finally {
+    await client.end();
+  }
+});
+
+// POST /api/client/bookings/:id/accept-price  (client accepts artist's price offer)
+router.post('/:id/accept-price', async (req: Request, res: Response) => {
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  try {
+    if (!req.user) return res.status(401).json({ success: false, error: 'Not authenticated' });
+
+    const { id } = req.params;
+    await client.connect();
+
+    const ownerCheck = await client.query(
+      `SELECT b.id, b.price_offer_status, b.final_price_estimate,
+              b.booking_reference,
+              a.email as artist_email, a.full_name as artist_name
+       FROM "Booking" b
+       LEFT JOIN "User" u ON b.user_id = u.id
+       LEFT JOIN "Artist" a ON b.artist_id = a.id
+       WHERE b.id = $1 AND (b.user_id = $2 OR u.email = $3)`,
+      [id, req.user.id, req.user.email]
+    );
+
+    if (ownerCheck.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Booking not found' });
+    }
+
+    const booking = ownerCheck.rows[0];
+    if (booking.price_offer_status !== 'offered') {
+      return res.status(400).json({ success: false, error: 'No price offer to accept' });
+    }
+
+    await client.query(
+      `UPDATE "Booking" SET price_offer_status = 'accepted', updated_at = NOW() WHERE id = $1`,
+      [id]
+    );
+
+    if (booking.artist_email) {
+      const clientName = `${req.user.first_name || ''} ${req.user.last_name || ''}`.trim() || req.user.email;
+      sendPriceAcceptedToArtist({
+        artistEmail: booking.artist_email,
+        clientName,
+        bookingReference: booking.booking_reference,
+        price: booking.final_price_estimate,
+      }).catch(() => {});
+    }
+
+    res.json({ success: true, message: 'Price accepted' });
+  } catch (error) {
+    console.error('Client accept-price error:', error);
+    res.status(500).json({ success: false, error: 'Failed to accept price' });
   } finally {
     await client.end();
   }
