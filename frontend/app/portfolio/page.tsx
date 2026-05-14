@@ -33,6 +33,18 @@ function toSlug(name: string): string {
   return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 }
 
+// Static placeholder — rendered when the API doesn't yet return Christina.
+// Remove once her Artist row is live in the DB.
+const CHRISTINA_PLACEHOLDER: Artist = {
+  id: 'placeholder-christina',
+  full_name: 'Christina',
+  specialties: null,
+  years_experience: null,
+  bio: null,
+  instagram_handle: null,
+  cover_photo: null,
+};
+
 const GALLERY_LABELS = ['Neo-Traditional', 'Cover-Up', 'Colour Work', 'Fine Detail', 'Portrait', 'Custom Design'];
 const ROMANS = ['I', 'II', 'III', 'IV', 'V', 'VI'];
 
@@ -251,6 +263,8 @@ function ArtistSection({ artist }: { artist: Artist }) {
 
 export default async function Portfolio() {
   const artists = await fetchArtists();
+  const hasChristina = artists.some(a => a.full_name.toLowerCase().includes('christina'));
+  const displayArtists = hasChristina ? artists : [...artists, CHRISTINA_PLACEHOLDER];
 
   return (
     <div style={{ backgroundColor: 'var(--bg)', minHeight: '100vh' }}>
@@ -282,10 +296,10 @@ export default async function Portfolio() {
       </section>
 
       {/* ── ARTIST SECTIONS ───────────────────────────────────────────────── */}
-      {artists.map((artist, index) => (
+      {displayArtists.map((artist, index) => (
         <div key={artist.id}>
           <ArtistSection artist={artist} />
-          {index < artists.length - 1 && (
+          {index < displayArtists.length - 1 && (
             <div className="max-w-5xl mx-auto px-6">
               <div className="section-divider">
                 <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.35em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.35)' }}>HOM</span>
