@@ -17,7 +17,7 @@ interface ArtistData {
 
 async function fetchArtist(slug: string): Promise<ArtistData | null> {
   try {
-    const res = await fetch(`${API}/api/artist/${slug}`, { next: { revalidate: 3600 } });
+    const res = await fetch(`${API}/api/artist/${slug}`, { next: { revalidate: 60 } });
     if (!res.ok) return null;
     const data = await res.json();
     return data.artist ?? null;

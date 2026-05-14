@@ -20,7 +20,7 @@ const API = process.env.NEXT_PUBLIC_API_URL || 'https://hall-of-mirrors-tattoo-p
 
 async function fetchArtists(): Promise<Artist[]> {
   try {
-    const res = await fetch(`${API}/api/artist`, { next: { revalidate: 3600 } });
+    const res = await fetch(`${API}/api/artist`, { next: { revalidate: 60 } });
     if (!res.ok) return [];
     const data = await res.json();
     return data.artists ?? [];

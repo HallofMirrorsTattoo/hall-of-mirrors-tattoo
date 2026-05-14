@@ -276,8 +276,8 @@ export default function ArtistDashboard() {
   const emptyProfile: ArtistProfile = { full_name: '', bio: '', specialties: '', years_experience: '', instagram_handle: '' };
   const [profile, setProfile] = useState<ArtistProfile>(emptyProfile);
   const [profileSaving, setProfileSaving] = useState(false);
-  const [profileSaved, setProfileSaved] = useState(false);
   const [profileError, setProfileError] = useState('');
+  const [editingSection, setEditingSection] = useState<string | null>(null);
 
   // ── Portfolio photos state ─────────────────────────────────────────────────
   interface PortfolioPhoto { id: string; public_url: string; display_order: number; created_at: string; }
@@ -324,7 +324,6 @@ export default function ArtistDashboard() {
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsError, setSettingsError] = useState('');
-  const [settingsSaved, setSettingsSaved] = useState(false);
 
   const avMonthKey = `${avYear}-${String(avMonth + 1).padStart(2, '0')}`;
 
@@ -442,7 +441,6 @@ export default function ArtistDashboard() {
     if (!accessToken) return;
     setProfileSaving(true);
     setProfileError('');
-    setProfileSaved(false);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/profile`, {
         method: 'PATCH',
@@ -456,8 +454,6 @@ export default function ArtistDashboard() {
         }),
       });
       if (!res.ok) throw new Error('Save failed');
-      setProfileSaved(true);
-      setTimeout(() => setProfileSaved(false), 3000);
     } catch {
       setProfileError('Failed to save profile. Please try again.');
     } finally {
@@ -568,7 +564,6 @@ export default function ArtistDashboard() {
     if (!accessToken) return;
     setSettingsSaving(true);
     setSettingsError('');
-    setSettingsSaved(false);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/studio-settings`, {
         method: 'PATCH',
@@ -578,8 +573,6 @@ export default function ArtistDashboard() {
       if (!res.ok) throw new Error('Save failed');
       const data = await res.json();
       setSettings(prev => ({ ...prev, ...fields, ...data }));
-      setSettingsSaved(true);
-      setTimeout(() => setSettingsSaved(false), 3000);
     } catch {
       setSettingsError('Failed to save settings. Please try again.');
     } finally {
@@ -3588,241 +3581,215 @@ export default function ArtistDashboard() {
 
         {/* ── Settings tab ─────────────────────────────────────────────────── */}
         {tab === 'settings' && (() => {
+
+          // ── Shared input styles ────────────────────────────────────────────
+          const inputSt: React.CSSProperties = { background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '0.5rem', padding: '0.625rem 0.875rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--cream)', outline: 'none', width: '100%', boxSizing: 'border-box' };
+
           const field = (label: string, key: keyof StudioSettings, type = 'text', placeholder = '') => (
             <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               <label style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-mid)', textTransform: 'uppercase' }}>{label}</label>
-              <input
-                type={type}
-                value={settings[key] ?? ''}
-                placeholder={placeholder}
-                onChange={e => setSettings(prev => ({ ...prev, [key]: e.target.value }))}
-                style={{
-                  background: 'var(--surface)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '0.5rem',
-                  padding: '0.625rem 0.875rem',
-                  fontFamily: '"DM Sans", sans-serif',
-                  fontSize: '0.875rem',
-                  color: 'var(--cream)',
-                  outline: 'none',
-                  width: '100%',
-                  boxSizing: 'border-box',
-                }}
-              />
-            </div>
-          );
-
-          const hoursPair = (day: string, startKey: keyof StudioSettings, endKey: keyof StudioSettings) => (
-            <div key={day} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: 'var(--text-mid)', width: '4.5rem', flexShrink: 0 }}>{day}</span>
-              <input
-                type="time"
-                value={settings[startKey] ?? ''}
-                onChange={e => setSettings(prev => ({ ...prev, [startKey]: e.target.value }))}
-                style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.375rem', padding: '0.375rem 0.5rem', fontFamily: '"DM Mono", monospace', fontSize: '0.8rem', color: 'var(--cream)', width: '8rem' }}
-              />
-              <span style={{ color: 'var(--text-mid)', fontSize: '0.8rem' }}>–</span>
-              <input
-                type="time"
-                value={settings[endKey] ?? ''}
-                onChange={e => setSettings(prev => ({ ...prev, [endKey]: e.target.value }))}
-                style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.375rem', padding: '0.375rem 0.5rem', fontFamily: '"DM Mono", monospace', fontSize: '0.8rem', color: 'var(--cream)', width: '8rem' }}
-              />
-              <button
-                onClick={() => setSettings(prev => ({ ...prev, [startKey]: '', [endKey]: '' }))}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-mid)', fontSize: '0.75rem', fontFamily: '"DM Sans", sans-serif', padding: '0.25rem 0.5rem' }}
-              >
-                Closed
-              </button>
-            </div>
-          );
-
-          const sectionTitle = (title: string) => (
-            <h3 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.25rem', fontWeight: 300, color: 'var(--gold)', margin: '0 0 1.25rem 0', letterSpacing: '-0.01em' }}>{title}</h3>
-          );
-
-          const sectionCard = (children: React.ReactNode, onSave: () => void) => (
-            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.875rem', padding: '1.75rem 2rem 1.5rem', marginBottom: '1.5rem' }}>
-              {children}
-              <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
-                <button
-                  onClick={onSave}
-                  disabled={settingsSaving}
-                  className="btn-primary"
-                  style={{ fontSize: '0.8125rem', padding: '0.5625rem 1.375rem', opacity: settingsSaving ? 0.7 : 1 }}
-                >
-                  <span>{settingsSaving ? 'Saving…' : 'Save'}</span>
-                </button>
-              </div>
-            </div>
-          );
-
-          if (settingsLoading) return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {[1,2,3,4].map(i => (
-                <div key={i} className="skeleton" style={{ height: '120px', borderRadius: '0.875rem' }} />
-              ))}
+              <input type={type} value={settings[key] ?? ''} placeholder={placeholder} onChange={e => setSettings(prev => ({ ...prev, [key]: e.target.value }))} style={inputSt} />
             </div>
           );
 
           const profileField = (label: string, key: keyof ArtistProfile, type = 'text', placeholder = '') => (
             <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               <label style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-mid)', textTransform: 'uppercase' }}>{label}</label>
-              <input
-                type={type}
-                value={profile[key] ?? ''}
-                placeholder={placeholder}
-                onChange={e => setProfile(prev => ({ ...prev, [key]: e.target.value }))}
-                style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.5rem', padding: '0.625rem 0.875rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--cream)', outline: 'none', width: '100%', boxSizing: 'border-box' }}
-              />
+              <input type={type} value={profile[key] ?? ''} placeholder={placeholder} onChange={e => setProfile(prev => ({ ...prev, [key]: e.target.value }))} style={inputSt} />
+            </div>
+          );
+
+          const hoursPair = (day: string, startKey: keyof StudioSettings, endKey: keyof StudioSettings) => (
+            <div key={day} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: 'var(--text-mid)', width: '4.5rem', flexShrink: 0 }}>{day}</span>
+              <input type="time" value={settings[startKey] ?? ''} onChange={e => setSettings(prev => ({ ...prev, [startKey]: e.target.value }))} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '0.375rem', padding: '0.375rem 0.5rem', fontFamily: '"DM Mono", monospace', fontSize: '0.8rem', color: 'var(--cream)', width: '8rem' }} />
+              <span style={{ color: 'var(--text-mid)', fontSize: '0.8rem' }}>–</span>
+              <input type="time" value={settings[endKey] ?? ''} onChange={e => setSettings(prev => ({ ...prev, [endKey]: e.target.value }))} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '0.375rem', padding: '0.375rem 0.5rem', fontFamily: '"DM Mono", monospace', fontSize: '0.8rem', color: 'var(--cream)', width: '8rem' }} />
+              <button onClick={() => setSettings(prev => ({ ...prev, [startKey]: '', [endKey]: '' }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-mid)', fontSize: '0.75rem', fontFamily: '"DM Sans", sans-serif', padding: '0.25rem 0.5rem' }}>Closed</button>
+            </div>
+          );
+
+          // ── View-mode display helpers ──────────────────────────────────────
+          const viewVal = (v: string | null | undefined) => (
+            <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: v ? 'var(--cream)' : 'var(--text-low)', fontStyle: v ? 'normal' : 'italic' }}>
+              {v || 'Not set'}
+            </span>
+          );
+          const viewRow = (label: string, value: string | null | undefined) => (
+            <div key={label}>
+              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-low)', margin: '0 0 0.2rem' }}>{label}</p>
+              {viewVal(value)}
+            </div>
+          );
+          const fmtHours = (s: string, e: string) => s && e ? `${s} – ${e}` : 'Closed';
+
+          // ── Section card with view / edit toggle ──────────────────────────
+          const EDIT_BTN: React.CSSProperties = { background: 'none', border: '1px solid rgba(201,168,76,0.25)', borderRadius: '0.3rem', padding: '0.25rem 0.75rem', cursor: 'pointer', fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)' };
+          const CANCEL_BTN: React.CSSProperties = { background: 'none', border: '1px solid var(--border)', borderRadius: '0.375rem', padding: '0.5rem 1rem', cursor: 'pointer', fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-mid)' };
+
+          const sectionCard = (
+            sectionKey: string,
+            title: string,
+            viewContent: React.ReactNode,
+            editContent: React.ReactNode,
+            onSave: () => void,
+            onCancel?: () => void,
+          ) => {
+            const isEditing = editingSection === sectionKey;
+            return (
+              <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.875rem', padding: '1.75rem 2rem 1.5rem', marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+                  <h3 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.25rem', fontWeight: 300, color: 'var(--gold)', margin: 0, letterSpacing: '-0.01em' }}>{title}</h3>
+                  {!isEditing && <button style={EDIT_BTN} onClick={() => setEditingSection(sectionKey)}>Edit</button>}
+                </div>
+                {isEditing ? editContent : viewContent}
+                {isEditing && (
+                  <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                    <button style={CANCEL_BTN} onClick={() => { (onCancel ?? fetchSettings)(); setEditingSection(null); }}>Cancel</button>
+                    <button
+                      onClick={() => { onSave(); setEditingSection(null); }}
+                      disabled={settingsSaving || profileSaving}
+                      className="btn-primary"
+                      style={{ fontSize: '0.8125rem', padding: '0.5625rem 1.375rem', opacity: (settingsSaving || profileSaving) ? 0.7 : 1 }}
+                    >
+                      <span>{(settingsSaving || profileSaving) ? 'Saving…' : 'Save'}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          };
+
+          if (settingsLoading) return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {[1,2,3,4,5].map(i => <div key={i} className="skeleton" style={{ height: '120px', borderRadius: '0.875rem' }} />)}
             </div>
           );
 
           return (
             <div style={{ maxWidth: '640px' }}>
 
-              {/* ── Artist Profile ── */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <h2 style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1.75rem', fontWeight: 300, letterSpacing: '-0.02em', color: 'var(--cream)', margin: 0 }}>Your Profile</h2>
-                {profileSaved && (
-                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: '#81c784', letterSpacing: '0.05em' }}>✓ SAVED</span>
-                )}
-              </div>
-              {profileError && (
-                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: '#e57373', letterSpacing: '0.05em', marginBottom: '1rem' }}>{profileError}</p>
+              {(settingsError || profileError) && (
+                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: '#e57373', letterSpacing: '0.05em', marginBottom: '1.25rem' }}>
+                  {settingsError || profileError}
+                </p>
               )}
-              <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.875rem', padding: '1.75rem 2rem 1.5rem', marginBottom: '2.5rem' }}>
-                {sectionTitle('Artist Profile')}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                  {profileField('Full Name', 'full_name', 'text', 'Your name')}
-                  {profileField('Instagram Handle', 'instagram_handle', 'text', 'yourhandle')}
-                  {profileField('Specialties', 'specialties', 'text', 'Neo-traditional, colour realism…')}
-                  {profileField('Years Experience', 'years_experience', 'number', '8')}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                  <label style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-mid)', textTransform: 'uppercase' }}>Bio</label>
-                  <textarea
-                    value={profile.bio ?? ''}
-                    placeholder="A few sentences about you and your work…"
-                    rows={5}
-                    onChange={e => setProfile(prev => ({ ...prev, bio: e.target.value }))}
-                    style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.5rem', padding: '0.625rem 0.875rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--cream)', outline: 'none', width: '100%', resize: 'vertical', boxSizing: 'border-box' }}
-                  />
-                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--text-low)', marginTop: '0.25rem' }}>
-                    Appears on your public artist page
-                  </span>
-                </div>
-                <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
-                  <button
-                    onClick={saveProfile}
-                    disabled={profileSaving}
-                    className="btn-primary"
-                    style={{ fontSize: '0.8125rem', padding: '0.5625rem 1.375rem', opacity: profileSaving ? 0.7 : 1 }}
-                  >
-                    <span>{profileSaving ? 'Saving…' : 'Save'}</span>
-                  </button>
-                </div>
-              </div>
+
+              {/* ── Your Profile ── */}
+              <h2 style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1.75rem', fontWeight: 300, letterSpacing: '-0.02em', color: 'var(--cream)', margin: '0 0 1.25rem' }}>Your Profile</h2>
+              {sectionCard(
+                'profile',
+                'Artist Profile',
+                /* view */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    {viewRow('Full Name', profile.full_name)}
+                    {viewRow('Instagram', profile.instagram_handle ? `@${profile.instagram_handle.replace('@','')}` : null)}
+                    {viewRow('Specialties', profile.specialties)}
+                    {viewRow('Years Experience', profile.years_experience ? `${profile.years_experience} years` : null)}
+                  </div>
+                  {viewRow('Bio', profile.bio)}
+                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.08em', color: 'var(--text-low)', margin: 0 }}>Appears on your public artist page</p>
+                </div>,
+                /* edit */
+                <div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                    {profileField('Full Name', 'full_name', 'text', 'Your name')}
+                    {profileField('Instagram Handle', 'instagram_handle', 'text', 'yourhandle')}
+                    {profileField('Specialties', 'specialties', 'text', 'Neo-traditional, colour realism…')}
+                    {profileField('Years Experience', 'years_experience', 'number', '8')}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <label style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-mid)', textTransform: 'uppercase' }}>Bio</label>
+                    <textarea value={profile.bio ?? ''} placeholder="A few sentences about you and your work…" rows={5} onChange={e => setProfile(prev => ({ ...prev, bio: e.target.value }))} style={{ ...inputSt, resize: 'vertical' }} />
+                    <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.06em', color: 'var(--text-low)' }}>Appears on your public artist page</span>
+                  </div>
+                </div>,
+                saveProfile,
+                () => { fetchProfile(); },
+              )}
 
               {/* ── Studio Settings ── */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <h2 style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1.75rem', fontWeight: 300, letterSpacing: '-0.02em', color: 'var(--cream)', margin: 0 }}>Studio Settings</h2>
-                {settingsSaved && (
-                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: '#81c784', letterSpacing: '0.05em' }}>✓ SAVED</span>
-                )}
-              </div>
+              <h2 style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1.75rem', fontWeight: 300, letterSpacing: '-0.02em', color: 'var(--cream)', margin: '1.5rem 0 1.25rem' }}>Studio Settings</h2>
 
-              {settingsError && (
-                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: '#e57373', letterSpacing: '0.05em', marginBottom: '1rem' }}>{settingsError}</p>
-              )}
-
-              {/* Contact info */}
               {sectionCard(
-                <>
-                  {sectionTitle('Contact & Location')}
+                'contact',
+                'Contact & Location',
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  {viewRow('Studio Name', settings.studio_name)}
+                  {viewRow('Email', settings.email)}
+                  {viewRow('Phone', settings.phone)}
+                  {viewRow('Postcode', settings.postcode)}
+                  <div style={{ gridColumn: '1 / -1' }}>{viewRow('Address', settings.address)}</div>
+                </div>,
+                <div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     {field('Studio Name', 'studio_name', 'text', 'Hall of Mirrors Tattoo')}
                     {field('Email', 'email', 'email', 'bookings@...')}
                     {field('Phone', 'phone', 'tel', '+44 ...')}
                     {field('Postcode', 'postcode', 'text', 'L1 1AB')}
                   </div>
-                  <div style={{ marginTop: '1rem' }}>
-                    {field('Address', 'address', 'text', '123 Castle Street, Liverpool')}
-                  </div>
-                </>,
-                () => saveSettings({ studio_name: settings.studio_name, address: settings.address, postcode: settings.postcode, phone: settings.phone, email: settings.email })
+                  <div style={{ marginTop: '1rem' }}>{field('Address', 'address', 'text', '123 Castle Street, Liverpool')}</div>
+                </div>,
+                () => saveSettings({ studio_name: settings.studio_name, address: settings.address, postcode: settings.postcode, phone: settings.phone, email: settings.email }),
               )}
 
-              {/* Opening hours */}
               {sectionCard(
-                <>
-                  {sectionTitle('Opening Hours')}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {hoursPair('Mon', 'hours_monday_start', 'hours_monday_end')}
-                    {hoursPair('Tue', 'hours_tuesday_start', 'hours_tuesday_end')}
-                    {hoursPair('Wed', 'hours_wednesday_start', 'hours_wednesday_end')}
-                    {hoursPair('Thu', 'hours_thursday_start', 'hours_thursday_end')}
-                    {hoursPair('Fri', 'hours_friday_start', 'hours_friday_end')}
-                    {hoursPair('Sat', 'hours_saturday_start', 'hours_saturday_end')}
-                    {hoursPair('Sun', 'hours_sunday_start', 'hours_sunday_end')}
-                  </div>
-                </>,
-                () => saveSettings({
-                  hours_monday_start: settings.hours_monday_start, hours_monday_end: settings.hours_monday_end,
-                  hours_tuesday_start: settings.hours_tuesday_start, hours_tuesday_end: settings.hours_tuesday_end,
-                  hours_wednesday_start: settings.hours_wednesday_start, hours_wednesday_end: settings.hours_wednesday_end,
-                  hours_thursday_start: settings.hours_thursday_start, hours_thursday_end: settings.hours_thursday_end,
-                  hours_friday_start: settings.hours_friday_start, hours_friday_end: settings.hours_friday_end,
-                  hours_saturday_start: settings.hours_saturday_start, hours_saturday_end: settings.hours_saturday_end,
-                  hours_sunday_start: settings.hours_sunday_start, hours_sunday_end: settings.hours_sunday_end,
-                })
+                'hours',
+                'Opening Hours',
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem' }}>
+                  {(['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] as const).map((day, i) => {
+                    const keys = [['hours_monday_start','hours_monday_end'],['hours_tuesday_start','hours_tuesday_end'],['hours_wednesday_start','hours_wednesday_end'],['hours_thursday_start','hours_thursday_end'],['hours_friday_start','hours_friday_end'],['hours_saturday_start','hours_saturday_end'],['hours_sunday_start','hours_sunday_end']] as const;
+                    return viewRow(day, fmtHours(settings[keys[i][0]] ?? '', settings[keys[i][1]] ?? ''));
+                  })}
+                </div>,
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {hoursPair('Mon', 'hours_monday_start', 'hours_monday_end')}
+                  {hoursPair('Tue', 'hours_tuesday_start', 'hours_tuesday_end')}
+                  {hoursPair('Wed', 'hours_wednesday_start', 'hours_wednesday_end')}
+                  {hoursPair('Thu', 'hours_thursday_start', 'hours_thursday_end')}
+                  {hoursPair('Fri', 'hours_friday_start', 'hours_friday_end')}
+                  {hoursPair('Sat', 'hours_saturday_start', 'hours_saturday_end')}
+                  {hoursPair('Sun', 'hours_sunday_start', 'hours_sunday_end')}
+                </div>,
+                () => saveSettings({ hours_monday_start: settings.hours_monday_start, hours_monday_end: settings.hours_monday_end, hours_tuesday_start: settings.hours_tuesday_start, hours_tuesday_end: settings.hours_tuesday_end, hours_wednesday_start: settings.hours_wednesday_start, hours_wednesday_end: settings.hours_wednesday_end, hours_thursday_start: settings.hours_thursday_start, hours_thursday_end: settings.hours_thursday_end, hours_friday_start: settings.hours_friday_start, hours_friday_end: settings.hours_friday_end, hours_saturday_start: settings.hours_saturday_start, hours_saturday_end: settings.hours_saturday_end, hours_sunday_start: settings.hours_sunday_start, hours_sunday_end: settings.hours_sunday_end }),
               )}
 
-              {/* Booking policy */}
               {sectionCard(
-                <>
-                  {sectionTitle('Booking Policy')}
+                'policy',
+                'Booking Policy',
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  {viewRow('Deposit Amount', settings.deposit_amount_fixed ? `£${settings.deposit_amount_fixed}` : null)}
+                  {viewRow('Cancellation Notice', settings.cancellation_policy_hours ? `${settings.cancellation_policy_hours} hours` : null)}
+                </div>,
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  {field('Deposit Amount (£)', 'deposit_amount_fixed', 'number', '50')}
+                  {field('Cancellation Notice (hours)', 'cancellation_policy_hours', 'number', '24')}
+                </div>,
+                () => saveSettings({ deposit_amount_fixed: settings.deposit_amount_fixed, cancellation_policy_hours: settings.cancellation_policy_hours }),
+              )}
+
+              {sectionCard(
+                'social',
+                'Social & About',
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    {field('Deposit Amount (£)', 'deposit_amount_fixed', 'number', '50')}
-                    {field('Cancellation Notice (hours)', 'cancellation_policy_hours', 'number', '24')}
+                    {viewRow('Instagram', settings.instagram_handle ? `@${settings.instagram_handle}` : null)}
+                    {viewRow('TikTok', settings.tiktok_handle ? `@${settings.tiktok_handle}` : null)}
+                    <div style={{ gridColumn: '1 / -1' }}>{viewRow('Facebook', settings.facebook_url)}</div>
                   </div>
-                </>,
-                () => saveSettings({ deposit_amount_fixed: settings.deposit_amount_fixed, cancellation_policy_hours: settings.cancellation_policy_hours })
-              )}
-
-              {/* Social handles */}
-              {sectionCard(
-                <>
-                  {sectionTitle('Social & About')}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    {field('Instagram Handle', 'instagram_handle', 'text', 'hallofmirrorstattoo')}
-                    {field('Facebook URL', 'facebook_url', 'url', 'https://facebook.com/...')}
-                    {field('TikTok Handle', 'tiktok_handle', 'text', 'hallofmirrorstattoo')}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                      <label style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-mid)', textTransform: 'uppercase' }}>About Section</label>
-                      <textarea
-                        value={settings.about_section ?? ''}
-                        placeholder="A few sentences about the studio…"
-                        rows={4}
-                        onChange={e => setSettings(prev => ({ ...prev, about_section: e.target.value }))}
-                        style={{
-                          background: 'var(--surface)',
-                          border: '1px solid var(--border)',
-                          borderRadius: '0.5rem',
-                          padding: '0.625rem 0.875rem',
-                          fontFamily: '"DM Sans", sans-serif',
-                          fontSize: '0.875rem',
-                          color: 'var(--cream)',
-                          outline: 'none',
-                          width: '100%',
-                          resize: 'vertical',
-                          boxSizing: 'border-box',
-                        }}
-                      />
-                    </div>
+                  {viewRow('About Section', settings.about_section)}
+                </div>,
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {field('Instagram Handle', 'instagram_handle', 'text', 'hallofmirrorstattoo')}
+                  {field('Facebook URL', 'facebook_url', 'url', 'https://facebook.com/...')}
+                  {field('TikTok Handle', 'tiktok_handle', 'text', 'hallofmirrorstattoo')}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <label style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-mid)', textTransform: 'uppercase' }}>About Section</label>
+                    <textarea value={settings.about_section ?? ''} placeholder="A few sentences about the studio…" rows={4} onChange={e => setSettings(prev => ({ ...prev, about_section: e.target.value }))} style={{ ...inputSt, resize: 'vertical' }} />
                   </div>
-                </>,
-                () => saveSettings({ instagram_handle: settings.instagram_handle, facebook_url: settings.facebook_url, tiktok_handle: settings.tiktok_handle, about_section: settings.about_section })
+                </div>,
+                () => saveSettings({ instagram_handle: settings.instagram_handle, facebook_url: settings.facebook_url, tiktok_handle: settings.tiktok_handle, about_section: settings.about_section }),
               )}
             </div>
           );

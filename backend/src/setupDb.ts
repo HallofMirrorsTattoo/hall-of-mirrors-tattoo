@@ -306,6 +306,10 @@ CREATE TABLE IF NOT EXISTS "PortfolioPhoto" (
     FOREIGN KEY (artist_id) REFERENCES "Artist"(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS "PortfolioPhoto_artist_id_idx" ON "PortfolioPhoto"(artist_id, display_order);
+
+INSERT INTO "Studio" (id, studio_name, address, postcode, cancellation_policy_hours, created_at, updated_at)
+VALUES ('hom-studio', 'Hall of Mirrors Tattoo', '', '', 24, NOW(), NOW())
+ON CONFLICT (id) DO NOTHING;
 `;
 
 export async function setupDatabase() {

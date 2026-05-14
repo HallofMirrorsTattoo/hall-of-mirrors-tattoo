@@ -90,11 +90,23 @@ studioSettingsRouter.patch('/', async (req: Request, res: Response) => {
 
   const client = await getClient();
   try {
-    const result = await client.query(
+    // Try UPDATE first; if no row exists yet, INSERT the seed row then UPDATE
+    let result = await client.query(
       `UPDATE "Studio" SET ${setClauses}, updated_at = NOW() WHERE id = (SELECT id FROM "Studio" LIMIT 1) RETURNING *`,
       values
     );
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Studio not found' });
+    if (result.rows.length === 0) {
+      await client.query(
+        `INSERT INTO "Studio" (id, studio_name, address, postcode, cancellation_policy_hours, created_at, updated_at)
+         VALUES ('hom-studio', 'Hall of Mirrors Tattoo', '', '', 24, NOW(), NOW())
+         ON CONFLICT (id) DO NOTHING`
+      );
+      result = await client.query(
+        `UPDATE "Studio" SET ${setClauses}, updated_at = NOW() WHERE id = 'hom-studio' RETURNING *`,
+        values
+      );
+    }
+    if (result.rows.length === 0) return res.status(500).json({ error: 'Failed to save settings' });
     res.json(result.rows[0]);
   } finally {
     await client.end();
