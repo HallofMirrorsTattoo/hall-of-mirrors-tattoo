@@ -295,6 +295,17 @@ CREATE TABLE IF NOT EXISTS "FlashSlot" (
     FOREIGN KEY (claimed_by_user_id) REFERENCES "User"(id) ON DELETE SET NULL
 );
 CREATE INDEX IF NOT EXISTS "FlashSlot_flash_day_id_idx" ON "FlashSlot"(flash_day_id);
+
+CREATE TABLE IF NOT EXISTS "PortfolioPhoto" (
+    id TEXT PRIMARY KEY,
+    artist_id TEXT NOT NULL,
+    public_url TEXT NOT NULL,
+    storage_path TEXT NOT NULL,
+    display_order INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (artist_id) REFERENCES "Artist"(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS "PortfolioPhoto_artist_id_idx" ON "PortfolioPhoto"(artist_id, display_order);
 `;
 
 export async function setupDatabase() {

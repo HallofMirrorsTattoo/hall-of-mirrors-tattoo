@@ -13,6 +13,7 @@ interface Artist {
   years_experience: number | null;
   bio: string | null;
   instagram_handle: string | null;
+  cover_photo: string | null;
 }
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://hall-of-mirrors-tattoo-production.up.railway.app';
@@ -196,9 +197,18 @@ function ArtistSection({ artist }: { artist: Artist }) {
             </div>
           </AnimatedSection>
 
-          {/* Right — Gallery grid */}
+          {/* Right — Cover photo or placeholder */}
           <AnimatedSection delay={180}>
-            {hasProfile ? (
+            {artist.cover_photo ? (
+              <div style={{ borderRadius: '0.375rem', overflow: 'hidden', border: '1px solid var(--border)', aspectRatio: '3/4' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={artist.cover_photo}
+                  alt={`${artist.full_name} portfolio`}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                />
+              </div>
+            ) : hasProfile ? (
               <div className="grid grid-cols-2 gap-3">
                 {GALLERY_LABELS.slice(0, 4).map((label, i) => (
                   <div
@@ -227,12 +237,9 @@ function ArtistSection({ artist }: { artist: Artist }) {
                 </div>
               </div>
             )}
-            {hasProfile && (
+            {hasProfile && igUrl && !artist.cover_photo && (
               <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: 'var(--text-low)', textAlign: 'center', marginTop: '1rem' }}>
-                Photography coming soon ·{' '}
-                {igUrl ? (
-                  <a href={igUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(201,168,76,0.5)', textDecoration: 'none' }}>See work on Instagram ↗</a>
-                ) : 'See work on Instagram'}
+                <a href={igUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(201,168,76,0.5)', textDecoration: 'none' }}>See work on Instagram ↗</a>
               </p>
             )}
           </AnimatedSection>

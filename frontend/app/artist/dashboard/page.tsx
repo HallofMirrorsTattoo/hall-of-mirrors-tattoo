@@ -142,7 +142,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function ArtistDashboard() {
   const router = useRouter();
   const { artist, accessToken, logout, isLoading: authLoading } = useAuth();
-  const [tab, setTab] = useState<'bookings' | 'calendar' | 'consultations' | 'availability' | 'stats' | 'flash' | 'settings'>('bookings');
+  const [tab, setTab] = useState<'bookings' | 'calendar' | 'consultations' | 'availability' | 'stats' | 'flash' | 'portfolio' | 'settings'>('bookings');
 
   // Bookings state
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -279,6 +279,13 @@ export default function ArtistDashboard() {
   const [profileSaved, setProfileSaved] = useState(false);
   const [profileError, setProfileError] = useState('');
 
+  // ── Portfolio photos state ─────────────────────────────────────────────────
+  interface PortfolioPhoto { id: string; public_url: string; display_order: number; created_at: string; }
+  const [portfolioPhotos, setPortfolioPhotos] = useState<PortfolioPhoto[]>([]);
+  const [portfolioLoading, setPortfolioLoading] = useState(false);
+  const [portfolioUploading, setPortfolioUploading] = useState(false);
+  const [portfolioError, setPortfolioError] = useState('');
+
   // ── Settings state ─────────────────────────────────────────────────────────
   interface StudioSettings {
     id: string;
@@ -408,6 +415,11 @@ export default function ArtistDashboard() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, accessToken]);
 
+  useEffect(() => {
+    if (tab === 'portfolio' && accessToken) fetchPortfolioPhotos();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, accessToken]);
+
   const fetchProfile = async () => {
     if (!accessToken) return;
     try {
@@ -450,6 +462,60 @@ export default function ArtistDashboard() {
       setProfileError('Failed to save profile. Please try again.');
     } finally {
       setProfileSaving(false);
+    }
+  };
+
+  const fetchPortfolioPhotos = async () => {
+    if (!accessToken) return;
+    setPortfolioLoading(true);
+    setPortfolioError('');
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/photos`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) throw new Error('Failed to load photos');
+      const data = await res.json();
+      setPortfolioPhotos(data.photos ?? []);
+    } catch {
+      setPortfolioError('Could not load portfolio photos.');
+    } finally {
+      setPortfolioLoading(false);
+    }
+  };
+
+  const uploadPortfolioPhoto = async (file: File) => {
+    if (!accessToken) return;
+    setPortfolioUploading(true);
+    setPortfolioError('');
+    try {
+      const form = new FormData();
+      form.append('photo', file);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/photos`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: form,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Upload failed');
+      setPortfolioPhotos(prev => [...prev, data.photo]);
+    } catch (err: any) {
+      setPortfolioError(err.message ?? 'Upload failed.');
+    } finally {
+      setPortfolioUploading(false);
+    }
+  };
+
+  const deletePortfolioPhoto = async (id: string) => {
+    if (!accessToken || !confirm('Remove this photo from your portfolio?')) return;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/photos/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) throw new Error('Delete failed');
+      setPortfolioPhotos(prev => prev.filter(p => p.id !== id));
+    } catch {
+      setPortfolioError('Could not delete photo. Please try again.');
     }
   };
 
@@ -2001,6 +2067,7 @@ export default function ArtistDashboard() {
             { key: 'availability', label: 'Availability', badge: 0 },
             { key: 'stats',        label: 'Stats',        badge: 0 },
             { key: 'flash',        label: 'Flash Days',   badge: 0 },
+            { key: 'portfolio',    label: 'Portfolio',    badge: 0 },
             { key: 'settings',     label: 'Settings',     badge: 0 },
           ] as const).map(({ key, label, badge }) => (
             <button
@@ -3421,6 +3488,103 @@ export default function ArtistDashboard() {
             </div>
           );
         })()}
+
+        {/* ── Portfolio tab ─────────────────────────────────────────────────── */}
+        {tab === 'portfolio' && (
+          <div>
+            <div style={{ marginBottom: '2rem' }}>
+              <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: 'var(--cream)', marginBottom: '0.375rem' }}>
+                Portfolio Photos
+              </p>
+              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', color: 'var(--text-low)', textTransform: 'uppercase' }}>
+                These appear on your public artist page · Max 20 photos
+              </p>
+            </div>
+
+            {portfolioError && (
+              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: '#e57373', letterSpacing: '0.05em', marginBottom: '1rem' }}>
+                {portfolioError}
+              </p>
+            )}
+
+            {/* Upload button */}
+            <label style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+              padding: '0.625rem 1.25rem',
+              background: portfolioUploading ? 'rgba(201,168,76,0.08)' : 'rgba(201,168,76,0.1)',
+              border: '1px solid rgba(201,168,76,0.25)',
+              borderRadius: '0.375rem',
+              cursor: portfolioUploading ? 'not-allowed' : 'pointer',
+              fontFamily: '"DM Mono", monospace',
+              fontSize: '0.72rem',
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: portfolioUploading ? 'var(--text-low)' : 'rgba(201,168,76,0.85)',
+              marginBottom: '2rem',
+              transition: 'background 0.2s',
+            }}>
+              {portfolioUploading ? 'Uploading…' : '+ Add Photo'}
+              <input
+                type="file"
+                accept="image/*"
+                disabled={portfolioUploading || portfolioPhotos.length >= 20}
+                onChange={e => { const f = e.target.files?.[0]; if (f) uploadPortfolioPhoto(f); e.target.value = ''; }}
+                style={{ display: 'none' }}
+              />
+            </label>
+
+            {portfolioLoading && (
+              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', color: 'var(--text-low)', letterSpacing: '0.08em' }}>Loading…</p>
+            )}
+
+            {!portfolioLoading && portfolioPhotos.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '4rem 2rem', border: '1px dashed rgba(201,168,76,0.15)', borderRadius: '0.5rem' }}>
+                <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.5rem', color: 'rgba(201,168,76,0.2)', margin: '0 0 0.5rem' }}>
+                  No photos yet
+                </p>
+                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', color: 'var(--text-low)', margin: 0, textTransform: 'uppercase' }}>
+                  Upload your first piece to start building your portfolio
+                </p>
+              </div>
+            )}
+
+            {portfolioPhotos.length > 0 && (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+                gap: '0.75rem',
+              }}>
+                {portfolioPhotos.map(photo => (
+                  <div key={photo.id} style={{ position: 'relative', aspectRatio: '1', borderRadius: '0.375rem', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={photo.public_url}
+                      alt="Portfolio piece"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    />
+                    <button
+                      onClick={() => deletePortfolioPhoto(photo.id)}
+                      style={{
+                        position: 'absolute', top: '0.375rem', right: '0.375rem',
+                        width: '1.5rem', height: '1.5rem',
+                        background: 'rgba(0,0,0,0.7)',
+                        border: 'none', borderRadius: '50%',
+                        cursor: 'pointer',
+                        color: 'rgba(255,255,255,0.7)',
+                        fontSize: '0.7rem',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        lineHeight: 1,
+                      }}
+                      title="Remove photo"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── Settings tab ─────────────────────────────────────────────────── */}
         {tab === 'settings' && (() => {

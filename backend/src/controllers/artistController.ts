@@ -119,30 +119,23 @@ export async function updateClientNotes(req: Request, res: Response) {
 }
 
 export async function getAllActiveArtists(req: Request, res: Response) {
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL,
-  });
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
 
   try {
     await client.connect();
 
     const result = await client.query(
-      `SELECT id, full_name, specialties, years_experience, bio, instagram_handle
-       FROM "Artist"
-       WHERE is_active = true
-       ORDER BY full_name ASC`
+      `SELECT a.id, a.full_name, a.specialties, a.years_experience, a.bio, a.instagram_handle,
+              (SELECT p.public_url FROM "PortfolioPhoto" p WHERE p.artist_id = a.id ORDER BY p.display_order ASC, p.created_at ASC LIMIT 1) AS cover_photo
+       FROM "Artist" a
+       WHERE a.is_active = true
+       ORDER BY a.full_name ASC`
     );
 
-    res.json({
-      success: true,
-      artists: result.rows,
-    });
+    res.json({ success: true, artists: result.rows });
   } catch (error) {
     console.error('Get artists error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch artists',
-    });
+    res.status(500).json({ success: false, error: 'Failed to fetch artists' });
   } finally {
     await client.end();
   }
@@ -164,11 +157,25 @@ export async function getArtistBySlug(req: Request, res: Response) {
     const artist = result.rows.find((a: any) => toSlug(a.full_name) === slug);
     if (!artist) return res.status(404).json({ success: false, error: 'Artist not found' });
 
-    const bookingCount = await db.query(
-      `SELECT COUNT(*)::int AS total FROM "Booking" WHERE artist_id = $1 AND appointment_status IN ('confirmed','completed')`,
-      [artist.id]
-    );
-    res.json({ success: true, artist: { ...artist, booking_count: bookingCount.rows[0]?.total ?? 0 } });
+    const [bookingCount, photosResult] = await Promise.all([
+      db.query(
+        `SELECT COUNT(*)::int AS total FROM "Booking" WHERE artist_id = $1 AND appointment_status IN ('confirmed','completed')`,
+        [artist.id]
+      ),
+      db.query(
+        `SELECT id, public_url FROM "PortfolioPhoto" WHERE artist_id = $1 ORDER BY display_order ASC, created_at ASC`,
+        [artist.id]
+      ),
+    ]);
+
+    res.json({
+      success: true,
+      artist: {
+        ...artist,
+        booking_count: bookingCount.rows[0]?.total ?? 0,
+        photos: photosResult.rows,
+      },
+    });
   } catch (error) {
     console.error('getArtistBySlug error:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch artist' });

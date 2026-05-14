@@ -1,5 +1,7 @@
 import express, { Request, Response } from 'express';
 import pkg from 'pg';
+import multer from 'multer';
+import { randomUUID } from 'crypto';
 import { getAllActiveArtists, getArtistBySlug, getArtistConsultations, respondToConsultation, updateClientNotes } from '../controllers/artistController.js';
 import {
   getArtistBookings,
@@ -15,10 +17,57 @@ import { authMiddleware } from '../middleware/auth.js';
 const { Client } = pkg;
 const router = express.Router();
 
-// Public routes
+// ── Portfolio photo upload helper (reuses design-ideas bucket) ─────────────
+
+const PORTFOLIO_BUCKET = 'design-ideas';
+
+const photoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Only image files are allowed'));
+  },
+});
+
+async function uploadPhotoToSupabase(buffer: Buffer, fileName: string, mimeType: string): Promise<{ publicUrl: string; storagePath: string }> {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceKey) throw new Error('Supabase storage not configured');
+
+  const storagePath = `portfolio/${fileName}`;
+  const res = await fetch(`${supabaseUrl}/storage/v1/object/${PORTFOLIO_BUCKET}/${storagePath}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${serviceKey}`, 'Content-Type': mimeType, 'x-upsert': 'true' },
+    body: buffer,
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Storage upload failed: ${err}`);
+  }
+  return {
+    publicUrl: `${supabaseUrl}/storage/v1/object/public/${PORTFOLIO_BUCKET}/${storagePath}`,
+    storagePath,
+  };
+}
+
+async function deletePhotoFromSupabase(storagePath: string): Promise<void> {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceKey) return;
+  await fetch(`${supabaseUrl}/storage/v1/object/${PORTFOLIO_BUCKET}/${storagePath}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${serviceKey}` },
+  });
+}
+
+// ── Public routes ──────────────────────────────────────────────────────────
+
 router.get('/', getAllActiveArtists);
 
-// PATCH /api/artist/profile — authenticated artist updates their own profile
+// ── Authenticated routes ───────────────────────────────────────────────────
+
+// PATCH /api/artist/profile — artist updates their own Artist row
 router.patch('/profile', authMiddleware, async (req: Request, res: Response) => {
   const allowed = ['full_name', 'bio', 'specialties', 'years_experience', 'instagram_handle'];
   const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k));
@@ -43,7 +92,81 @@ router.patch('/profile', authMiddleware, async (req: Request, res: Response) => 
   }
 });
 
-// Protected routes (require authentication)
+// GET /api/artist/photos — list own portfolio photos
+router.get('/photos', authMiddleware, async (req: Request, res: Response) => {
+  const db = new Client({ connectionString: process.env.DATABASE_URL });
+  await db.connect();
+  try {
+    const result = await db.query(
+      `SELECT id, public_url, display_order, created_at FROM "PortfolioPhoto"
+       WHERE artist_id = $1 ORDER BY display_order ASC, created_at ASC`,
+      [req.artist!.id]
+    );
+    res.json({ success: true, photos: result.rows });
+  } finally {
+    await db.end();
+  }
+});
+
+// POST /api/artist/photos — upload a new portfolio photo
+router.post('/photos', authMiddleware, photoUpload.single('photo'), async (req: Request, res: Response) => {
+  if (!req.file) return res.status(400).json({ error: 'No image file provided' });
+
+  const db = new Client({ connectionString: process.env.DATABASE_URL });
+  await db.connect();
+  try {
+    // Enforce max 20 photos
+    const countResult = await db.query(
+      `SELECT COUNT(*)::int AS total FROM "PortfolioPhoto" WHERE artist_id = $1`,
+      [req.artist!.id]
+    );
+    if (countResult.rows[0].total >= 20) {
+      return res.status(400).json({ error: 'Maximum 20 photos per portfolio. Delete some to upload more.' });
+    }
+
+    const ext = req.file.mimetype.split('/')[1]?.replace('jpeg', 'jpg') ?? 'jpg';
+    const fileName = `${req.artist!.id}/${randomUUID()}.${ext}`;
+    const { publicUrl, storagePath } = await uploadPhotoToSupabase(req.file.buffer, fileName, req.file.mimetype);
+
+    const orderResult = await db.query(
+      `SELECT COALESCE(MAX(display_order), -1) + 1 AS next_order FROM "PortfolioPhoto" WHERE artist_id = $1`,
+      [req.artist!.id]
+    );
+    const displayOrder = orderResult.rows[0].next_order;
+
+    const id = randomUUID();
+    const insertResult = await db.query(
+      `INSERT INTO "PortfolioPhoto" (id, artist_id, public_url, storage_path, display_order, created_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())
+       RETURNING id, public_url, display_order, created_at`,
+      [id, req.artist!.id, publicUrl, storagePath, displayOrder]
+    );
+    res.status(201).json({ success: true, photo: insertResult.rows[0] });
+  } catch (err: any) {
+    console.error('Photo upload error:', err);
+    res.status(500).json({ error: err.message ?? 'Upload failed' });
+  } finally {
+    await db.end();
+  }
+});
+
+// DELETE /api/artist/photos/:id — delete own portfolio photo
+router.delete('/photos/:id', authMiddleware, async (req: Request, res: Response) => {
+  const db = new Client({ connectionString: process.env.DATABASE_URL });
+  await db.connect();
+  try {
+    const result = await db.query(
+      `DELETE FROM "PortfolioPhoto" WHERE id = $1 AND artist_id = $2 RETURNING storage_path`,
+      [req.params.id, req.artist!.id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Photo not found' });
+    deletePhotoFromSupabase(result.rows[0].storage_path).catch(() => {});
+    res.json({ success: true });
+  } finally {
+    await db.end();
+  }
+});
+
 router.get('/bookings', authMiddleware, getArtistBookings);
 router.get('/bookings/:id', authMiddleware, getArtistBookingById);
 router.patch('/bookings/:id', authMiddleware, updateBookingStatusByArtist);

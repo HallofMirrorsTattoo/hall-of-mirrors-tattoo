@@ -12,6 +12,7 @@ interface ArtistData {
   bio: string | null;
   instagram_handle: string | null;
   booking_count: number;
+  photos: { id: string; public_url: string }[];
 }
 
 async function fetchArtist(slug: string): Promise<ArtistData | null> {
@@ -50,6 +51,65 @@ const GALLERY_PLACEHOLDERS = [
   { roman: 'V',    label: 'Portrait' },
   { roman: 'VI',   label: 'Custom Design' },
 ];
+
+function GalleryGrid({ photos }: { photos: { id: string; public_url: string }[] }) {
+  if (photos.length > 0) {
+    return (
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+        gap: '1px',
+        background: 'var(--border)',
+        borderRadius: '0.375rem',
+        overflow: 'hidden',
+        border: '1px solid var(--border)',
+      }}>
+        {photos.map(photo => (
+          <div key={photo.id} style={{ aspectRatio: '1', overflow: 'hidden', background: 'var(--surface)' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photo.public_url}
+              alt="Portfolio piece"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+      gap: '1px',
+      background: 'var(--border)',
+      borderRadius: '0.375rem',
+      overflow: 'hidden',
+      border: '1px solid var(--border)',
+    }}>
+      {GALLERY_PLACEHOLDERS.map((item) => (
+        <div key={item.roman} style={{
+          aspectRatio: '1',
+          background: 'var(--surface)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.5rem',
+          position: 'relative',
+        }}>
+          <span aria-hidden="true" style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '3.5rem', fontWeight: 300, color: 'rgba(201,168,76,0.08)', lineHeight: 1 }}>
+            {item.roman}
+          </span>
+          <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)', position: 'absolute', bottom: '0.875rem' }}>
+            {item.label}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default async function ArtistPage({ params }: { params: { slug: string } }) {
   const artist = await fetchArtist(params.slug);
@@ -235,46 +295,16 @@ export default async function ArtistPage({ params }: { params: { slug: string } 
           )}
         </div>
 
-        {/* Gallery grid — placeholders until real images added */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-          gap: '1px',
-          background: 'var(--border)',
-          borderRadius: '0.375rem',
-          overflow: 'hidden',
-          border: '1px solid var(--border)',
-        }}>
-          {GALLERY_PLACEHOLDERS.map((item) => (
-            <div key={item.roman} style={{
-              aspectRatio: '1',
-              background: 'var(--surface)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-              position: 'relative',
-            }}>
-              <span aria-hidden="true" style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '3.5rem', fontWeight: 300, color: 'rgba(201,168,76,0.08)', lineHeight: 1 }}>
-                {item.roman}
-              </span>
-              <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)', position: 'absolute', bottom: '0.875rem' }}>
-                {item.label}
-              </span>
-            </div>
-          ))}
-        </div>
+        <GalleryGrid photos={artist.photos ?? []} />
 
-        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-low)', textAlign: 'center', marginTop: '1.25rem' }}>
-          Full portfolio on{' '}
-          {igUrl ? (
+        {igUrl && (
+          <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-low)', textAlign: 'center', marginTop: '1.25rem' }}>
+            More work on{' '}
             <a href={igUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(201,168,76,0.5)', textDecoration: 'none' }}>
-              Instagram
+              Instagram ↗
             </a>
-          ) : 'Instagram'}{' '}
-          · Photography coming soon
-        </p>
+          </p>
+        )}
       </section>
 
       {/* Section divider */}
