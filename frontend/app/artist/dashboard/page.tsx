@@ -90,6 +90,8 @@ interface Booking {
   client_budget?: number | null;
   price_offer_status?: string;
   price_offer_note?: string | null;
+  has_consent_form?: boolean;
+  client_session_count?: number;
 }
 
 interface Consultation {
@@ -710,6 +712,11 @@ export default function ArtistDashboard() {
   const filteredBookings = bookings.filter((b) => statusFilter === 'all' || b.appointment_status === statusFilter);
   const pastBookingsAll = bookings.filter((b) => !activeStatuses.includes(b.appointment_status));
 
+  // Counter-offers from clients awaiting artist response
+  const pendingCounterOffers = bookings.filter(
+    (b) => b.appointment_status === 'counter_offered' && b.counter_offered_by === 'client'
+  ).length;
+
   const renderBookingRow = (booking: Booking) => {
     const isCancelled = booking.appointment_status === 'cancelled';
     const isSelected = selectedBooking?.id === booking.id;
@@ -803,8 +810,26 @@ export default function ArtistDashboard() {
             })()}
           </div>
 
+          {/* Client name + session count badge */}
+          <div>
+            <span style={labelStyle}>Client</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flexWrap: 'wrap' }}>
+              <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.6 }}>
+                {selectedBooking.first_name} {selectedBooking.last_name}
+              </p>
+              {(() => {
+                const count = Number(selectedBooking.client_session_count ?? 0);
+                if (count <= 0) return null;
+                return (
+                  <span style={{ padding: '0.15rem 0.5rem', background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: '2rem', fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)', whiteSpace: 'nowrap' }}>
+                    {count === 1 ? '1st session' : count === 2 ? '2nd session' : count === 3 ? '3rd session' : `${count}th session`}
+                  </span>
+                );
+              })()}
+            </div>
+          </div>
+
           {[
-            { label: 'Client', value: `${selectedBooking.first_name} ${selectedBooking.last_name}` },
             { label: 'Email', value: selectedBooking.email || '—' },
             { label: 'Phone', value: selectedBooking.phone || '—' },
             { label: 'Placement', value: selectedBooking.placement },
@@ -816,6 +841,22 @@ export default function ArtistDashboard() {
               <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.6 }}>{value}</p>
             </div>
           ))}
+
+          {/* Consent form status */}
+          {selectedBooking.appointment_status !== 'cancelled' && (
+            <div>
+              <span style={labelStyle}>Consent form</span>
+              {selectedBooking.has_consent_form ? (
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.25rem 0.625rem', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '2rem' }}>
+                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(34,197,94,0.8)' }}>✓ Signed</span>
+                </div>
+              ) : (
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.25rem 0.625rem', background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.25)', borderRadius: '2rem' }}>
+                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#CA8A04' }}>Not yet signed</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Price offer */}
@@ -1422,38 +1463,74 @@ export default function ArtistDashboard() {
           </p>
         </div>
 
-        {/* ── Upcoming appointment hub ───────────────────────────────────────── */}
+        {/* ── Today's schedule / next session hub ───────────────────────────── */}
         {(() => {
           const now = new Date();
           const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+          const fmtHour = (h: number) => h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h - 12}pm`;
+
           const upcoming = bookings
             .filter((b) => b.appointment_status === 'confirmed' && b.appointment_date_time >= todayStr)
             .sort((a, b) => a.appointment_date_time.localeCompare(b.appointment_date_time));
           if (upcoming.length === 0) return null;
+
           const next = upcoming[0];
           const nextDate = next.appointment_date_time.substring(0, 10);
           const isToday = nextDate === todayStr;
+          const todaySessions = isToday ? upcoming.filter((b) => b.appointment_date_time.substring(0, 10) === todayStr) : [];
+
+          // Multiple sessions today — show a compact list
+          if (isToday && todaySessions.length > 1) {
+            return (
+              <div style={{ marginBottom: '2rem', background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '0.75rem', overflow: 'hidden' }}>
+                <div style={{ padding: '0.875rem 1.5rem', borderBottom: '1px solid rgba(201,168,76,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--gold)' }}>
+                    Today — {todaySessions.length} sessions
+                  </span>
+                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', color: 'rgba(201,168,76,0.5)', textTransform: 'uppercase' }}>
+                    {new Date(todayStr + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  </span>
+                </div>
+                <div>
+                  {todaySessions.map((b, i) => {
+                    const sh = b.appointment_time ? parseInt(b.appointment_time.substring(0, 2), 10) : null;
+                    const eh = sh !== null && b.estimated_duration_minutes ? sh + Math.round(b.estimated_duration_minutes / 60) : null;
+                    return (
+                      <button
+                        key={b.id}
+                        type="button"
+                        onClick={() => { setTab('bookings'); setSelectedBooking(b); }}
+                        style={{ width: '100%', display: 'grid', gridTemplateColumns: '6rem 1fr auto', alignItems: 'center', gap: '1rem', padding: '0.875rem 1.5rem', background: 'none', border: 'none', borderTop: i > 0 ? '1px solid rgba(201,168,76,0.1)' : 'none', cursor: 'pointer', textAlign: 'left' }}
+                      >
+                        <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.8rem', color: 'var(--gold)' }}>
+                          {sh !== null ? fmtHour(sh) : '—'}{eh ? ` → ${fmtHour(eh)}` : ''}
+                        </span>
+                        <div>
+                          <p style={{ margin: '0 0 0.15rem', fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1rem', color: 'var(--cream)', fontWeight: 300 }}>
+                            {b.first_name} {b.last_name}
+                          </p>
+                          <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-mid)' }}>
+                            {b.placement}{b.estimated_size ? ` · ${b.estimated_size}` : ''}
+                          </p>
+                        </div>
+                        <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', color: 'rgba(201,168,76,0.5)' }}>→</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          }
+
+          // Single session today or next upcoming
           const startHour = next.appointment_time ? parseInt(next.appointment_time.substring(0, 2), 10) : null;
           const endHour = startHour !== null && next.estimated_duration_minutes
-            ? startHour + Math.round(next.estimated_duration_minutes / 60)
-            : null;
-          const fmtHour = (h: number) => h < 12 ? `${h}am` : h === 12 ? '12pm' : `${h - 12}pm`;
-          const todayCount = upcoming.filter((b) => b.appointment_date_time.substring(0, 10) === todayStr).length;
+            ? startHour + Math.round(next.estimated_duration_minutes / 60) : null;
           return (
-            <div style={{
-              marginBottom: '2rem',
-              padding: '1rem 1.5rem',
-              background: isToday ? 'rgba(201,168,76,0.07)' : 'var(--surface)',
-              border: `1px solid ${isToday ? 'rgba(201,168,76,0.3)' : 'var(--border)'}`,
-              borderRadius: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1.5rem',
-              flexWrap: 'wrap',
-            }}>
+            <div style={{ marginBottom: '2rem', padding: '1rem 1.5rem', background: isToday ? 'rgba(201,168,76,0.07)' : 'var(--surface)', border: `1px solid ${isToday ? 'rgba(201,168,76,0.3)' : 'var(--border)'}`, borderRadius: '0.75rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', minWidth: 0 }}>
                 <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: isToday ? 'var(--gold)' : 'rgba(201,168,76,0.5)' }}>
-                  {isToday ? `Today · ${todayCount} session${todayCount > 1 ? 's' : ''}` : 'Next session'}
+                  {isToday ? 'Today' : 'Next session'}
                 </span>
                 <span style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1.25rem', color: 'var(--cream)', lineHeight: 1.2 }}>
                   {next.first_name} {next.last_name}
@@ -1506,7 +1583,7 @@ export default function ArtistDashboard() {
         <div className="scroll-no-bar" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderBottom: '1px solid var(--border)', marginBottom: '2.5rem' }}>
           <div style={{ display: 'flex', gap: 0, minWidth: 'max-content' }}>
           {([
-            { key: 'bookings', label: 'Bookings', badge: 0 },
+            { key: 'bookings', label: 'Bookings', badge: pendingCounterOffers },
             { key: 'calendar', label: 'Calendar', badge: 0 },
             { key: 'consultations', label: 'Consultations', badge: pendingConsultations },
             { key: 'availability', label: 'Availability', badge: 0 },

@@ -27,10 +27,12 @@ router.get('/', async (req: Request, res: Response) => {
               b.counter_offer_date, b.counter_offer_time,
               b.counter_offer_note, b.counter_offered_by,
               b.created_at,
-              a.full_name as artist_name, a.instagram_handle
+              a.full_name as artist_name, a.instagram_handle,
+              CASE WHEN cf.id IS NOT NULL THEN true ELSE false END as consent_form_signed
        FROM "Booking" b
        LEFT JOIN "Artist" a ON b.artist_id = a.id
        LEFT JOIN "User" u ON b.user_id = u.id
+       LEFT JOIN "ConsentForm" cf ON cf.booking_id = b.id
        WHERE b.user_id = $1 OR u.email = $2
        ORDER BY b.appointment_date_time DESC`,
       [req.user.id, req.user.email]

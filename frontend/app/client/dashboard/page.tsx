@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useClientAuth } from '@/lib/clientAuthContext';
@@ -9,25 +9,72 @@ import BookingsTab from './bookings';
 import DesignIdeasTab from './design-ideas';
 import ConsultationsTab from './consultations';
 import ConsentFormsTab from './consent-forms';
+import AftercareTab from './aftercare';
 
 const BASE_TABS = [
   { id: 'bookings',      label: 'Your Bookings' },
-  { id: 'design-ideas',  label: 'Design Ideas' },
   { id: 'consultations', label: 'Consultations' },
   { id: 'consent-forms', label: 'Consent Forms' },
+  { id: 'design-ideas',  label: 'Design Ideas' },
+  { id: 'aftercare',     label: 'Aftercare' },
 ] as const;
 
 type TabId = typeof BASE_TABS[number]['id'];
 
 export default function ClientDashboardPage() {
   const router = useRouter();
-  const { user, logout } = useClientAuth();
+  const { user, logout, accessToken } = useClientAuth();
   const [activeTab, setActiveTab] = useState<TabId>('bookings');
+  const [badges, setBadges] = useState<Partial<Record<TabId, number>>>({});
 
   const handleLogout = () => {
     logout();
     router.push('/');
   };
+
+  const updateBadge = useCallback((tab: TabId, count: number) => {
+    setBadges(prev => ({ ...prev, [tab]: count }));
+  }, []);
+
+  const onBookingsBadge = useCallback((n: number) => setBadges(prev => ({ ...prev, bookings: n })), []);
+
+  // Fetch consultation badge count (pending consults with artist messages)
+  useEffect(() => {
+    if (!accessToken) return;
+    (async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/client/consultations`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const consultations = data.consultations || [];
+        const badge = consultations.filter((c: { status: string; artist_message_count: number }) =>
+          c.status !== 'declined' && c.artist_message_count > 0
+        ).length;
+        updateBadge('consultations', badge);
+      } catch { /* non-critical */ }
+    })();
+  }, [accessToken, updateBadge]);
+
+  // Fetch consent forms badge count (unsigned consent forms for active bookings)
+  useEffect(() => {
+    if (!accessToken) return;
+    (async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/client/consent`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const bookings = data.bookings || [];
+        const badge = bookings.filter((b: { consent_form_id: string | null; appointment_status: string }) =>
+          !b.consent_form_id && ['pending_consent', 'confirmed'].includes(b.appointment_status)
+        ).length;
+        updateBadge('consent-forms', badge);
+      } catch { /* non-critical */ }
+    })();
+  }, [accessToken, updateBadge]);
 
   return (
     <ClientProtectedRoute>
@@ -51,19 +98,24 @@ export default function ClientDashboardPage() {
                 Welcome back{user?.first_name ? `, ${user.first_name}` : ''}
               </h1>
               <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.6 }}>
-                Manage your bookings, design ideas, and consultations
+                Manage your bookings, messages, and consent forms
               </p>
             </div>
-            <button onClick={handleLogout} className="btn-secondary" style={{ flexShrink: 0, marginTop: '0.5rem' }}>
-              Logout
-            </button>
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexShrink: 0, marginTop: '0.5rem' }}>
+              <Link href="/client/profile" className="btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.8125rem' }}>
+                Profile
+              </Link>
+              <button onClick={handleLogout} className="btn-secondary">
+                Log out
+              </button>
+            </div>
           </div>
 
           {/* Tab Navigation */}
           <div className="scroll-no-bar" style={{ borderBottom: '1px solid var(--border)', marginBottom: '2.5rem', display: 'flex', gap: '0', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
             {BASE_TABS.map((tab) => {
               const isActive = activeTab === tab.id;
-              const badge = 0;
+              const badge = badges[tab.id] ?? 0;
               return (
                 <button
                   key={tab.id}
@@ -87,12 +139,8 @@ export default function ClientDashboardPage() {
                     alignItems: 'center',
                     gap: '0.375rem',
                   }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) e.currentTarget.style.color = 'var(--cream)';
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) e.currentTarget.style.color = 'var(--text-mid)';
-                  }}
+                  onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = 'var(--cream)'; }}
+                  onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = 'var(--text-mid)'; }}
                 >
                   {tab.label}
                   {badge > 0 && (
@@ -107,10 +155,11 @@ export default function ClientDashboardPage() {
 
           {/* Tab Content */}
           <div style={{ minHeight: '24rem' }}>
-            {activeTab === 'bookings'      && <BookingsTab />}
-            {activeTab === 'design-ideas'  && <DesignIdeasTab />}
+            {activeTab === 'bookings'      && <BookingsTab onBadgeUpdate={onBookingsBadge} />}
             {activeTab === 'consultations' && <ConsultationsTab />}
             {activeTab === 'consent-forms' && <ConsentFormsTab />}
+            {activeTab === 'design-ideas'  && <DesignIdeasTab />}
+            {activeTab === 'aftercare'     && <AftercareTab />}
           </div>
 
           {/* Quick Actions */}
@@ -119,25 +168,25 @@ export default function ClientDashboardPage() {
               <div className="grid md:grid-cols-2 gap-8">
                 <div>
                   <h3 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.25rem', fontWeight: 400, color: 'var(--cream)', marginBottom: '0.75rem' }}>
-                    Want to book a new appointment?
+                    Ready for your next piece?
                   </h3>
                   <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
-                    Start the booking process to schedule your next tattoo session with Robyn.
+                    Book your next session directly — choose a date and time that works for you.
                   </p>
                   <Link href="/booking" className="btn-primary">
-                    <span>Book Now</span>
+                    <span>Book a session</span>
                     <span className="btn-icon" aria-hidden="true">↗</span>
                   </Link>
                 </div>
                 <div>
                   <h3 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.25rem', fontWeight: 400, color: 'var(--cream)', marginBottom: '0.75rem' }}>
-                    Want a consultation first?
+                    Have a question?
                   </h3>
                   <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
-                    Use the Consultations tab above to discuss your design ideas and get expert advice.
+                    Message Robyn from the Consultations tab — she&apos;ll reply as soon as possible.
                   </p>
                   <button onClick={() => setActiveTab('consultations')} className="btn-secondary">
-                    View Consultations
+                    Open Consultations
                   </button>
                 </div>
               </div>

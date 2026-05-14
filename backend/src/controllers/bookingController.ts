@@ -417,10 +417,13 @@ export async function getArtistBookings(req: Request, res: Response) {
 
     const result = await client.query(
       `SELECT b.*, u.id as user_id, u.first_name, u.last_name, u.email, u.phone,
-              a.id as artist_id, a.full_name as artist_name, a.email as artist_email
+              a.id as artist_id, a.full_name as artist_name, a.email as artist_email,
+              CASE WHEN cf.id IS NOT NULL THEN true ELSE false END as has_consent_form,
+              (SELECT COUNT(*) FROM "Booking" b2 WHERE b2.user_id = u.id AND b2.appointment_status NOT IN ('cancelled')) as client_session_count
        FROM "Booking" b
        JOIN "User" u ON b.user_id = u.id
        LEFT JOIN "Artist" a ON b.artist_id = a.id
+       LEFT JOIN "ConsentForm" cf ON cf.booking_id = b.id
        WHERE b.artist_id = $1
        ORDER BY b.appointment_date_time ASC`,
       [req.artist.id]
