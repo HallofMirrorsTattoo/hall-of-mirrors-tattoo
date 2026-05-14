@@ -265,6 +265,20 @@ export default function ArtistDashboard() {
   const [newSlotFile, setNewSlotFile] = useState<File | null>(null);
   const [newSlotSubmitting, setNewSlotSubmitting] = useState(false);
 
+  // ── Artist profile state ───────────────────────────────────────────────────
+  interface ArtistProfile {
+    full_name: string;
+    bio: string;
+    specialties: string;
+    years_experience: string;
+    instagram_handle: string;
+  }
+  const emptyProfile: ArtistProfile = { full_name: '', bio: '', specialties: '', years_experience: '', instagram_handle: '' };
+  const [profile, setProfile] = useState<ArtistProfile>(emptyProfile);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
+  const [profileError, setProfileError] = useState('');
+
   // ── Settings state ─────────────────────────────────────────────────────────
   interface StudioSettings {
     id: string;
@@ -390,9 +404,54 @@ export default function ArtistDashboard() {
   }, [tab, accessToken]);
 
   useEffect(() => {
-    if (tab === 'settings' && accessToken) fetchSettings();
+    if (tab === 'settings' && accessToken) { fetchSettings(); fetchProfile(); }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, accessToken]);
+
+  const fetchProfile = async () => {
+    if (!accessToken) return;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setProfile({
+        full_name: data.full_name ?? '',
+        bio: data.bio ?? '',
+        specialties: data.specialties ?? '',
+        years_experience: data.years_experience != null ? String(data.years_experience) : '',
+        instagram_handle: data.instagram_handle ?? '',
+      });
+    } catch { /* non-critical */ }
+  };
+
+  const saveProfile = async () => {
+    if (!accessToken) return;
+    setProfileSaving(true);
+    setProfileError('');
+    setProfileSaved(false);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/profile`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: profile.full_name,
+          bio: profile.bio,
+          specialties: profile.specialties,
+          years_experience: profile.years_experience !== '' ? Number(profile.years_experience) : null,
+          instagram_handle: profile.instagram_handle,
+        }),
+      });
+      if (!res.ok) throw new Error('Save failed');
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 3000);
+    } catch {
+      setProfileError('Failed to save profile. Please try again.');
+    } finally {
+      setProfileSaving(false);
+    }
+  };
 
   const fetchSettings = async () => {
     if (!accessToken) return;
@@ -3442,8 +3501,66 @@ export default function ArtistDashboard() {
             </div>
           );
 
+          const profileField = (label: string, key: keyof ArtistProfile, type = 'text', placeholder = '') => (
+            <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <label style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-mid)', textTransform: 'uppercase' }}>{label}</label>
+              <input
+                type={type}
+                value={profile[key] ?? ''}
+                placeholder={placeholder}
+                onChange={e => setProfile(prev => ({ ...prev, [key]: e.target.value }))}
+                style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.5rem', padding: '0.625rem 0.875rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--cream)', outline: 'none', width: '100%', boxSizing: 'border-box' }}
+              />
+            </div>
+          );
+
           return (
             <div style={{ maxWidth: '640px' }}>
+
+              {/* ── Artist Profile ── */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                <h2 style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1.75rem', fontWeight: 300, letterSpacing: '-0.02em', color: 'var(--cream)', margin: 0 }}>Your Profile</h2>
+                {profileSaved && (
+                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: '#81c784', letterSpacing: '0.05em' }}>✓ SAVED</span>
+                )}
+              </div>
+              {profileError && (
+                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: '#e57373', letterSpacing: '0.05em', marginBottom: '1rem' }}>{profileError}</p>
+              )}
+              <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.875rem', padding: '1.75rem 2rem 1.5rem', marginBottom: '2.5rem' }}>
+                {sectionTitle('Artist Profile')}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                  {profileField('Full Name', 'full_name', 'text', 'Your name')}
+                  {profileField('Instagram Handle', 'instagram_handle', 'text', 'yourhandle')}
+                  {profileField('Specialties', 'specialties', 'text', 'Neo-traditional, colour realism…')}
+                  {profileField('Years Experience', 'years_experience', 'number', '8')}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <label style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-mid)', textTransform: 'uppercase' }}>Bio</label>
+                  <textarea
+                    value={profile.bio ?? ''}
+                    placeholder="A few sentences about you and your work…"
+                    rows={5}
+                    onChange={e => setProfile(prev => ({ ...prev, bio: e.target.value }))}
+                    style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.5rem', padding: '0.625rem 0.875rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--cream)', outline: 'none', width: '100%', resize: 'vertical', boxSizing: 'border-box' }}
+                  />
+                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--text-low)', marginTop: '0.25rem' }}>
+                    Appears on your public artist page
+                  </span>
+                </div>
+                <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={saveProfile}
+                    disabled={profileSaving}
+                    className="btn-primary"
+                    style={{ fontSize: '0.8125rem', padding: '0.5625rem 1.375rem', opacity: profileSaving ? 0.7 : 1 }}
+                  >
+                    <span>{profileSaving ? 'Saving…' : 'Save'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* ── Studio Settings ── */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <h2 style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1.75rem', fontWeight: 300, letterSpacing: '-0.02em', color: 'var(--cream)', margin: 0 }}>Studio Settings</h2>
                 {settingsSaved && (
