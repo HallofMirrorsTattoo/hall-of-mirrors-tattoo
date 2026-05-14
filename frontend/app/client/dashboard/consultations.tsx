@@ -50,24 +50,24 @@ function fmtDate(iso: string): string {
 function StatusBadge({ status, inDialogue = false }: { status: string; inDialogue?: boolean }) {
   if (status === 'pending' && inDialogue) {
     return (
-      <span style={{ padding: '0.2rem 0.6rem', borderRadius: '2rem', background: 'rgba(99,102,241,0.12)', color: '#818CF8', ...mono, fontSize: '0.65rem', letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+      <span style={{ padding: '0.2rem 0.6rem', borderRadius: '2rem', background: 'var(--gold-muted)', color: 'var(--gold)', ...mono, fontSize: '0.7rem', letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
         In dialogue
       </span>
     );
   }
   const map: Record<string, { bg: string; color: string; label: string }> = {
-    pending:           { bg: 'rgba(234,179,8,0.12)',   color: '#CA8A04', label: 'Awaiting response' },
+    pending:           { bg: 'rgba(201,168,76,0.12)',  color: 'rgba(201,168,76,0.75)', label: 'Awaiting response' },
     responded:         { bg: 'rgba(201,168,76,0.12)',  color: 'var(--gold)', label: 'Responded' },
-    approved:          { bg: 'rgba(34,197,94,0.12)',   color: '#16A34A', label: 'Chat open' },
-    declined:          { bg: 'rgba(239,68,68,0.12)',   color: '#DC2626', label: 'Declined' },
-    confirmed:         { bg: 'rgba(34,197,94,0.12)',   color: '#16A34A', label: 'Confirmed session' },
+    approved:          { bg: 'rgba(34,197,94,0.12)',   color: 'rgba(34,197,94,0.85)', label: 'Chat open' },
+    declined:          { bg: 'rgba(239,68,68,0.12)',   color: 'rgba(239,68,68,0.85)', label: 'Declined' },
+    confirmed:         { bg: 'rgba(34,197,94,0.12)',   color: 'rgba(34,197,94,0.85)', label: 'Confirmed session' },
     completed:         { bg: 'rgba(201,168,76,0.12)',  color: 'var(--gold)', label: 'Completed' },
-    pending_consent:   { bg: 'rgba(234,179,8,0.12)',   color: '#CA8A04', label: 'Awaiting confirmation' },
-    cancelled:         { bg: 'rgba(239,68,68,0.12)',   color: '#DC2626', label: 'Cancelled' },
+    pending_consent:   { bg: 'rgba(201,168,76,0.12)',  color: 'rgba(201,168,76,0.75)', label: 'Awaiting confirmation' },
+    cancelled:         { bg: 'rgba(239,68,68,0.12)',   color: 'rgba(239,68,68,0.85)', label: 'Cancelled' },
   };
   const s = map[status] || { bg: 'rgba(155,155,155,0.12)', color: 'var(--text-mid)', label: status };
   return (
-    <span style={{ padding: '0.2rem 0.6rem', borderRadius: '2rem', background: s.bg, color: s.color, ...mono, fontSize: '0.65rem', letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+    <span style={{ padding: '0.2rem 0.6rem', borderRadius: '2rem', background: s.bg, color: s.color, ...mono, fontSize: '0.7rem', letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
       {s.label}
     </span>
   );
@@ -123,7 +123,7 @@ function ChatPanel({ chatKey, openChat, msgs, msgsLoading, msgAreaRef, draft, se
         )}
       </div>
       <div style={{ padding: '0.875rem 1.5rem', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
-        {sendError && <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', color: '#f87171' }}>{sendError}</p>}
+        {sendError && <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', color: 'var(--error-text)' }}>{sendError}</p>}
         <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'flex-end' }}>
           <textarea
             value={draft}
@@ -131,9 +131,7 @@ function ChatPanel({ chatKey, openChat, msgs, msgsLoading, msgAreaRef, draft, se
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
             placeholder="Write a message… (Enter to send)"
             rows={2}
-            style={{ flex: 1, padding: '0.625rem 0.875rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--cream)', fontSize: '0.875rem', lineHeight: 1.5, resize: 'none', outline: 'none', fontFamily: '"DM Sans", sans-serif', transition: 'border-color 0.2s ease' }}
-            onFocus={(e) => (e.target.style.borderColor = 'rgba(201,168,76,0.5)')}
-            onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+            style={{ flex: 1, padding: '0.625rem 0.875rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--cream)', fontSize: '0.875rem', lineHeight: 1.5, resize: 'none', fontFamily: '"DM Sans", sans-serif', transition: 'border-color 0.2s ease' }}
           />
           <button
             type="button"
@@ -291,7 +289,7 @@ export default function ConsultationsTab() {
   );
 
   if (loading) {
-    return <p style={{ ...mono, fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-low)', padding: '2rem 0' }}>Loading...</p>;
+    return <p style={{ ...mono, fontSize: '0.75rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-low)', padding: '2rem 0' }}>Loading...</p>;
   }
 
   return (
@@ -300,7 +298,7 @@ export default function ConsultationsTab() {
       {!submitSuccess ? (
         <div className="card-premium" style={{ marginBottom: '2rem' }}>
           <div className="card-premium-inner">
-            <h3 style={{ ...serif, fontStyle: 'italic', fontWeight: 300, fontSize: '1.25rem', color: 'var(--cream)', marginBottom: '0.375rem' }}>
+            <h3 style={{ ...serif, fontStyle: 'italic', fontWeight: 400, fontSize: '1.25rem', color: 'var(--cream)', marginBottom: '0.375rem' }}>
               Request a consultation
             </h3>
             <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-low)', marginBottom: '1.25rem', lineHeight: 1.6 }}>
@@ -312,9 +310,7 @@ export default function ConsultationsTab() {
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Describe the design, style, size, and placement you have in mind…"
                 rows={4}
-                style={{ width: '100%', padding: '0.75rem 1rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--cream)', fontSize: '0.9375rem', lineHeight: 1.6, resize: 'vertical', outline: 'none', fontFamily: '"DM Sans", sans-serif', boxSizing: 'border-box' }}
-                onFocus={(e) => (e.target.style.borderColor = 'rgba(201,168,76,0.5)')}
-                onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+                style={{ width: '100%', padding: '0.75rem 1rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.75rem', color: 'var(--cream)', fontSize: '0.9375rem', lineHeight: 1.6, resize: 'vertical', fontFamily: '"DM Sans", sans-serif', boxSizing: 'border-box' }}
               />
               <button type="submit" disabled={submitting || !newMessage.trim()} className="btn-primary" style={{ alignSelf: 'flex-start', opacity: (submitting || !newMessage.trim()) ? 0.5 : 1 }}>
                 {submitting ? 'Sending…' : 'Send consultation request'}
@@ -330,12 +326,12 @@ export default function ConsultationsTab() {
         </div>
       )}
 
-      {error && <p style={{ fontSize: '0.875rem', color: '#f87171', marginBottom: '1rem' }}>{error}</p>}
+      {error && <p style={{ fontSize: '0.875rem', color: 'var(--error-text)', marginBottom: '1rem' }}>{error}</p>}
 
       {/* ── Confirmed booking threads ── */}
       {activeBookings.length > 0 && (
         <div style={{ marginBottom: '1.5rem' }}>
-          <p style={{ ...mono, fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', marginBottom: '0.875rem' }}>
+          <p style={{ ...mono, fontSize: '0.75rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', marginBottom: '0.875rem' }}>
             Your sessions
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -347,7 +343,7 @@ export default function ConsultationsTab() {
                 <div key={b.id} style={{ background: 'var(--surface)', border: `1px solid ${isOpen ? 'rgba(201,168,76,0.3)' : 'var(--border)'}`, borderRadius: '0.75rem', overflow: 'hidden', transition: 'border-color 0.2s ease' }}>
                   <div style={{ padding: '1.125rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <p style={{ margin: '0 0 0.2rem', ...serif, fontStyle: 'italic', fontWeight: 300, fontSize: '1.0625rem', color: 'var(--cream)' }}>
+                      <p style={{ margin: '0 0 0.2rem', ...serif, fontStyle: 'italic', fontWeight: 400, fontSize: '1.0625rem', color: 'var(--cream)' }}>
                         {b.artist_name || 'Robyn'} · {dateStr}
                       </p>
                       <p style={{ margin: 0, ...mono, fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-low)' }}>
@@ -381,7 +377,7 @@ export default function ConsultationsTab() {
         </p>
       ) : consultations.length > 0 && (
         <div>
-          <p style={{ ...mono, fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', marginBottom: '0.875rem' }}>
+          <p style={{ ...mono, fontSize: '0.75rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', marginBottom: '0.875rem' }}>
             Consultations
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -395,7 +391,7 @@ export default function ConsultationsTab() {
                 <div key={c.consultation_id} style={{ background: 'var(--surface)', border: `1px solid ${isOpen ? 'rgba(201,168,76,0.3)' : 'var(--border)'}`, borderRadius: '0.75rem', overflow: 'hidden', transition: 'border-color 0.2s ease' }}>
                   <div style={{ padding: '1.25rem 1.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                      <p style={{ margin: 0, ...serif, fontStyle: 'italic', fontWeight: 300, fontSize: '1.0625rem', color: 'var(--cream)' }}>
+                      <p style={{ margin: 0, ...serif, fontStyle: 'italic', fontWeight: 400, fontSize: '1.0625rem', color: 'var(--cream)' }}>
                         {c.artist_name || 'Robyn'}
                       </p>
                       <StatusBadge status={c.status} inDialogue={inDialogue} />

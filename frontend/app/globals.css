@@ -18,6 +18,12 @@
   --text-low:     #9A9288;
   --border:       #332E28;
   --border-light: rgba(201, 168, 76, 0.18);
+  --error-text:     rgba(239, 68, 68, 0.85);
+  --error-bg:       rgba(239, 68, 68, 0.06);
+  --error-border:   rgba(239, 68, 68, 0.2);
+  --success-text:   rgba(34, 197, 94, 0.85);
+  --success-bg:     rgba(34, 197, 94, 0.06);
+  --success-border: rgba(34, 197, 94, 0.2);
   --cursor-x:     50%;
   --cursor-y:     50%;
 }
@@ -108,6 +114,28 @@ p {
   color: var(--gold);
   opacity: 0.9;
   margin-bottom: 1rem;
+}
+
+/* ─── Alert boxes ───────────────────────────────────────────────────────────── */
+.alert-error {
+  padding: 1rem 1.25rem;
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  border-radius: 0.75rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.875rem;
+  color: var(--error-text);
+  line-height: 1.6;
+}
+.alert-success {
+  padding: 1rem 1.25rem;
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  border-radius: 0.75rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.875rem;
+  color: var(--success-text);
+  line-height: 1.6;
 }
 
 /* ─── Section divider ───────────────────────────────────────────────────────── */

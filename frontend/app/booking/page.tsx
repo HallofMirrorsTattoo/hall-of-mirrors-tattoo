@@ -33,7 +33,7 @@ type BookingFormData = z.infer<typeof BookingSchema>;
 const eyebrow: React.CSSProperties = {
   fontFamily: '"DM Mono", monospace',
   fontSize: '0.75rem',
-  letterSpacing: '0.18em',
+  letterSpacing: '0.22em',
   textTransform: 'uppercase',
   color: 'rgba(201,168,76,0.85)',
   display: 'block',

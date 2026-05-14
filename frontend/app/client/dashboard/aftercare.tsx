@@ -31,7 +31,7 @@ export default function AftercareTab() {
         <h2 style={{
           fontFamily: '"Cormorant Garamond", serif',
           fontStyle: 'italic',
-          fontWeight: 300,
+          fontWeight: 400,
           fontSize: 'clamp(1.5rem, 3vw, 2rem)',
           color: 'var(--cream)',
           letterSpacing: '-0.01em',
@@ -40,7 +40,7 @@ export default function AftercareTab() {
         }}>
           Aftercare instructions
         </h2>
-        <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.7, maxWidth: '42rem' }}>
+        <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text)', lineHeight: 1.7, maxWidth: '42rem' }}>
           Taking care of your tattoo properly in the first few weeks protects your investment and ensures the best possible healed result. If you have any questions, message Robyn directly from the Consultations tab.
         </p>
       </div>
@@ -84,7 +84,7 @@ export default function AftercareTab() {
               </p>
               <p style={{
                 fontFamily: '"DM Sans", sans-serif',
-                fontSize: '0.9rem',
+                fontSize: '0.9375rem',
                 color: 'var(--text)',
                 lineHeight: 1.7,
                 margin: 0,

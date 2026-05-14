@@ -35,7 +35,7 @@ export default function ClientLoginPage() {
           <h1 style={{
             fontFamily: '"Cormorant Garamond", serif',
             fontStyle: 'italic',
-            fontWeight: 300,
+            fontWeight: 400,
             fontSize: 'clamp(2rem, 5vw, 3rem)',
             color: 'var(--cream)',
             letterSpacing: '-0.02em',
@@ -49,30 +49,14 @@ export default function ClientLoginPage() {
           <div className="card-premium-inner">
 
             {error && (
-              <div style={{
-                marginBottom: '1.5rem',
-                padding: '1rem 1.25rem',
-                background: 'rgba(239,68,68,0.08)',
-                border: '1px solid rgba(239,68,68,0.25)',
-                borderRadius: '0.5rem',
-              }}>
-                <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: '#fca5a5' }}>
-                  {error}
-                </p>
+              <div className="alert-error" style={{ marginBottom: '1.5rem' }}>
+                {error}
               </div>
             )}
 
             {success && (
-              <div style={{
-                marginBottom: '1.5rem',
-                padding: '1rem 1.25rem',
-                background: 'rgba(201,168,76,0.08)',
-                border: '1px solid rgba(201,168,76,0.25)',
-                borderRadius: '0.5rem',
-              }}>
-                <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--gold)' }}>
-                  {success}
-                </p>
+              <div className="alert-success" style={{ marginBottom: '1.5rem' }}>
+                {success}
               </div>
             )}
 

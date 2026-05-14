@@ -74,7 +74,9 @@ function statusStyle(status: string): React.CSSProperties {
   if (status === 'pending_consent')
     return { background: 'rgba(154,144,130,0.1)', color: 'var(--text-mid)', border: '1px solid rgba(154,144,130,0.2)' };
   if (status === 'cancelled')
-    return { background: 'rgba(239,68,68,0.08)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.2)' };
+    return { background: 'rgba(239,68,68,0.08)', color: 'rgba(239,68,68,0.85)', border: '1px solid rgba(239,68,68,0.2)' };
+  if (status === 'completed')
+    return { background: 'rgba(34,197,94,0.08)', color: 'rgba(34,197,94,0.8)', border: '1px solid rgba(34,197,94,0.2)' };
   if (status === 'counter_offered')
     return { background: 'rgba(201,168,76,0.15)', color: 'var(--gold)', border: '1px solid rgba(201,168,76,0.4)' };
   return { background: 'rgba(154,144,130,0.1)', color: 'var(--text-mid)', border: '1px solid rgba(154,144,130,0.2)' };
@@ -349,7 +351,7 @@ export default function BookingDetailPage() {
   );
   if (error) return wrap(
     <div style={{ padding: '1.25rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '0.5rem' }}>
-      <p style={{ margin: 0, color: '#fca5a5', fontSize: '0.9rem', fontFamily: '"DM Sans", sans-serif' }}>{error}</p>
+      <p style={{ margin: 0, color: 'var(--error-text)', fontSize: '0.9rem', fontFamily: '"DM Sans", sans-serif' }}>{error}</p>
     </div>
   );
   if (!booking) return wrap(<p style={{ color: 'var(--text-mid)' }}>Booking not found.</p>);
@@ -469,7 +471,7 @@ export default function BookingDetailPage() {
                         <button
                           onClick={() => setMode('cancel-confirm')}
                           className="btn-secondary"
-                          style={{ fontSize: '0.8125rem', padding: '0.6rem 1.25rem', color: '#fca5a5', borderColor: 'rgba(239,68,68,0.3)' }}
+                          style={{ fontSize: '0.8125rem', padding: '0.6rem 1.25rem', color: 'var(--error-text)', borderColor: 'rgba(239,68,68,0.3)' }}
                         >
                           Cancel booking
                         </button>
@@ -548,7 +550,7 @@ export default function BookingDetailPage() {
                         <p style={{
                           fontFamily: '"DM Mono", monospace', fontSize: '0.75rem',
                           letterSpacing: '0.12em', textTransform: 'uppercase',
-                          color: '#fca5a5', margin: '0 0 0.5rem',
+                          color: 'var(--error-text)', margin: '0 0 0.5rem',
                         }}>
                           Before you cancel
                         </p>
@@ -566,7 +568,7 @@ export default function BookingDetailPage() {
                             background: 'rgba(239,68,68,0.15)',
                             border: '1px solid rgba(239,68,68,0.35)',
                             borderRadius: '0.375rem',
-                            color: '#fca5a5',
+                            color: 'var(--error-text)',
                             fontFamily: '"DM Mono", monospace',
                             fontSize: '0.7rem',
                             letterSpacing: '0.1em',
@@ -680,7 +682,7 @@ export default function BookingDetailPage() {
                       {within48hrs ? (
                         <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8375rem', color: 'var(--text)', margin: 0, lineHeight: 1.65 }}>
                           Your appointment is within 48 hours. Rescheduling at this stage will
-                          {' '}<strong style={{ color: '#fca5a5' }}>forfeit your deposit</strong>. You're welcome to reschedule the date,
+                          {' '}<strong style={{ color: 'var(--error-text)' }}>forfeit your deposit</strong>. You're welcome to reschedule the date,
                           but a new deposit will be required to confirm the replacement slot.
                         </p>
                       ) : (
@@ -980,7 +982,7 @@ export default function BookingDetailPage() {
                         })
                       )}
                     </div>
-                    {msgError && <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', color: '#f87171' }}>{msgError}</p>}
+                    {msgError && <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', color: 'var(--error-text)' }}>{msgError}</p>}
                     <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'flex-end' }}>
                       <textarea
                         value={msgDraft}
@@ -1028,7 +1030,7 @@ export default function BookingDetailPage() {
                       ))}
                     </div>
                     <div style={{ marginTop: '1.5rem', padding: '0.875rem 1rem', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.18)', borderRadius: '0.5rem' }}>
-                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#fca5a5', margin: '0 0 0.375rem' }}>Seek advice if you notice</p>
+                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--error-text)', margin: '0 0 0.375rem' }}>Seek advice if you notice</p>
                       <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8375rem', color: 'var(--text)', lineHeight: 1.65, margin: 0 }}>
                         Excessive redness or swelling beyond day 3, hot to the touch, oozing pus, fever, or a raised rash spreading outward from the tattoo.
                       </p>
@@ -1091,7 +1093,7 @@ export default function BookingDetailPage() {
                       <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', fontWeight: 500, color: booking.appointment_status === 'cancelled' ? 'rgba(252,165,165,0.7)' : 'var(--cream)' }}>
                         {booking.deposit_price ? `£${booking.deposit_price}` : '—'}
                         {booking.appointment_status === 'cancelled' && (
-                          <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#fca5a5', marginLeft: '0.4rem' }}>
+                          <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--error-text)', marginLeft: '0.4rem' }}>
                             forfeited
                           </span>
                         )}
@@ -1173,7 +1175,7 @@ export default function BookingDetailPage() {
                           {booking.price_offer_note}
                         </blockquote>
                       )}
-                      {priceAcceptError && <p style={{ margin: '0 0 0.5rem', fontSize: '0.8125rem', color: '#f87171' }}>{priceAcceptError}</p>}
+                      {priceAcceptError && <p style={{ margin: '0 0 0.5rem', fontSize: '0.8125rem', color: 'var(--error-text)' }}>{priceAcceptError}</p>}
                       <button
                         onClick={handleAcceptPrice}
                         disabled={acceptingPrice}

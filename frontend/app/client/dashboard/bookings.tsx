@@ -74,7 +74,7 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
       case 'counter_offered':
         return { background: 'rgba(201,168,76,0.15)', color: 'var(--gold)', border: '1px solid rgba(201,168,76,0.4)' };
       case 'cancelled':
-        return { background: 'rgba(239,68,68,0.08)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.2)' };
+        return { background: 'rgba(239,68,68,0.08)', color: 'rgba(239,68,68,0.85)', border: '1px solid rgba(239,68,68,0.2)' };
       case 'completed':
         return { background: 'rgba(34,197,94,0.08)', color: 'rgba(34,197,94,0.8)', border: '1px solid rgba(34,197,94,0.2)' };
       default:
@@ -84,7 +84,7 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
 
   if (loading) return (
     <div style={{ padding: '3rem 0', textAlign: 'center' }}>
-      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-low)' }}>Loading</p>
+      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-low)' }}>Loading</p>
     </div>
   );
   if (error) return <p style={{ color: '#fca5a5', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem' }}>{error}</p>;
@@ -133,7 +133,7 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
           <div className="card-premium-inner">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h3 className="text-lg font-serif font-bold" style={{ color: 'var(--cream)' }}>
+                <h3 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 400, fontSize: '1.125rem', color: 'var(--cream)', margin: 0 }}>
                   {booking.artist_name || 'Robyn'}
                 </h3>
                 <p className="text-sm" style={{ color: 'var(--text-low)' }}>
@@ -163,10 +163,10 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
                 onClick={(e) => { e.stopPropagation(); router.push(`/client/consent/${booking.id}`); }}
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', width: '100%', margin: '0 0 0.75rem', padding: '0.625rem 0.875rem', background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.35)', borderRadius: '0.5rem', cursor: 'pointer', textAlign: 'left' }}
               >
-                <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#CA8A04' }}>
+                <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.85)' }}>
                   Action required — sign your consent form
                 </span>
-                <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', color: '#CA8A04', flexShrink: 0 }}>→</span>
+                <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', color: 'rgba(201,168,76,0.85)', flexShrink: 0 }}>→</span>
               </button>
             )}
 
@@ -257,7 +257,7 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
           {/* Active bookings */}
           {activeBookings.length === 0 && (
             <div style={{ textAlign: 'center', padding: '2rem 0', marginBottom: '1.5rem' }}>
-              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)', marginBottom: '1rem' }}>
+              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-low)', marginBottom: '1rem' }}>
                 No upcoming bookings
               </p>
               <Link href="/booking" className="btn-primary" style={{ display: 'inline-flex' }}>
@@ -286,7 +286,7 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
                   marginBottom: showPast ? '1rem' : 0,
                 }}
               >
-                <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+                <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
                   Past sessions ({pastBookings.length})
                 </span>
                 <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', color: 'var(--text-low)', marginLeft: 'auto' }}>
@@ -294,7 +294,7 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
                 </span>
               </button>
               {showPast && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', opacity: 0.75 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', opacity: 0.75 }}>
                   {pastBookings.map(b => <BookingCard key={b.id} booking={b} />)}
                 </div>
               )}

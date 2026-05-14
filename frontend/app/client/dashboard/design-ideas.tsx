@@ -114,7 +114,7 @@ export default function DesignIdeasTab() {
 
   if (loading) return (
     <div style={{ padding: '3rem 0', textAlign: 'center' }}>
-      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-low)' }}>Loading...</p>
+      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-low)' }}>Loading...</p>
     </div>
   );
 
@@ -181,7 +181,7 @@ export default function DesignIdeasTab() {
             </div>
 
             {uploadError && (
-              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: '#fca5a5' }}>{uploadError}</p>
+              <div className="alert-error">{uploadError}</div>
             )}
 
             <button
@@ -197,7 +197,7 @@ export default function DesignIdeasTab() {
       </div>
 
       {/* Gallery */}
-      {error && <p style={{ color: '#fca5a5', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem' }}>{error}</p>}
+      {error && <div className="alert-error">{error}</div>}
 
       {ideas.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '3rem 0' }}>
@@ -215,7 +215,7 @@ export default function DesignIdeasTab() {
                 </div>
                 <div style={{ padding: '0.875rem 1rem' }}>
                   {idea.description && (
-                    <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-mid)', marginBottom: '0.5rem', lineHeight: 1.5 }}>
+                    <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text)', marginBottom: '0.5rem', lineHeight: 1.5 }}>
                       {idea.description}
                     </p>
                   )}
