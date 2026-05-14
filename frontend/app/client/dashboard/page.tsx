@@ -8,13 +8,11 @@ import { ClientProtectedRoute } from '@/lib/clientProtectedRoute';
 import BookingsTab from './bookings';
 import DesignIdeasTab from './design-ideas';
 import ConsultationsTab from './consultations';
-import ConsentFormsTab from './consent-forms';
 import AftercareTab from './aftercare';
 
 const BASE_TABS = [
   { id: 'bookings',      label: 'Your Bookings' },
   { id: 'consultations', label: 'Consultations' },
-  { id: 'consent-forms', label: 'Consent Forms' },
   { id: 'design-ideas',  label: 'Design Ideas' },
   { id: 'aftercare',     label: 'Aftercare' },
 ] as const;
@@ -53,25 +51,6 @@ export default function ClientDashboardPage() {
           c.status !== 'declined' && c.artist_message_count > 0
         ).length;
         updateBadge('consultations', badge);
-      } catch { /* non-critical */ }
-    })();
-  }, [accessToken, updateBadge]);
-
-  // Fetch consent forms badge count (unsigned consent forms for active bookings)
-  useEffect(() => {
-    if (!accessToken) return;
-    (async () => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/client/consent`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        if (!res.ok) return;
-        const data = await res.json();
-        const bookings = data.bookings || [];
-        const badge = bookings.filter((b: { consent_form_id: string | null; appointment_status: string }) =>
-          !b.consent_form_id && ['pending_consent', 'confirmed'].includes(b.appointment_status)
-        ).length;
-        updateBadge('consent-forms', badge);
       } catch { /* non-critical */ }
     })();
   }, [accessToken, updateBadge]);
@@ -157,7 +136,6 @@ export default function ClientDashboardPage() {
           <div style={{ minHeight: '24rem' }}>
             {activeTab === 'bookings'      && <BookingsTab onBadgeUpdate={onBookingsBadge} />}
             {activeTab === 'consultations' && <ConsultationsTab />}
-            {activeTab === 'consent-forms' && <ConsentFormsTab />}
             {activeTab === 'design-ideas'  && <DesignIdeasTab />}
             {activeTab === 'aftercare'     && <AftercareTab />}
           </div>

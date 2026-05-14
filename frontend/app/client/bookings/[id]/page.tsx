@@ -44,6 +44,8 @@ interface Booking {
   client_budget?: number | null;
   price_offer_status?: string;
   price_offer_note?: string | null;
+  payment_method?: string;
+  consent_form_signed?: boolean;
 }
 
 type Mode = 'view' | 'cancel-confirm' | 'reschedule' | 'counter-offer';
@@ -112,6 +114,7 @@ export default function BookingDetailPage() {
   const [counterAvailData, setCounterAvailData] = useState<AvailabilityData | null>(null);
   const [acceptingPrice, setAcceptingPrice] = useState(false);
   const [priceAcceptError, setPriceAcceptError] = useState('');
+  const [updatingPayment, setUpdatingPayment] = useState(false);
 
   interface BookingMsg { id: string; sender_type: 'client' | 'artist'; body: string; created_at: string; }
   const [messages, setMessages] = useState<BookingMsg[]>([]);
@@ -199,6 +202,21 @@ export default function BookingDetailPage() {
       setPriceAcceptError(err instanceof Error ? err.message : 'Failed to accept price');
     } finally {
       setAcceptingPrice(false);
+    }
+  };
+
+  const handleSetPaymentMethod = async (method: string) => {
+    setUpdatingPayment(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/client/bookings/${bookingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ payment_method: method }),
+      });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed to update'); }
+      setBooking(prev => prev ? { ...prev, payment_method: method } : prev);
+    } catch { /* non-critical */ } finally {
+      setUpdatingPayment(false);
     }
   };
 
@@ -572,6 +590,40 @@ export default function BookingDetailPage() {
                 </div>
               </div>
 
+              {/* Consent form card */}
+              {['pending_consent', 'confirmed'].includes(booking.appointment_status) && (
+                <div className="card-premium">
+                  <div className="card-premium-inner">
+                    <h2 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.25rem', fontWeight: 400, color: 'var(--cream)', margin: '0 0 1rem' }}>
+                      Consent Form
+                    </h2>
+                    {booking.consent_form_signed ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', padding: '0.75rem 1rem', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '0.5rem' }}>
+                        <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(34,197,94,0.8)' }}>
+                          ✓ Consent form signed
+                        </span>
+                      </div>
+                    ) : (
+                      <div>
+                        <div style={{ padding: '0.875rem 1rem', background: 'rgba(234,179,8,0.07)', border: '1px solid rgba(234,179,8,0.3)', borderRadius: '0.5rem', marginBottom: '1rem' }}>
+                          <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.65, margin: 0 }}>
+                            Your consent form needs to be signed before your appointment. This only takes a couple of minutes.
+                          </p>
+                        </div>
+                        <Link
+                          href={`/client/consent/${bookingId}`}
+                          className="btn-primary"
+                          style={{ display: 'inline-flex', fontSize: '0.8125rem', padding: '0.6rem 1.25rem' }}
+                        >
+                          <span>Sign consent form</span>
+                          <span className="btn-icon" aria-hidden="true">→</span>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Appointment */}
               <div className="card-premium">
                 <div className="card-premium-inner">
@@ -886,7 +938,7 @@ export default function BookingDetailPage() {
               {/* Message thread */}
               {booking.appointment_status !== 'cancelled' && (
                 <div className="card-premium">
-                  <div className="card-premium-inner">
+                  <div className="card-premium-inner" id="messages">
                     <h2 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.25rem', fontWeight: 400, color: 'var(--cream)', margin: '0 0 1.25rem' }}>
                       Messages
                     </h2>
@@ -949,6 +1001,42 @@ export default function BookingDetailPage() {
                         {msgSending ? '…' : '→'}
                       </button>
                     </div>
+                  </div>
+                </div>
+              )}
+              {/* Aftercare — shown only for completed bookings */}
+              {booking.appointment_status === 'completed' && (
+                <div className="card-premium">
+                  <div className="card-premium-inner">
+                    <h2 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.25rem', fontWeight: 400, color: 'var(--cream)', margin: '0 0 1.25rem' }}>
+                      Aftercare Guide
+                    </h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                      {[
+                        { step: '01', title: 'First 2–4 hours', body: 'Keep the wrap on. When you remove it, wash gently with clean hands using unscented antibacterial soap. Pat dry with a clean paper towel — never rub.' },
+                        { step: '02', title: 'Days 1–14', body: 'Apply a thin layer of unscented moisturiser (Hustle Butter or plain Lubriderm) 2–3 times daily. Keep it moisturised but never soaked.' },
+                        { step: '03', title: 'What to avoid', body: 'No sun exposure, swimming, soaking in baths or hot tubs. Do not pick, scratch, or peel the healing skin — let it flake off naturally.' },
+                        { step: '04', title: 'Healing timeline', body: 'Surface skin heals in 2–4 weeks. Full dermal healing takes 3–6 months. Use SPF 50+ on the tattoo permanently once healed.' },
+                      ].map(({ step, title, body }) => (
+                        <div key={step} style={{ display: 'flex', gap: '1rem' }}>
+                          <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.1em', color: 'rgba(201,168,76,0.45)', flexShrink: 0, paddingTop: '0.2rem' }}>{step}</span>
+                          <div>
+                            <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', fontWeight: 500, color: 'var(--cream)', margin: '0 0 0.25rem' }}>{title}</p>
+                            <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.65, margin: 0 }}>{body}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ marginTop: '1.5rem', padding: '0.875rem 1rem', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.18)', borderRadius: '0.5rem' }}>
+                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#fca5a5', margin: '0 0 0.375rem' }}>Seek advice if you notice</p>
+                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8375rem', color: 'var(--text)', lineHeight: 1.65, margin: 0 }}>
+                        Excessive redness or swelling beyond day 3, hot to the touch, oozing pus, fever, or a raised rash spreading outward from the tattoo.
+                      </p>
+                    </div>
+                    <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8375rem', color: 'var(--text-mid)', lineHeight: 1.65, marginTop: '1.25rem', marginBottom: 0 }}>
+                      Touch-ups are complimentary within 3 months of your session, provided aftercare guidelines were followed.
+                      Message your artist to arrange a top-up appointment.
+                    </p>
                   </div>
                 </div>
               )}
@@ -1029,6 +1117,47 @@ export default function BookingDetailPage() {
                       Deposit details will be confirmed by your artist.
                     </p>
                   ) : null}
+
+                  {/* Payment method preference */}
+                  {booking.appointment_status !== 'cancelled' && booking.appointment_status !== 'completed' && (
+                    <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
+                      <p style={{ ...label, marginBottom: '0.625rem' }}>How would you like to pay?</p>
+                      {booking.payment_method === 'cash' ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.75rem', background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '0.375rem' }}>
+                            <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(34,197,94,0.8)' }}>
+                              ✓ Cash on the day
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleSetPaymentMethod('not_set')}
+                            disabled={updatingPayment}
+                            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-low)', opacity: updatingPayment ? 0.5 : 1, textAlign: 'left' }}
+                          >
+                            Change
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleSetPaymentMethod('cash')}
+                            disabled={updatingPayment}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 0.875rem', background: 'transparent', border: '1px solid var(--border)', borderRadius: '0.375rem', cursor: 'pointer', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--cream)', opacity: updatingPayment ? 0.5 : 1 }}
+                          >
+                            <span style={{ width: '0.875rem', height: '0.875rem', borderRadius: '50%', border: '2px solid var(--border)', flexShrink: 0 }} />
+                            Cash on the day
+                          </button>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.625rem 0.875rem', background: 'transparent', border: '1px solid var(--border)', borderRadius: '0.375rem', opacity: 0.4 }}>
+                            <span style={{ width: '0.875rem', height: '0.875rem', borderRadius: '50%', border: '2px solid var(--border)', flexShrink: 0 }} />
+                            <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-mid)' }}>Online by card</span>
+                            <span style={{ marginLeft: 'auto', fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-low)', padding: '0.1rem 0.4rem', border: '1px solid var(--border)', borderRadius: '0.25rem' }}>Soon</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Price offer from artist */}
                   {booking.price_offer_status === 'offered' && (

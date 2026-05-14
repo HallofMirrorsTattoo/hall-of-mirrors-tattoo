@@ -26,7 +26,7 @@ router.get('/', async (req: Request, res: Response) => {
               b.final_price_estimate as final_price,
               b.counter_offer_date, b.counter_offer_time,
               b.counter_offer_note, b.counter_offered_by,
-              b.created_at,
+              b.created_at, b.payment_method,
               a.full_name as artist_name, a.instagram_handle,
               CASE WHEN cf.id IS NOT NULL THEN true ELSE false END as consent_form_signed
        FROM "Booking" b
@@ -68,7 +68,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, error: 'Booking not found' });
     }
 
-    // Main booking + artist — no DesignIdea join here so it can't break this query
+    // Main booking + artist + consent form status
     const result = await client.query(
       `SELECT b.id, b.booking_reference,
               b.appointment_date_time as appointment_date,
@@ -81,10 +81,13 @@ router.get('/:id', async (req: Request, res: Response) => {
               b.counter_offer_date, b.counter_offer_time,
               b.counter_offer_note, b.counter_offered_by,
               b.client_budget, b.price_offer_status, b.price_offer_note,
+              b.payment_method,
               b.created_at, b.updated_at,
-              a.id as artist_id, a.full_name as artist_name, a.specialties, a.bio, a.instagram_handle
+              a.id as artist_id, a.full_name as artist_name, a.specialties, a.bio, a.instagram_handle,
+              CASE WHEN cf.id IS NOT NULL THEN true ELSE false END as consent_form_signed
        FROM "Booking" b
        LEFT JOIN "Artist" a ON b.artist_id = a.id
+       LEFT JOIN "ConsentForm" cf ON cf.booking_id = b.id
        WHERE b.id = $1`,
       [id]
     );
@@ -129,6 +132,8 @@ router.get('/:id', async (req: Request, res: Response) => {
         client_budget: booking.client_budget ?? null,
         price_offer_status: booking.price_offer_status ?? 'none',
         price_offer_note: booking.price_offer_note ?? null,
+        payment_method: booking.payment_method ?? 'not_set',
+        consent_form_signed: booking.consent_form_signed ?? false,
         artist: booking.artist_id ? {
           id: booking.artist_id,
           name: booking.artist_name,
@@ -154,12 +159,7 @@ router.patch('/:id', async (req: Request, res: Response) => {
     if (!req.user) return res.status(401).json({ success: false, error: 'Not authenticated' });
 
     const { id } = req.params;
-    const { appointment_status, new_appointment_date, new_appointment_time } = req.body;
-
-    const allowedStatuses = ['cancelled', 'rescheduled'];
-    if (!allowedStatuses.includes(appointment_status)) {
-      return res.status(400).json({ success: false, error: 'Only "cancelled" or "rescheduled" are allowed' });
-    }
+    const { appointment_status, new_appointment_date, new_appointment_time, payment_method } = req.body;
 
     await client.connect();
 
@@ -179,6 +179,25 @@ router.patch('/:id', async (req: Request, res: Response) => {
     const existing = bookingResult.rows[0];
     if (existing.appointment_status === 'cancelled') {
       return res.status(400).json({ success: false, error: 'Booking is already cancelled' });
+    }
+
+    // payment_method-only update (no status change required)
+    if (payment_method !== undefined && appointment_status === undefined) {
+      if (!['cash', 'card', 'not_set'].includes(payment_method)) {
+        return res.status(400).json({ success: false, error: 'Invalid payment_method value' });
+      }
+      const pmResult = await client.query(
+        `UPDATE "Booking" SET payment_method = $1, updated_at = NOW()
+         WHERE id = $2
+         RETURNING id, payment_method`,
+        [payment_method, id]
+      );
+      return res.json({ success: true, message: 'Payment method updated', booking: pmResult.rows[0] });
+    }
+
+    const allowedStatuses = ['cancelled', 'rescheduled'];
+    if (!allowedStatuses.includes(appointment_status)) {
+      return res.status(400).json({ success: false, error: 'Only "cancelled" or "rescheduled" are allowed' });
     }
 
     let updateResult;

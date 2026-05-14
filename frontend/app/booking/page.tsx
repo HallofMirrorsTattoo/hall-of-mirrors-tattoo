@@ -71,6 +71,8 @@ export default function BookingPage() {
   const [activationState, setActivationState]       = useState<'idle' | 'submitting' | 'done' | 'dismissed'>('idle');
   const [activationError, setActivationError]       = useState('');
 
+  const [paymentMethod, setPaymentMethod]          = useState<'cash' | 'card'>('cash');
+
   // Availability state
   const [selectedArtistId, setSelectedArtistId]   = useState('');
   const [selectedDate, setSelectedDate]           = useState<string | null>(null);
@@ -172,6 +174,7 @@ export default function BookingPage() {
           ...data,
           artistId: data.artistId || undefined,
           clientBudget: data.clientBudget || undefined,
+          payment_method: paymentMethod,
         };
         if (selectedDate) {
           payload.appointmentDate = selectedDate;
@@ -655,6 +658,35 @@ export default function BookingPage() {
                         )}
                       </p>
                     )}
+                  </div>
+                )}
+
+                {/* Payment preference — only shown for booking mode */}
+                {formMode === 'booking' && (
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <label style={{ display: 'block', marginBottom: '0.625rem' }}>How would you like to pay your deposit?</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('cash')}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: paymentMethod === 'cash' ? 'rgba(201,168,76,0.1)' : 'transparent', border: `1px solid ${paymentMethod === 'cash' ? 'var(--gold)' : 'var(--border)'}`, borderRadius: '0.5rem', cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.2s, background 0.2s' }}
+                      >
+                        <span style={{ width: '1rem', height: '1rem', borderRadius: '50%', border: `2px solid ${paymentMethod === 'cash' ? 'var(--gold)' : 'var(--border)'}`, background: paymentMethod === 'cash' ? 'var(--gold)' : 'transparent', flexShrink: 0, position: 'relative' }}>
+                          {paymentMethod === 'cash' && <span style={{ position: 'absolute', inset: '2px', background: 'var(--bg)', borderRadius: '50%' }} />}
+                        </span>
+                        <div>
+                          <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: paymentMethod === 'cash' ? 'var(--cream)' : 'var(--text)', fontWeight: paymentMethod === 'cash' ? 500 : 400 }}>Cash on the day</p>
+                          <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.775rem', color: 'var(--text-low)', lineHeight: 1.4 }}>Pay your deposit in cash when you arrive</p>
+                        </div>
+                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: 'transparent', border: '1px solid var(--border)', borderRadius: '0.5rem', opacity: 0.45, cursor: 'default' }}>
+                        <span style={{ width: '1rem', height: '1rem', borderRadius: '50%', border: '2px solid var(--border)', flexShrink: 0 }} />
+                        <div>
+                          <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: 'var(--text)' }}>Online by card</p>
+                          <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.775rem', color: 'var(--text-low)', lineHeight: 1.4 }}>Coming soon</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
 

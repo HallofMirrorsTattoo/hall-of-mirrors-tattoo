@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useClientAuth } from '@/lib/clientAuthContext';
 
 interface Booking {
@@ -120,6 +121,7 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
   };
 
   const BookingCard = ({ booking }: { booking: Booking }) => {
+    const router = useRouter();
     const needsResponse = booking.appointment_status === 'counter_offered' && booking.counter_offered_by === 'artist';
     const needsConsent = booking.appointment_status === 'pending_consent' && !booking.consent_form_signed;
     const isPast = ['completed', 'cancelled'].includes(booking.appointment_status);
@@ -127,11 +129,7 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
     return (
       <div>
         <CountdownStrip booking={booking} />
-        <Link
-          href={`/client/bookings/${booking.id}`}
-          className="card-premium hover:shadow-lg transition-shadow"
-          style={{ display: 'block' }}
-        >
+        <div className="card-premium" style={{ cursor: 'pointer' }} onClick={() => router.push(`/client/bookings/${booking.id}`)}>
           <div className="card-premium-inner">
             <div className="flex justify-between items-start mb-4">
               <div>
@@ -158,14 +156,18 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
               </span>
             </div>
 
-            {/* Consent form needed banner */}
+            {/* Consent form needed — navigates directly to consent form, not booking detail */}
             {needsConsent && (
-              <div style={{ margin: '0 0 0.75rem', padding: '0.625rem 0.875rem', background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.35)', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
-                <p style={{ margin: 0, fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#CA8A04' }}>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); router.push(`/client/consent/${booking.id}`); }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', width: '100%', margin: '0 0 0.75rem', padding: '0.625rem 0.875rem', background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.35)', borderRadius: '0.5rem', cursor: 'pointer', textAlign: 'left' }}
+              >
+                <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#CA8A04' }}>
                   Action required — sign your consent form
-                </p>
+                </span>
                 <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', color: '#CA8A04', flexShrink: 0 }}>→</span>
-              </div>
+              </button>
             )}
 
             {/* Counter-offer response needed */}
@@ -198,11 +200,11 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
                 Ref: {booking.booking_reference}
               </p>
               <p className="text-xs" style={{ color: 'var(--text-low)', margin: 0 }}>
-                View details →
+                View full booking →
               </p>
             </div>
           </div>
-        </Link>
+        </div>
 
         {/* Rebook CTA for completed past sessions */}
         {booking.appointment_status === 'completed' && (

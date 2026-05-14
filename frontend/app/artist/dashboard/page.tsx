@@ -92,6 +92,7 @@ interface Booking {
   price_offer_note?: string | null;
   has_consent_form?: boolean;
   client_session_count?: number;
+  payment_method?: string;
 }
 
 interface Consultation {
@@ -514,7 +515,7 @@ export default function ArtistDashboard() {
     bookingId: string,
     status: string,
     notes: string,
-    opts?: { duration_hours?: number; notify_end_time?: boolean; new_appointment_date?: string; new_appointment_time?: string }
+    opts?: { duration_hours?: number; notify_end_time?: boolean; new_appointment_date?: string; new_appointment_time?: string; payment_method?: string }
   ) => {
     try {
       setIsUpdating(true);
@@ -855,6 +856,46 @@ export default function ArtistDashboard() {
                   <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#CA8A04' }}>Not yet signed</span>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Payment method */}
+          {selectedBooking.appointment_status !== 'cancelled' && (
+            <div>
+              <span style={labelStyle}>Payment method</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
+                {selectedBooking.payment_method === 'cash' ? (
+                  <>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.25rem 0.625rem', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '2rem' }}>
+                      <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(34,197,94,0.8)' }}>✓ Cash on day</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleStatusUpdate(selectedBooking.id, selectedBooking.appointment_status, selectedBooking.artist_notes ?? '', { payment_method: 'not_set' })}
+                      disabled={isUpdating}
+                      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-low)', opacity: isUpdating ? 0.5 : 1 }}
+                    >
+                      Undo
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.25rem 0.625rem', background: 'rgba(154,144,130,0.08)', border: '1px solid rgba(154,144,130,0.2)', borderRadius: '2rem' }}>
+                      <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+                        {selectedBooking.payment_method === 'card' ? 'Card online' : 'Not set'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleStatusUpdate(selectedBooking.id, selectedBooking.appointment_status, selectedBooking.artist_notes ?? '', { payment_method: 'cash' })}
+                      disabled={isUpdating}
+                      style={{ padding: '0.2rem 0.6rem', background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: '2rem', cursor: 'pointer', fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)', opacity: isUpdating ? 0.5 : 1 }}
+                    >
+                      Set cash on day
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           )}
         </div>

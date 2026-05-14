@@ -447,6 +447,16 @@ The full roadmap is documented in the plan file:
 
 ### Phase 2 — already done ✅ (consent form shipped)
 
+### Phase 3 — One-Stop Booking + Cash Payment (current sprint — May 2026)
+- [ ] Each booking page is a full workspace: consent form, messages, aftercare, and payment — all in one place at `/client/bookings/[id]`
+- [ ] Consent banner on booking cards links directly to `/client/consent/[id]` (not to booking detail)
+- [ ] Consent form card inside `/client/bookings/[id]`: "Sign your consent form" CTA or "✓ Signed" status
+- [ ] Aftercare card inside `/client/bookings/[id]` for completed bookings
+- [ ] Cash payment preference: client selects on booking form; artist can override / lock in the booking detail panel
+- [ ] `payment_method TEXT DEFAULT 'not_set'` column on `Booking` table (`cash` / `card` / `not_set`)
+- [ ] Consent Forms tab removed from client dashboard (now inside each booking)
+- [ ] Artist booking detail: payment method row + "Set as cash on day" button
+
 ### Later phases — see roadmap file
 
 ### Assets Needed from Robyn

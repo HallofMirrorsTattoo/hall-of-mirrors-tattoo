@@ -33,6 +33,7 @@ const CreateBookingSchema = z.object({
   notes: z.string().optional(),
   artistId: z.string().optional(),
   clientBudget: z.coerce.number().positive().optional(),
+  payment_method: z.enum(['cash', 'card', 'not_set']).optional().default('not_set'),
 }).refine(
   (d) => d.appointmentDate || d.preferredDate,
   { message: 'Please select a date', path: ['appointmentDate'] }
@@ -150,8 +151,8 @@ export async function createBooking(req: Request, res: Response) {
       `INSERT INTO "Booking" (
         id, studio_id, user_id, artist_id, appointment_date_time, appointment_time,
         appointment_status, tattoo_description, placement, estimated_size, artist_notes,
-        deposit_amount, balance_due, booking_reference, client_budget, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), NOW())`,
+        deposit_amount, balance_due, booking_reference, client_budget, payment_method, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())`,
       [
         bookingId,
         'default-studio',
@@ -168,6 +169,7 @@ export async function createBooking(req: Request, res: Response) {
         '0',
         bookingReference,
         validatedData.clientBudget ?? null,
+        validatedData.payment_method ?? 'not_set',
       ]
     );
 
@@ -516,7 +518,7 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
     }
 
     const { id } = req.params;
-    const { status, notes, duration_hours, notify_end_time, new_appointment_date, new_appointment_time } = req.body;
+    const { status, notes, duration_hours, notify_end_time, new_appointment_date, new_appointment_time, payment_method } = req.body;
 
     // Validate status
     const validStatuses = ['pending_consent', 'confirmed', 'completed', 'cancelled'];
@@ -571,6 +573,12 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
     if (notify_end_time !== undefined) {
       setClauses.push(`notify_end_time = $${params.length}`);
       params.splice(params.length - 1, 0, Boolean(notify_end_time));
+    }
+
+    // Artist can set payment method
+    if (payment_method !== undefined && ['cash', 'card', 'not_set'].includes(String(payment_method))) {
+      setClauses.push(`payment_method = $${params.length}`);
+      params.splice(params.length - 1, 0, payment_method);
     }
 
     // Artist-initiated reschedule: update date + time
