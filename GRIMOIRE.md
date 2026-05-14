@@ -2,7 +2,7 @@
 ### Hall of Mirrors Tattoo — Master Record
 
 **Last Updated:** 2026-05-14
-**Status:** Production live · Phases 0–5, 6.1, 6.3, 6.4, 6.5, 7.3 shipped · Studio/artist data separation complete · Phase 6.2+ roadmap active
+**Status:** Production live · Phases 0–5, 6.1, 6.3, 6.4, 6.5, 6.7, 7.3 shipped · Studio/artist data separation complete · Portfolio photos live · Phase 6.2+ roadmap active
 
 > This is the single source of truth for all past work, current state, and future plans.
 > Read this at the start of every session. Update it at the end of every session.
@@ -176,7 +176,7 @@ cd frontend && npm run dev
 
 ## Current State (2026-05-14)
 
-Phases 0–5, 6.1, 6.3, 6.4, 6.5, 7.3 shipped plus the full studio/artist data separation work below.
+Phases 0–5, 6.1, 6.3, 6.4, 6.5, 7.3 shipped plus the full studio/artist data separation and portfolio photo work below.
 
 **Studio settings wired to frontend** (commits `036bf46`, `c45dad8`):
 - `GET /api/studio-settings` public endpoint — no auth, returns all public studio fields
@@ -207,12 +207,24 @@ Phases 0–5, 6.1, 6.3, 6.4, 6.5, 7.3 shipped plus the full studio/artist data s
 - `TattooParlor` JSON-LD structured data populated from studio settings (address, phone, socials)
 - Eyebrow: "The Studio" (was "The Artist"); h1: "Where craft becomes permanent"
 
+**Portfolio photo management** (commit `072f305`):
+- New `PortfolioPhoto` table — `id, artist_id, public_url, storage_path, display_order, created_at`
+- `POST /api/artist/photos` — authenticated; multer upload → Supabase Storage `portfolio/{artist_id}/` prefix; max 20 photos
+- `GET /api/artist/photos` — returns own photos ordered by display_order
+- `DELETE /api/artist/photos/:id` — removes from DB and triggers storage deletion
+- `GET /api/artist` now includes `cover_photo` (first photo subquery) per artist — feeds `/portfolio`
+- `GET /api/artist/:slug` now includes full `photos[]` array — feeds `/artists/[slug]`
+- Artist dashboard: new **Portfolio tab** (8th tab) — upload button, square photo grid, delete per photo, empty state
+- `/artists/[slug]`: `GalleryGrid` component — shows real photos if uploaded, falls back to labelled placeholders
+- `/portfolio`: shows `cover_photo` as large portrait image when available, falls back to placeholder card grid
+
 **Items still pending user action (not code blockers):**
 - [ ] Verify `studio@hallofmirrorstattoo.com` as SendGrid Single Sender
 - [ ] Confirm `FRONTEND_URL=https://hall-of-mirrors-tattoo.vercel.app` in Railway env vars
-- [ ] Add Christina (need: name, email, password) — she can fill bio/specialties/instagram herself via dashboard
+- [ ] Add Christina (need: name, email, password) — she can fill bio/specialties/instagram/photos herself via dashboard
 - [ ] Robyn to fill in Studio Settings → Social & About (Instagram + TikTok handles → auto-wires to footer)
 - [ ] Robyn to fill in Studio Settings → Contact & Location (address, phone) → auto-wires to About page JSON-LD
+- [ ] Robyn to upload portfolio photos via Dashboard → Portfolio tab → instantly live on artist page + portfolio page
 
 ---
 
@@ -319,11 +331,19 @@ Client joins waitlist for cancelled slots. When a confirmed booking cancels, not
 - Studio social handles (Studio table) are separate from artist Instagram (Artist table) — can be same or different accounts
 - `settingsSaved` / `profileSaved` flash confirmation (3s) after each section save
 
-**6.4 Per-artist portfolio page `/artists/[slug]`** ✅ Complete (2026-05-14)
+**6.4 Per-artist portfolio page `/artists/[slug]`** ✅ Complete (2026-05-14, updated `072f305`)
 - Server component at `app/artists/[slug]/page.tsx` — fetches from `GET /api/artist/:slug`
 - Backend: `getArtistBySlug` in `artistController.ts`, slug = `full_name.toLowerCase().replace(/\s+/g, '-')`
-- Shows portrait placeholder, bio, specialties, years experience, Instagram link, booking_count, gallery placeholder grid, "Book with [name]" CTA
-- Route ordering: `/:slug` registered LAST in `routes/artists.ts` — specific named routes (`/bookings`, `/consultations`) take priority
+- Shows bio, specialties, years experience, Instagram link, booking_count, real photo gallery (or labelled placeholders if none uploaded), "Book with [name]" CTA
+- `GalleryGrid` component — real photos from `PortfolioPhoto` table when available; falls back to 6-cell placeholder grid
+- Route ordering: `/:slug` registered LAST in `routes/artists.ts` — specific named routes (`/bookings`, `/consultations`, `/photos`) take priority
+
+**6.7 Portfolio photo management** ✅ Complete (2026-05-14, commit `072f305`)
+- `PortfolioPhoto` table — `id, artist_id, public_url, storage_path, display_order` (max 20 per artist)
+- `POST/GET/DELETE /api/artist/photos` — authenticated; uploads to Supabase Storage `portfolio/` prefix in `design-ideas` bucket
+- Artist dashboard: Portfolio tab (8th tab) — photo grid, upload, per-photo delete, empty state
+- `/portfolio` shows `cover_photo` (first photo) as portrait hero when uploaded
+- `/artists/[slug]` shows full photo grid from `PortfolioPhoto` table
 
 **6.5 SEO foundations** ✅ Complete (2026-05-14)
 - `app/sitemap.ts` — dynamic sitemap, fetches artist slugs from API at build time
