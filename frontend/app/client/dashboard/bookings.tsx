@@ -83,8 +83,20 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
   };
 
   if (loading) return (
-    <div style={{ padding: '3rem 0', textAlign: 'center' }}>
-      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-low)' }}>Loading</p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      {[1, 2, 3].map(i => (
+        <div key={i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '1.375rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div className="skeleton" style={{ height: '0.7rem', width: '7rem' }} />
+            <div className="skeleton" style={{ height: '1.4rem', width: '5.5rem', borderRadius: '2rem' }} />
+          </div>
+          <div className="skeleton" style={{ height: '1.5rem', width: '60%' }} />
+          <div style={{ display: 'flex', gap: '1.5rem' }}>
+            <div className="skeleton" style={{ height: '0.65rem', width: '5rem' }} />
+            <div className="skeleton" style={{ height: '0.65rem', width: '4rem' }} />
+          </div>
+        </div>
+      ))}
     </div>
   );
   if (error) return <p style={{ color: 'var(--error-text)', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem' }}>{error}</p>;

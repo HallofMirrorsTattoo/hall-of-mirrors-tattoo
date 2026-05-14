@@ -656,6 +656,17 @@ export default function BookingDetailPage() {
                         <p style={value}>{fmtDuration(booking.estimated_duration)}</p>
                       </div>
                     )}
+                    {booking.appointment_time && booking.appointment_status === 'confirmed' && (
+                      <a
+                        href={`${process.env.NEXT_PUBLIC_API_URL}/api/client/bookings/${booking.id}/ics`}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)', marginTop: '0.25rem', transition: 'color 0.2s ease' }}
+                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--gold)')}
+                        onMouseLeave={e => (e.currentTarget.style.color = 'rgba(201,168,76,0.7)')}
+                      >
+                        <span>Add to calendar</span>
+                        <span aria-hidden="true">↓</span>
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>

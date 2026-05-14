@@ -57,6 +57,7 @@ module.exports = {
         'reveal-mask':  'revealMask 1s cubic-bezier(0.77,0,0.175,1) forwards',
         'draw-line':    'drawLine 1s cubic-bezier(0.32,0.72,0,1) forwards',
         'slide-up':     'slideUp 0.9s cubic-bezier(0.32,0.72,0,1) forwards',
+        'tab-fade-in':  'tabFadeIn 0.18s cubic-bezier(0.22,1,0.36,1) both',
       },
       keyframes: {
         kenBurns: {
@@ -97,6 +98,10 @@ module.exports = {
         },
         slideUp: {
           '0%':   { opacity: '0', transform: 'translateY(40px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        tabFadeIn: {
+          '0%':   { opacity: '0', transform: 'translateY(7px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },

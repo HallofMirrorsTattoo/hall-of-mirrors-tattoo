@@ -464,7 +464,11 @@ export async function getArtistBookingById(req: Request, res: Response) {
 
     const result = await client.query(
       `SELECT b.*, u.id as user_id, u.first_name, u.last_name, u.email, u.phone,
-              a.id as artist_id, a.full_name as artist_name, a.email as artist_email
+              a.id as artist_id, a.full_name as artist_name, a.email as artist_email,
+              (SELECT COUNT(*)::int FROM "Booking" b2
+               WHERE b2.user_id = b.user_id
+                 AND b2.appointment_status IN ('confirmed','completed')
+                 AND b2.created_at <= b.created_at) AS client_session_count
        FROM "Booking" b
        JOIN "User" u ON b.user_id = u.id
        LEFT JOIN "Artist" a ON b.artist_id = a.id

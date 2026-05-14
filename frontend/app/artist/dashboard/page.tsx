@@ -1661,6 +1661,8 @@ export default function ArtistDashboard() {
           </div>
         </div>
 
+        <div key={tab} className="tab-content">
+
         {/* Bookings tab */}
         {tab === 'bookings' && (
           <div>
@@ -1697,7 +1699,18 @@ export default function ArtistDashboard() {
               )}
 
               {isLoading ? (
-                <p style={{ ...labelStyle, opacity: 0.4, padding: '2rem 0' }}>Loading...</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {[1, 2, 3].map(i => (
+                    <div key={i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                        <div className="skeleton" style={{ height: '0.7rem', width: '5rem' }} />
+                        <div className="skeleton" style={{ height: '1rem', width: '55%' }} />
+                        <div className="skeleton" style={{ height: '0.65rem', width: '4rem' }} />
+                      </div>
+                      <div className="skeleton" style={{ height: '1.4rem', width: '5rem', borderRadius: '2rem', flexShrink: 0 }} />
+                    </div>
+                  ))}
+                </div>
               ) : filteredBookings.length === 0 && pastBookingsAll.length === 0 ? (
                 <p style={{ color: 'var(--text-low)', fontSize: '0.9rem', padding: '2rem 0' }}>No bookings found.</p>
               ) : (
@@ -2750,12 +2763,45 @@ export default function ArtistDashboard() {
                 ))}
               </div>
 
+              {/* Referral source breakdown */}
+              {(() => {
+                const referralMap: Record<string, number> = {};
+                bookings.forEach(b => {
+                  const src = (b as unknown as { referral_source?: string }).referral_source;
+                  if (src) referralMap[src] = (referralMap[src] ?? 0) + 1;
+                });
+                const rows = Object.entries(referralMap).sort((a, b) => b[1] - a[1]);
+                const refTotal = rows.reduce((s, [, n]) => s + n, 0) || 1;
+                return (
+                  <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', overflow: 'hidden', marginBottom: '1.5rem' }}>
+                    <div style={{ padding: '1.125rem 1.5rem', borderBottom: '1px solid var(--border)' }}>
+                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', margin: 0 }}>How clients find you</p>
+                    </div>
+                    {rows.length === 0 ? (
+                      <p style={{ padding: '1.25rem 1.5rem', fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.1em', color: 'var(--text-low)', margin: 0 }}>No referral source data yet</p>
+                    ) : rows.map(([src, count], i) => (
+                      <div key={src} style={{ padding: '0.875rem 1.5rem', borderBottom: i < rows.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem' }}>
+                          <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text)', textTransform: 'capitalize' }}>{src}</span>
+                          <span style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.125rem', color: 'var(--gold)' }}>{count}</span>
+                        </div>
+                        <div style={{ height: '2px', background: 'rgba(255,255,255,0.05)', borderRadius: '1px', overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${Math.round(count / refTotal * 100)}%`, background: 'var(--gold)', borderRadius: '1px', opacity: 0.45, transition: 'width 0.6s ease' }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
               <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.08em', color: 'var(--text-low)', textAlign: 'center' }}>
                 Revenue figures are estimates only · Data reflects all bookings in your records
               </p>
             </div>
           );
         })()}
+
+        </div>{/* end tab-content */}
 
       </main>
     </div>

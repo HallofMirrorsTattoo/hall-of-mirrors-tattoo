@@ -289,7 +289,21 @@ export default function ConsultationsTab() {
   );
 
   if (loading) {
-    return <p style={{ ...mono, fontSize: '0.75rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-low)', padding: '2rem 0' }}>Loading...</p>;
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {[1, 2].map(i => (
+          <div key={i} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div className="skeleton" style={{ height: '1.1rem', width: '5rem' }} />
+              <div className="skeleton" style={{ height: '1.4rem', width: '6rem', borderRadius: '2rem' }} />
+            </div>
+            <div className="skeleton" style={{ height: '0.85rem', width: '90%' }} />
+            <div className="skeleton" style={{ height: '0.85rem', width: '70%' }} />
+            <div className="skeleton" style={{ height: '0.65rem', width: '4rem' }} />
+          </div>
+        ))}
+      </div>
+    );
   }
 
   return (
@@ -409,6 +423,23 @@ export default function ConsultationsTab() {
                         <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: 'var(--text)', lineHeight: 1.65 }}>
                           {c.artist_response}
                         </p>
+                      </div>
+                    )}
+
+                    {c.status === 'approved' && (
+                      <div style={{ marginTop: '1.125rem', padding: '1rem 1.125rem', background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.18)', borderRadius: '0.625rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                        <div>
+                          <p style={{ margin: '0 0 0.2rem', ...mono, fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)' }}>
+                            Your consultation is approved
+                          </p>
+                          <p style={{ margin: 0, ...serif, fontStyle: 'italic', fontWeight: 300, fontSize: '1.0625rem', color: 'var(--cream)' }}>
+                            Ready to book your session?
+                          </p>
+                        </div>
+                        <a href="/booking" className="btn-primary" style={{ flexShrink: 0, padding: '0.5rem 1.125rem', fontSize: '0.8125rem' }}>
+                          <span>Book now</span>
+                          <span className="btn-icon" aria-hidden="true">↗</span>
+                        </a>
                       </div>
                     )}
 

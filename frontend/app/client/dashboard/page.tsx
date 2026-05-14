@@ -133,7 +133,7 @@ export default function ClientDashboardPage() {
           </div>
 
           {/* Tab Content */}
-          <div style={{ minHeight: '24rem' }}>
+          <div key={activeTab} className="tab-content" style={{ minHeight: '24rem' }}>
             {activeTab === 'bookings'      && <BookingsTab onBadgeUpdate={onBookingsBadge} />}
             {activeTab === 'consultations' && <ConsultationsTab />}
             {activeTab === 'design-ideas'  && <DesignIdeasTab />}

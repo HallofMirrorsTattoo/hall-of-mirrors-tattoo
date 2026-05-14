@@ -419,4 +419,67 @@ router.post('/:id/accept-price', async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/client/bookings/:id/ics — calendar download
+router.get('/:id/ics', async (req: Request, res: Response) => {
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  try {
+    if (!req.user) return res.status(401).json({ success: false, error: 'Not authenticated' });
+
+    await client.connect();
+    const result = await client.query(
+      `SELECT b.booking_reference, b.appointment_date_time, b.appointment_time,
+              b.estimated_duration_minutes, b.tattoo_placement,
+              a.full_name as artist_name
+       FROM "Booking" b
+       LEFT JOIN "Artist" a ON b.artist_id = a.id
+       LEFT JOIN "User" u ON b.user_id = u.id
+       WHERE b.id = $1 AND (b.user_id = $2 OR u.email = $3)`,
+      [req.params.id, req.user.id, req.user.email]
+    );
+
+    if (result.rows.length === 0) return res.status(404).json({ success: false, error: 'Booking not found' });
+
+    const b = result.rows[0];
+    if (!b.appointment_date_time) return res.status(400).json({ success: false, error: 'No appointment date set' });
+
+    const start = new Date(b.appointment_date_time);
+    if (b.appointment_time) {
+      const [h, m] = b.appointment_time.split(':').map(Number);
+      start.setHours(h, m, 0, 0);
+    }
+    const durationMs = (b.estimated_duration_minutes ?? 120) * 60_000;
+    const end = new Date(start.getTime() + durationMs);
+
+    const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    const stamp = fmt(new Date());
+    const artist = b.artist_name || 'Robyn';
+    const placement = b.tattoo_placement ? ` · ${b.tattoo_placement}` : '';
+
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Hall of Mirrors Tattoo//EN',
+      'BEGIN:VEVENT',
+      `UID:${b.booking_reference}@hallofmirrorstattoo.com`,
+      `DTSTAMP:${stamp}`,
+      `DTSTART:${fmt(start)}`,
+      `DTEND:${fmt(end)}`,
+      `SUMMARY:Tattoo session with ${artist}${placement}`,
+      'LOCATION:Suite 3\\, 34 Castle Street\\, Liverpool L2 0NR',
+      `DESCRIPTION:Booking reference: ${b.booking_reference}\\nHall of Mirrors Tattoo Studio`,
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+
+    res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="hom-${b.booking_reference}.ics"`);
+    res.send(ics);
+  } catch (error) {
+    console.error('ICS error:', error);
+    res.status(500).json({ success: false, error: 'Failed to generate calendar file' });
+  } finally {
+    await client.end();
+  }
+});
+
 export default router;
