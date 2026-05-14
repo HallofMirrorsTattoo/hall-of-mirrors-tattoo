@@ -1,3 +1,5 @@
+> Design system tokens, tech stack, and forward roadmap: see [GRIMOIRE.md](../GRIMOIRE.md)
+
 # Hall of Mirrors Tattoo — Product Context
 
 ## Product Purpose
