@@ -2,7 +2,7 @@
 ### Hall of Mirrors Tattoo — Master Record
 
 **Last Updated:** 2026-05-14
-**Status:** Production live · Phases 0–5, 6.1, 6.3, 6.4, 6.5, 6.7, 7.3 shipped · Settings view/edit mode · Studio seed fix · Portfolio cache 60s · Phase 6.2+ roadmap active
+**Status:** Production live · Phases 0–5, 6.1, 6.3, 6.4, 6.5, 6.7, 7.3 shipped · Artist profile save/load fixed · Portrait upload live · Studio settings stripped from artist dashboard · Phase 6.2+ roadmap active
 
 > This is the single source of truth for all past work, current state, and future plans.
 > Read this at the start of every session. Update it at the end of every session.
@@ -226,14 +226,24 @@ Phases 0–5, 6.1, 6.3, 6.4, 6.5, 7.3 shipped plus the full studio/artist data s
 - Portfolio page ISR cache reduced from 3600s → 60s; artist slug page same — photos appear on public site within ~1 minute of upload instead of up to 1 hour
 - Note: if photos still don't appear after 60–90s, check Supabase Storage → `design-ideas` bucket → ensure `anon` SELECT policy is enabled (public read access)
 
+**Async/await Save fix** (commit `1248dfe`):
+- `sectionCard` Save button was firing `onSave()` without awaiting — PATCH executed in background, section closed immediately. If PATCH failed, error was silent and local state looked correct until refresh
+- `saveProfile` and `saveSettings` now return `Promise<boolean>` — `true` on success, `false` + error message on failure
+- Save button now `async () => { const ok = await onSave(); if (ok !== false) setEditingSection(null); }` — only closes on confirmed success; keeps section open with error visible if PATCH fails
+
+**Artist profile save/load root cause fix + Studio Settings removal + Portrait upload** (commit `5f4e6f2`):
+- **Root cause of "nothing saves on refresh"**: `fetchProfile()` read `data.full_name` directly, but `GET /api/auth/me` returns `{ success: true, artist: { full_name, … } }`. Fix: `const a = data.artist ?? data` unwraps the envelope. Profile fields now load correctly on every tab open.
+- **Studio Settings stripped from artist dashboard**: removed `StudioSettings` interface, `fetchSettings`, `saveSettings`, all four Studio Settings section cards (Contact & Location, Opening Hours, Booking Policy, Social & About), and all related state (`settingsLoading`, `settingsSaving`, `settingsError`). Artists should not manage studio-wide config. No more "Could not load studio settings" error on tab open.
+- **Portrait photo upload**: new `portrait_url TEXT` column on `Artist` table (auto-migrated); `POST /api/artist/portrait` (authenticated, multer, Supabase Storage at `portraits/{artist_id}.{ext}`, upserts on same artist ID); dashboard Settings → Artist Profile card now shows portrait thumbnail in view mode and an "Upload portrait" file button in edit mode; public `/artists/[slug]` page now shows the real portrait in the 4/5 hero box — falls back to letter-initial placeholder if none uploaded
+- `getArtistBySlug` and `getAllActiveArtists` both now return `portrait_url`; `getArtistProfile` (`GET /api/auth/me`) also returns `portrait_url`
+
 **Items still pending user action (not code blockers):**
 - [ ] Verify `studio@hallofmirrorstattoo.com` as SendGrid Single Sender
 - [ ] Confirm `FRONTEND_URL=https://hall-of-mirrors-tattoo.vercel.app` in Railway env vars
-- [ ] Add Christina (need: name, email, password) — she can fill bio/specialties/instagram/photos herself via dashboard
-- [ ] Robyn to fill in Studio Settings → Social & About (Instagram + TikTok handles → auto-wires to footer)
-- [ ] Robyn to fill in Studio Settings → Contact & Location (address, phone) → auto-wires to About page JSON-LD
+- [ ] Add Christina (need: name, email, password) — she can fill bio/specialties/instagram/photos/portrait herself via dashboard
+- [ ] Robyn to fill in Dashboard → Settings → Artist Profile (bio, specialties, instagram, portrait photo) → appears on `/artists/robyn` immediately
 - [ ] Robyn to upload portfolio photos via Dashboard → Portfolio tab → appear on site within ~1 min
-- [ ] Check Supabase Storage `design-ideas` bucket has public read (anon SELECT policy) if photos don't surface
+- [ ] Check Supabase Storage `design-ideas` bucket has public read (anon SELECT policy) if photos/portrait don't surface
 
 ---
 
@@ -330,15 +340,8 @@ Client joins waitlist for cancelled slots. When a confirmed booking cancels, not
 **6.3 Studio settings page** ✅ Complete (2026-05-14, commit `f962a7a`)
 - `backend/src/routes/studioSettings.ts` — `GET/PATCH /api/artist/studio-settings` (authenticated) + `GET /api/studio-settings` (public); no new DB tables (Studio table already had all columns)
 - Allowlist-based PATCH: only known fields accepted, dynamic `SET` clauses built from request body
-- Settings tab added to artist dashboard (`'settings'` in tab union) — now 7 tabs total
-- Five save-independent cards in Settings tab:
-  - **Your Profile** (artist-specific) — full_name, bio, specialties, years_experience, instagram_handle; saves to `Artist` table via `PATCH /api/artist/profile`; "Appears on your public artist page" note
-  - **Contact & Location** (studio) — studio_name, email, phone, postcode, address
-  - **Opening Hours** (studio) — Mon–Sun time pickers + Closed button clears both times
-  - **Booking Policy** (studio) — deposit £, cancellation notice hours
-  - **Social & About** (studio) — Instagram/Facebook/TikTok handles + about_section textarea
-- Studio social handles (Studio table) are separate from artist Instagram (Artist table) — can be same or different accounts
-- `settingsSaved` / `profileSaved` flash confirmation (3s) after each section save
+- Settings tab added to artist dashboard (`'settings'` in tab union)
+- **Note (commit `5f4e6f2`):** Studio Settings sections subsequently removed from artist dashboard — artists should not manage studio-wide config. Studio settings (`/api/artist/studio-settings`) remain available via API for a future admin panel. Dashboard Settings tab now contains only **Your Profile** (artist-specific) — full_name, bio, specialties, years_experience, instagram_handle, portrait_url.
 
 **6.4 Per-artist portfolio page `/artists/[slug]`** ✅ Complete (2026-05-14, updated `072f305`)
 - Server component at `app/artists/[slug]/page.tsx` — fetches from `GET /api/artist/:slug`
@@ -487,7 +490,7 @@ frontend/app/
 ├── aftercare/page.tsx            Aftercare instructions
 ├── artist/
 │   ├── login/page.tsx
-│   └── dashboard/page.tsx        7 tabs: Bookings, Calendar, Consultations, Availability, Stats, Flash Days, Settings
+│   └── dashboard/page.tsx        8 tabs: Bookings, Calendar, Consultations, Availability, Stats, Flash Days, Portfolio, Settings
 ├── client/
 │   ├── login/page.tsx
 │   ├── signup/page.tsx           Pre-fills email from ?email= param
@@ -556,7 +559,7 @@ backend/src/
 | Table | Key Notes |
 |---|---|
 | User | `password_hash = ''` = stub; `account_status = 'deleted'` = soft-deleted (PII anonymised) |
-| Artist | `is_active`, `instagram_handle`, one row per artist |
+| Artist | `is_active`, `instagram_handle`, `portrait_url` (nullable, Supabase Storage URL), one row per artist |
 | Booking | `appointment_date_time`, `appointment_time` (HH:MM start), `estimated_duration_minutes`, `notify_end_time`, `payment_method`, `counter_offer_*` columns |
 | AvailabilityBlock | `blocked_date DATE`, `blocked_slot TEXT` (null = whole day) |
 | Consultation | `status`: pending / approved / declined / responded; `status_updated_at` |
