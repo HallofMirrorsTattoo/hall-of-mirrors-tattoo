@@ -2,7 +2,7 @@
 ### Hall of Mirrors Tattoo — Master Record
 
 **Last Updated:** 2026-05-14
-**Status:** Production live · Phases 0–5, 6.1, 6.3, 6.4, 6.5, 6.7, 7.3 shipped · Nav streamlined to Home / Portfolio / About · Flash Days teaser in Portfolio · Services absorbed into About (no prices) · Phase 6.2+ roadmap active
+**Status:** Production live · Phases 0–5, 6.1, 6.3, 6.4, 6.5, 6.7, 7.3 shipped · Nav streamlined to Home / Portfolio / About · Flash Days teaser in Portfolio · Services absorbed into About (no prices) · Christina placeholder live · Phase 6.2+ roadmap active
 
 > This is the single source of truth for all past work, current state, and future plans.
 > Read this at the start of every session. Update it at the end of every session.
@@ -246,10 +246,16 @@ Phases 0–5, 6.1, 6.3, 6.4, 6.5, 7.3 shipped plus the full studio/artist data s
 - **`/services` redirect**: `next.config.js` now returns a permanent (308) redirect from `/services` → `/about`. Any old bookmarks or search engine links are forwarded cleanly. The `/services/page.tsx` file remains in the codebase but is unreachable in production.
 - User journey is now: Home (overview) → Portfolio (meet artists, discover flash days) → About (philosophy, what we offer, credentials, find us) → Book.
 
+**Christina placeholder on Portfolio page** (commit `e353c6f`):
+- `CHRISTINA_PLACEHOLDER` static `Artist` object added to `portfolio/page.tsx` — all fields null except `full_name: 'Christina'` and a placeholder ID.
+- `hasChristina` check: if the API already returns an artist whose name includes "christina", the placeholder is suppressed and the real data is used. Self-retiring — no code change needed when her account goes live.
+- Renders using the existing `ArtistSection` "coming soon" state: "Coming Soon" badge, first name in large italic gold, placeholder card, "Get Notified" button.
+- HOM divider between Robyn and Christina sections now driven by `displayArtists.length` (was `artists.length`) so the divider appears correctly with the injected placeholder.
+
 **Items still pending user action (not code blockers):**
 - [ ] Verify `studio@hallofmirrorstattoo.com` as SendGrid Single Sender
 - [ ] Confirm `FRONTEND_URL=https://hall-of-mirrors-tattoo.vercel.app` in Railway env vars
-- [ ] Add Christina (need: name, email, password) — she can fill bio/specialties/instagram/photos/portrait herself via dashboard
+- [ ] Add Christina (need: name, email, password) — she can fill bio/specialties/instagram/photos/portrait herself via dashboard; placeholder on `/portfolio` auto-retires once her Artist row is in the DB
 - [ ] Robyn to fill in Dashboard → Settings → Artist Profile (bio, specialties, instagram, portrait photo) → appears on `/artists/robyn` immediately
 - [ ] Robyn to upload portfolio photos via Dashboard → Portfolio tab → appear on site within ~1 min
 - [ ] Check Supabase Storage `design-ideas` bucket has public read (anon SELECT policy) if photos/portrait don't surface
