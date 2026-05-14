@@ -14,10 +14,6 @@ interface ArtistData {
   booking_count: number;
 }
 
-function toSlug(name: string): string {
-  return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-}
-
 async function fetchArtist(slug: string): Promise<ArtistData | null> {
   try {
     const res = await fetch(`${API}/api/artist/${slug}`, { next: { revalidate: 3600 } });
