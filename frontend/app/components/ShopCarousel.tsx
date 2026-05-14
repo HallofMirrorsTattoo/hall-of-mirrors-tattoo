@@ -24,7 +24,7 @@ export default function ShopCarousel() {
   }, [current]);
 
   return (
-    <div className="absolute inset-0 overflow-hidden" style={{ backgroundColor: '#0E0C09' }}>
+    <div className="absolute inset-0 overflow-hidden" style={{ backgroundColor: 'var(--bg)' }}>
       {photos.map((photo, i) => (
         <div
           key={photo}
@@ -55,7 +55,7 @@ export default function ShopCarousel() {
           <div
             className="absolute inset-0"
             style={{
-              background: 'linear-gradient(to bottom, rgba(14,12,9,0.45) 0%, rgba(14,12,9,0.2) 40%, rgba(14,12,9,0.55) 100%)',
+              background: 'linear-gradient(to bottom, rgba(14, 12, 9,0.45) 0%, rgba(14, 12, 9,0.2) 40%, rgba(14, 12, 9,0.55) 100%)',
             }}
           />
         </div>
@@ -76,7 +76,7 @@ export default function ShopCarousel() {
         className="absolute top-0 left-0 right-0 pointer-events-none"
         style={{
           height: '30%',
-          background: 'linear-gradient(to bottom, rgba(14,12,9,0.6), transparent)',
+          background: 'linear-gradient(to bottom, rgba(14, 12, 9,0.6), transparent)',
           zIndex: 10,
         }}
       />

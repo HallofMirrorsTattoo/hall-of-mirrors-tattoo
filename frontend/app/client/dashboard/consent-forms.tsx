@@ -79,7 +79,7 @@ export default function ConsentFormsTab() {
   if (error) {
     return (
       <div style={{ padding: '1rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '0.5rem' }}>
-        <p style={{ margin: 0, fontSize: '0.875rem', color: '#f87171' }}>{error}</p>
+        <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--error-text)' }}>{error}</p>
       </div>
     );
   }

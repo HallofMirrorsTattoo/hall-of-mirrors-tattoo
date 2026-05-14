@@ -217,7 +217,7 @@ export default function ClientProfilePage() {
         <form onSubmit={handleSubmit}>
           {error && (
             <div style={{ padding: '0.875rem 1rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '0.5rem', marginBottom: '1.5rem' }}>
-              <p style={{ margin: 0, fontSize: '0.875rem', color: '#f87171' }}>{error}</p>
+              <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--error-text)' }}>{error}</p>
             </div>
           )}
           {success && (
@@ -291,7 +291,7 @@ export default function ClientProfilePage() {
             <button
               type="button"
               onClick={() => setDeleteOpen(true)}
-              style={{ padding: '0.625rem 1.5rem', background: 'transparent', border: '1px solid rgba(239,68,68,0.4)', borderRadius: '0.375rem', color: '#f87171', fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', transition: 'border-color 0.2s, color 0.2s' }}
+              style={{ padding: '0.625rem 1.5rem', background: 'transparent', border: '1px solid rgba(239,68,68,0.4)', borderRadius: '0.375rem', color: 'var(--error-text)', fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', transition: 'border-color 0.2s, color 0.2s' }}
               onMouseEnter={(e) => { (e.target as HTMLButtonElement).style.borderColor = 'rgba(239,68,68,0.7)'; (e.target as HTMLButtonElement).style.color = '#fca5a5'; }}
               onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.borderColor = 'rgba(239,68,68,0.4)'; (e.target as HTMLButtonElement).style.color = '#f87171'; }}
             >
@@ -308,7 +308,7 @@ export default function ClientProfilePage() {
           onClick={(e) => { if (e.target === e.currentTarget) setDeleteOpen(false); }}
         >
           <div style={{ width: '100%', maxWidth: '24rem', background: 'var(--surface)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '0.75rem', padding: '2rem' }}>
-            <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#f87171', marginBottom: '1rem' }}>
+            <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--error-text)', marginBottom: '1rem' }}>
               Confirm deletion
             </p>
             <p style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1.5rem', fontStyle: 'italic', fontWeight: 300, color: 'var(--cream)', marginBottom: '1rem', lineHeight: 1.2 }}>
@@ -319,7 +319,7 @@ export default function ClientProfilePage() {
             </p>
 
             {deleteError && (
-              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginBottom: '1rem' }}>{deleteError}</p>
+              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginBottom: '1rem' }}>{deleteError}</p>
             )}
 
             <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -335,7 +335,7 @@ export default function ClientProfilePage() {
                 type="button"
                 onClick={handleDelete}
                 disabled={deleting}
-                style={{ flex: 1, padding: '0.75rem', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: '0.375rem', color: '#fca5a5', fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: deleting ? 'default' : 'pointer', opacity: deleting ? 0.6 : 1 }}
+                style={{ flex: 1, padding: '0.75rem', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: '0.375rem', color: 'var(--error-text)', fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: deleting ? 'default' : 'pointer', opacity: deleting ? 0.6 : 1 }}
               >
                 {deleting ? 'Deleting...' : 'Yes, delete'}
               </button>

@@ -161,7 +161,7 @@ export default function MessagesTab({ onUnreadCountChange }: MessagesTabProps) {
 
   if (threadsError) {
     return (
-      <p style={{ fontSize: '0.875rem', color: '#f87171', padding: '2rem 0' }}>{threadsError}</p>
+      <p style={{ fontSize: '0.875rem', color: 'var(--error-text)', padding: '2rem 0' }}>{threadsError}</p>
     );
   }
 
@@ -298,7 +298,7 @@ export default function MessagesTab({ onUnreadCountChange }: MessagesTabProps) {
           {/* Input */}
           <div style={{ padding: '0.875rem 1.25rem', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
             {sendError && (
-              <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', color: '#f87171' }}>{sendError}</p>
+              <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', color: 'var(--error-text)' }}>{sendError}</p>
             )}
             <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'flex-end' }}>
               <textarea

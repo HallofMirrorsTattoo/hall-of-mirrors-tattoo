@@ -122,7 +122,7 @@ export default function ConsultationPage() {
                   border: '1px solid rgba(239,68,68,0.25)',
                   borderRadius: '0.5rem',
                 }}>
-                  <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: '#fca5a5', fontWeight: 500 }}>
+                  <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: 'var(--error-text)', fontWeight: 500 }}>
                     {errorMessage || 'Something went wrong. Please try again.'}
                   </p>
                 </div>
@@ -140,7 +140,7 @@ export default function ConsultationPage() {
                       style={errors.clientName ? { borderColor: 'rgba(239,68,68,0.5)' } : {}}
                     />
                     {errors.clientName && (
-                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginTop: '0.375rem' }}>{errors.clientName.message}</p>
+                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.clientName.message}</p>
                     )}
                   </div>
 
@@ -154,7 +154,7 @@ export default function ConsultationPage() {
                       style={errors.clientEmail ? { borderColor: 'rgba(239,68,68,0.5)' } : {}}
                     />
                     {errors.clientEmail && (
-                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginTop: '0.375rem' }}>{errors.clientEmail.message}</p>
+                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.clientEmail.message}</p>
                     )}
                   </div>
 
@@ -168,7 +168,7 @@ export default function ConsultationPage() {
                       style={errors.clientPhone ? { borderColor: 'rgba(239,68,68,0.5)' } : {}}
                     />
                     {errors.clientPhone && (
-                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginTop: '0.375rem' }}>{errors.clientPhone.message}</p>
+                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.clientPhone.message}</p>
                     )}
                   </div>
 
@@ -185,7 +185,7 @@ export default function ConsultationPage() {
                       <option value="follow_up">Follow-up Consultation</option>
                     </select>
                     {errors.consultationType && (
-                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginTop: '0.375rem' }}>{errors.consultationType.message}</p>
+                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.consultationType.message}</p>
                     )}
                   </div>
                 </div>
@@ -219,7 +219,7 @@ export default function ConsultationPage() {
                     style={errors.message ? { borderColor: 'rgba(239,68,68,0.5)' } : {}}
                   />
                   {errors.message && (
-                    <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginTop: '0.375rem' }}>{errors.message.message}</p>
+                    <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.message.message}</p>
                   )}
                 </div>
 

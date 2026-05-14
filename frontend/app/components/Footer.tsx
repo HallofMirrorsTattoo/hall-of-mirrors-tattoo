@@ -5,7 +5,7 @@ import Image from 'next/image';
 
 export default function Footer() {
   return (
-    <footer style={{ backgroundColor: '#0E0C09', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
+    <footer style={{ backgroundColor: 'var(--bg)', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
       <div className="max-w-6xl mx-auto px-6 py-20 md:py-28">
 
         {/* Top grid */}

@@ -67,7 +67,7 @@ export default function ArtistLogin() {
                 border: '1px solid rgba(239,68,68,0.25)',
                 borderRadius: '0.5rem',
               }}>
-                <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: '#fca5a5' }}>
+                <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--error-text)' }}>
                   {error}
                 </p>
               </div>

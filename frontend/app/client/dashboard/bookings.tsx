@@ -87,7 +87,7 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
       <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-low)' }}>Loading</p>
     </div>
   );
-  if (error) return <p style={{ color: '#fca5a5', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem' }}>{error}</p>;
+  if (error) return <p style={{ color: 'var(--error-text)', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem' }}>{error}</p>;
 
   const activeStatuses = ['pending_consent', 'confirmed', 'rescheduled', 'counter_offered'];
   const activeBookings = bookings.filter(b => activeStatuses.includes(b.appointment_status));

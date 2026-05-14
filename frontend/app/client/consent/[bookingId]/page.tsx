@@ -39,6 +39,28 @@ const sectionHeadingStyle: React.CSSProperties = {
   borderBottom: '1px solid var(--border)',
 };
 
+interface ConsentBooking {
+  id: string;
+  booking_reference: string;
+  appointment_date_time: string;
+  appointment_time?: string;
+  appointment_status: string;
+  placement?: string;
+  artist_name?: string;
+  consent_form_signed?: boolean;
+}
+
+interface ConsentProfile {
+  first_name: string;
+  last_name: string;
+  email?: string;
+  date_of_birth?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  postcode?: string;
+}
+
 const initialMedical = {
   pregnant_or_breastfeeding: false,
   blood_borne_conditions: false,
@@ -104,9 +126,9 @@ function YesNoToggle({ label, value, onChange }: { label: string; value: boolean
             fontSize: '0.75rem',
             fontFamily: '"DM Mono", monospace',
             cursor: 'pointer',
-            borderColor: value ? '#e8a020' : 'var(--border)',
-            background: value ? 'rgba(232,160,32,0.12)' : 'transparent',
-            color: value ? '#e8a020' : 'var(--text-low)',
+            borderColor: value ? 'var(--gold)' : 'var(--border)',
+            background: value ? 'var(--gold-muted)' : 'transparent',
+            color: value ? 'var(--gold)' : 'var(--text-low)',
           }}
         >Yes</button>
       </div>
@@ -134,7 +156,7 @@ function ConsentCheckbox({ label, checked, onChange }: { label: string; checked:
           transition: 'all 0.2s ease',
         }}
       >
-        {checked && <span style={{ color: '#0E0C09', fontSize: '0.75rem', fontWeight: 700 }}>✓</span>}
+        {checked && <span style={{ color: 'var(--bg)', fontSize: '0.75rem', fontWeight: 700 }}>✓</span>}
       </div>
       <span style={{ fontSize: '0.9rem', color: checked ? 'var(--cream)' : 'var(--text-mid)', lineHeight: 1.5 }}>{label}</span>
     </label>
@@ -147,8 +169,8 @@ export default function ConsentFormPage() {
   const { accessToken, isLoading: authLoading } = useClientAuth();
 
   const [pageLoading, setPageLoading] = useState(true);
-  const [booking, setBooking] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [booking, setBooking] = useState<ConsentBooking | null>(null);
+  const [profile, setProfile] = useState<ConsentProfile | null>(null);
   const [alreadySigned, setAlreadySigned] = useState(false);
   const [error, setError] = useState('');
 
@@ -320,7 +342,7 @@ export default function ConsentFormPage() {
 
         {error && (
           <div style={{ padding: '0.875rem 1rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '0.5rem', marginBottom: '2rem' }}>
-            <p style={{ margin: 0, fontSize: '0.875rem', color: '#f87171' }}>{error}</p>
+            <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--error-text)' }}>{error}</p>
           </div>
         )}
 

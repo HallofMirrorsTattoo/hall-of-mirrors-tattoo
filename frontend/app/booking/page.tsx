@@ -342,7 +342,7 @@ export default function BookingPage() {
 
               {activationError && (
                 <div style={{ padding: '0.75rem 1rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '0.5rem', marginBottom: '1rem' }}>
-                  <p style={{ margin: 0, fontSize: '0.8125rem', color: '#f87171' }}>{activationError}</p>
+                  <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--error-text)' }}>{activationError}</p>
                 </div>
               )}
 
@@ -426,7 +426,7 @@ export default function BookingPage() {
 
               {submitStatus === 'error' && (
                 <div style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '0.5rem' }}>
-                  <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: '#fca5a5', fontWeight: 500, margin: 0 }}>
+                  <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: 'var(--error-text)', fontWeight: 500, margin: 0 }}>
                     {errorMessage}
                   </p>
                 </div>
@@ -439,7 +439,7 @@ export default function BookingPage() {
                     key={m}
                     type="button"
                     onClick={() => setFormMode(m)}
-                    style={{ flex: 1, padding: '0.625rem 1rem', background: formMode === m ? 'var(--gold)' : 'transparent', color: formMode === m ? '#0E0C09' : 'var(--text-mid)', border: 'none', borderRadius: '2rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', fontWeight: formMode === m ? 600 : 400, cursor: 'pointer', transition: 'all 0.2s ease' }}
+                    style={{ flex: 1, padding: '0.625rem 1rem', background: formMode === m ? 'var(--gold)' : 'transparent', color: formMode === m ? 'var(--bg)' : 'var(--text-mid)', border: 'none', borderRadius: '2rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', fontWeight: formMode === m ? 600 : 400, cursor: 'pointer', transition: 'all 0.2s ease' }}
                   >
                     {m === 'booking' ? 'Book a session' : 'Request a consultation'}
                   </button>
@@ -464,21 +464,21 @@ export default function BookingPage() {
                     <label htmlFor="clientName">Full Name</label>
                     <input {...register('clientName')} type="text" id="clientName" placeholder="Your name"
                       style={errors.clientName ? { borderColor: 'rgba(239,68,68,0.5)' } : {}} />
-                    {errors.clientName && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginTop: '0.375rem' }}>{errors.clientName.message}</p>}
+                    {errors.clientName && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.clientName.message}</p>}
                   </div>
 
                   <div>
                     <label htmlFor="clientEmail">Email</label>
                     <input {...register('clientEmail')} type="email" id="clientEmail" placeholder="your@email.com"
                       style={errors.clientEmail ? { borderColor: 'rgba(239,68,68,0.5)' } : {}} />
-                    {errors.clientEmail && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginTop: '0.375rem' }}>{errors.clientEmail.message}</p>}
+                    {errors.clientEmail && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.clientEmail.message}</p>}
                   </div>
 
                   <div style={{ gridColumn: '1 / -1' }}>
                     <label htmlFor="clientPhone">Phone Number</label>
                     <input {...register('clientPhone')} type="tel" id="clientPhone" placeholder="+44 7911 123456"
                       style={errors.clientPhone ? { borderColor: 'rgba(239,68,68,0.5)' } : {}} />
-                    {errors.clientPhone && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginTop: '0.375rem' }}>{errors.clientPhone.message}</p>}
+                    {errors.clientPhone && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.clientPhone.message}</p>}
                   </div>
                 </div>
 
@@ -528,7 +528,7 @@ export default function BookingPage() {
                         onAvailabilityLoad={setAvailabilityData}
                       />
                     </div>
-                    {dateError && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginTop: '0.375rem', marginBottom: '1rem' }}>{dateError}</p>}
+                    {dateError && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem', marginBottom: '1rem' }}>{dateError}</p>}
 
                     {/* ── Slot picker appears after date selection ── */}
                     {selectedDate && (
@@ -546,7 +546,7 @@ export default function BookingPage() {
                           onSlotSelect={handleSlotSelect}
                           slotData={availabilityData?.slotData}
                         />
-                        {slotError && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginTop: '0.75rem' }}>{slotError}</p>}
+                        {slotError && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.75rem' }}>{slotError}</p>}
                       </div>
                     )}
                   </>
@@ -566,7 +566,7 @@ export default function BookingPage() {
                         style={dateError ? { borderColor: 'rgba(239,68,68,0.5)' } : {}}
                       />
                     </div>
-                    {dateError && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginTop: '0.375rem' }}>{dateError}</p>}
+                    {dateError && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{dateError}</p>}
                     <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.08em', color: 'var(--text-low)', marginTop: '0.5rem' }}>
                       Select an artist above to choose from available time slots.
                     </p>
@@ -585,7 +585,7 @@ export default function BookingPage() {
                       placeholder="Describe your tattoo idea, inspiration, specific elements you want included…"
                       rows={5}
                       style={errors.tattooDesignDescription ? { borderColor: 'rgba(239,68,68,0.5)' } : {}} />
-                    {errors.tattooDesignDescription && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginTop: '0.375rem' }}>{errors.tattooDesignDescription.message}</p>}
+                    {errors.tattooDesignDescription && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.tattooDesignDescription.message}</p>}
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
@@ -599,7 +599,7 @@ export default function BookingPage() {
                         <option value="large">Large (6–12 in)</option>
                         <option value="xlarge">Extra Large (12+ in)</option>
                       </select>
-                      {errors.estimatedSize && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginTop: '0.375rem' }}>{errors.estimatedSize.message}</p>}
+                      {errors.estimatedSize && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.estimatedSize.message}</p>}
                     </div>
 
                     <div>
@@ -607,7 +607,7 @@ export default function BookingPage() {
                       <input {...register('estimatedPlacement')} type="text" id="estimatedPlacement"
                         placeholder="e.g., upper arm, chest…"
                         style={errors.estimatedPlacement ? { borderColor: 'rgba(239,68,68,0.5)' } : {}} />
-                      {errors.estimatedPlacement && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: '#fca5a5', marginTop: '0.375rem' }}>{errors.estimatedPlacement.message}</p>}
+                      {errors.estimatedPlacement && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.estimatedPlacement.message}</p>}
                     </div>
                   </div>
 

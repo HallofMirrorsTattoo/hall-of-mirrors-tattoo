@@ -125,7 +125,7 @@ export default function Home() {
       </div>
 
       {/* ── SCROLLING CONTENT ───────────────────────────────────────────────── */}
-      <div className="relative z-10" style={{ backgroundColor: '#0E0C09' }}>
+      <div className="relative z-10" style={{ backgroundColor: 'var(--bg)' }}>
 
         {/* ── CREDENTIALS STRIP ─────────────────────────────────────────────── */}
         <section className="px-0 py-0" style={{ borderTop: '1px solid rgba(201,168,76,0.12)', borderBottom: '1px solid rgba(201,168,76,0.12)' }}>
@@ -335,7 +335,7 @@ export default function Home() {
 
               <AnimatedSection delay={200}>
                 {/* Studio image — replace with real photo */}
-                <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: '4/5', background: 'linear-gradient(160deg, #1D1A15 0%, #0E0C09 100%)' }}>
+                <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: '4/5', background: 'linear-gradient(160deg, var(--surface-2) 0%, var(--bg) 100%)' }}>
                   {/* Mirror frame ornament */}
                   <div className="absolute rounded-xl" style={{ inset: '1.5rem', border: '1px solid rgba(201,168,76,0.15)' }} aria-hidden="true" />
                   <div className="absolute rounded-lg" style={{ inset: '2.5rem', border: '1px solid rgba(201,168,76,0.07)' }} aria-hidden="true" />
@@ -451,7 +451,7 @@ export default function Home() {
         </section>
 
         {/* ── FINAL CTA ──────────────────────────────────────────────────────── */}
-        <section className="px-6 py-36 md:py-56 relative overflow-hidden" style={{ backgroundColor: '#0E0C09' }}>
+        <section className="px-6 py-36 md:py-56 relative overflow-hidden" style={{ backgroundColor: 'var(--bg)' }}>
           {/* Layered radial atmosphere */}
           <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
             <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 80% 70% at 50% 60%, rgba(201,168,76,0.07) 0%, transparent 65%)' }} />
