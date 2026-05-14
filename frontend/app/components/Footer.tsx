@@ -1,9 +1,9 @@
-'use client';
-
 import Link from 'next/link';
 import Image from 'next/image';
+import { getStudioSettings } from '@/lib/studioSettings';
 
-export default function Footer() {
+export default async function Footer() {
+  const studio = await getStudioSettings();
   return (
     <footer style={{ backgroundColor: 'var(--bg)', borderTop: '1px solid rgba(201,168,76,0.1)' }}>
       <div className="max-w-6xl mx-auto px-6 py-20 md:py-28">
@@ -40,8 +40,21 @@ export default function Footer() {
               Neo-traditional specialist. Every design custom.
             </p>
             <div className="flex gap-4 mt-6">
-              <a href="#" className="footer-social">Instagram</a>
-              <a href="#" className="footer-social">TikTok</a>
+              {studio?.instagram_handle && (
+                <a href={`https://instagram.com/${studio.instagram_handle}`} target="_blank" rel="noopener noreferrer" className="footer-social">Instagram</a>
+              )}
+              {studio?.tiktok_handle && (
+                <a href={`https://tiktok.com/@${studio.tiktok_handle}`} target="_blank" rel="noopener noreferrer" className="footer-social">TikTok</a>
+              )}
+              {studio?.facebook_url && (
+                <a href={studio.facebook_url} target="_blank" rel="noopener noreferrer" className="footer-social">Facebook</a>
+              )}
+              {!studio?.instagram_handle && !studio?.tiktok_handle && !studio?.facebook_url && (
+                <>
+                  <a href="#" className="footer-social">Instagram</a>
+                  <a href="#" className="footer-social">TikTok</a>
+                </>
+              )}
             </div>
           </div>
 
@@ -65,10 +78,20 @@ export default function Footer() {
               lineHeight: 2,
               color: 'var(--text-mid)',
             }}>
-              Suite 3<br />
-              34 Castle Street<br />
-              Liverpool L2 0NR<br />
-              United Kingdom
+              {studio?.address ? (
+                <>
+                  {studio.address}<br />
+                  {studio.postcode && <>{studio.postcode}<br /></>}
+                  United Kingdom
+                </>
+              ) : (
+                <>
+                  Suite 3<br />
+                  34 Castle Street<br />
+                  Liverpool L2 0NR<br />
+                  United Kingdom
+                </>
+              )}
             </address>
           </div>
 

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import AnimatedSection from '../components/AnimatedSection';
+import { getStudioSettings } from '@/lib/studioSettings';
 
 const credentials = [
   { n: 'I',   label: 'Licensed',        title: 'Liverpool City Council', detail: 'Ref: A11394900' },
@@ -14,7 +15,12 @@ const stats = [
   { num: '1:1',  label: 'Consultation' },
 ];
 
-export default function About() {
+export default async function About() {
+  const studio = await getStudioSettings();
+  const addressDetail = studio?.address
+    ? [studio.address, studio.postcode].filter(Boolean).join(', ')
+    : 'Suite 3, 34 Castle Street, L2 0NR';
+
   return (
     <div style={{ backgroundColor: 'var(--bg)', minHeight: '100vh' }}>
 
@@ -37,17 +43,25 @@ export default function About() {
               }}>
                 Meet Robyn
               </h1>
-              <p style={{ marginBottom: '1.25rem' }}>
-                Based in the heart of Liverpool&apos;s Castle Street, Hall of Mirrors is a
-                private studio specialising in neo-traditional tattooing — bold lines,
-                rich colour palettes, and timeless imagery drawn from art history,
-                natural forms, and personal narrative.
-              </p>
-              <p style={{ marginBottom: '1.25rem' }}>
-                Every piece is drawn from what the client brings to the chair — their
-                stories, references, and vision — translated into something that will
-                last a lifetime. Robyn&apos;s full biography is coming soon.
-              </p>
+              {studio?.about_section ? (
+                <p style={{ marginBottom: '1.25rem', whiteSpace: 'pre-line' }}>
+                  {studio.about_section}
+                </p>
+              ) : (
+                <>
+                  <p style={{ marginBottom: '1.25rem' }}>
+                    Based in the heart of Liverpool&apos;s Castle Street, Hall of Mirrors is a
+                    private studio specialising in neo-traditional tattooing — bold lines,
+                    rich colour palettes, and timeless imagery drawn from art history,
+                    natural forms, and personal narrative.
+                  </p>
+                  <p style={{ marginBottom: '1.25rem' }}>
+                    Every piece is drawn from what the client brings to the chair — their
+                    stories, references, and vision — translated into something that will
+                    last a lifetime. Robyn&apos;s full biography is coming soon.
+                  </p>
+                </>
+              )}
 
               {/* Stats */}
               <div style={{ display: 'flex', gap: '2.5rem', marginTop: '2.5rem', marginBottom: '2.5rem' }}>
@@ -158,7 +172,7 @@ export default function About() {
             <p className="eyebrow" style={{ marginBottom: '2.5rem' }}>The Studio</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-0" style={{ borderTop: '1px solid var(--border)', borderLeft: '1px solid var(--border)' }}>
               {[
-                { title: 'Liverpool',     detail: 'Suite 3, 34 Castle Street, L2 0NR' },
+                { title: 'Liverpool',     detail: addressDetail },
                 { title: 'Bespoke Only',  detail: 'Every design is created for you alone' },
                 { title: 'Consultation',  detail: 'Free initial design consultations available' },
               ].map((item) => (

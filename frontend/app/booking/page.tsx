@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useClientAuth } from '@/lib/clientAuthContext';
 import AvailabilityCalendar, { AvailabilityData } from '@/app/components/AvailabilityCalendar';
 import TimeSlotPicker from '@/app/components/TimeSlotPicker';
+import type { StudioSettings } from '@/lib/studioSettings';
 
 interface Artist {
   id: string;
@@ -119,6 +120,7 @@ export default function BookingPage() {
 
   const [paymentMethod, setPaymentMethod]          = useState<'cash' | 'card'>('cash');
   const [policyAccepted, setPolicyAccepted]        = useState(false);
+  const [studioSettings, setStudioSettings]        = useState<StudioSettings | null>(null);
 
   // Availability state
   const [selectedArtistId, setSelectedArtistId]   = useState('');
@@ -174,6 +176,13 @@ export default function BookingPage() {
       }
     };
     fetchArtists();
+  }, []);
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/studio-settings`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => d && setStudioSettings(d))
+      .catch(() => {});
   }, []);
 
   const handleDateSelect = (date: string) => {
@@ -785,7 +794,12 @@ export default function BookingPage() {
 
                       {/* Payment preference */}
                       <div style={{ marginBottom: '1.75rem' }}>
-                        <label style={{ display: 'block', marginBottom: '0.625rem' }}>How would you like to pay your deposit?</label>
+                        <label style={{ display: 'block', marginBottom: '0.375rem' }}>How would you like to pay your deposit?</label>
+                        {studioSettings?.deposit_amount_fixed && (
+                          <p style={{ ...mono, fontSize: '0.72rem', letterSpacing: '0.08em', color: 'rgba(201,168,76,0.6)', marginBottom: '0.75rem' }}>
+                            A £{studioSettings.deposit_amount_fixed} deposit is required to hold your appointment.
+                          </p>
+                        )}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                           <button
                             type="button"
@@ -819,7 +833,7 @@ export default function BookingPage() {
                           style={{ marginTop: '0.1rem', accentColor: 'var(--gold)', width: '1rem', height: '1rem', flexShrink: 0 }}
                         />
                         <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.6 }}>
-                          I understand that cancellations within 48 hours of my appointment may be subject to a cancellation fee, and that this booking is subject to artist confirmation.
+                          I understand that cancellations within {studioSettings?.cancellation_policy_hours ?? 48} hours of my appointment may be subject to a cancellation fee, and that this booking is subject to artist confirmation.
                         </span>
                       </label>
 
