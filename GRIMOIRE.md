@@ -2,7 +2,7 @@
 ### Hall of Mirrors Tattoo — Master Record
 
 **Last Updated:** 2026-05-14
-**Status:** Production live · Phases 0–5, 6.1, 6.3, 6.4, 6.5, 6.7, 7.3 shipped · Artist profile save/load fixed · Portrait upload live · Studio settings stripped from artist dashboard · Phase 6.2+ roadmap active
+**Status:** Production live · Phases 0–5, 6.1, 6.3, 6.4, 6.5, 6.7, 7.3 shipped · Nav streamlined to Home / Portfolio / About · Flash Days teaser in Portfolio · Services absorbed into About (no prices) · Phase 6.2+ roadmap active
 
 > This is the single source of truth for all past work, current state, and future plans.
 > Read this at the start of every session. Update it at the end of every session.
@@ -237,6 +237,15 @@ Phases 0–5, 6.1, 6.3, 6.4, 6.5, 7.3 shipped plus the full studio/artist data s
 - **Portrait photo upload**: new `portrait_url TEXT` column on `Artist` table (auto-migrated); `POST /api/artist/portrait` (authenticated, multer, Supabase Storage at `portraits/{artist_id}.{ext}`, upserts on same artist ID); dashboard Settings → Artist Profile card now shows portrait thumbnail in view mode and an "Upload portrait" file button in edit mode; public `/artists/[slug]` page now shows the real portrait in the 4/5 hero box — falls back to letter-initial placeholder if none uploaded
 - `getArtistBySlug` and `getAllActiveArtists` both now return `portrait_url`; `getArtistProfile` (`GET /api/auth/me`) also returns `portrait_url`
 
+**Navigation restructure** (commit `bcf96c0`):
+- **Header**: nav reduced to 3 links — Home, Portfolio, About. Services and Flash Days removed from top nav.
+- **Footer**: Services removed from Navigate column; Flash Days added in its place. New order: Book Appointment, Portfolio, Flash Days, Consultation, About.
+- **Portfolio page**: Flash Days teaser section added before the final CTA — 2-column layout explaining flash days (pre-drawn, fixed price, limited) with a "See upcoming flash days ↗" link to `/flash`. Bottom CTA button changed from `/services` to `/about`.
+- **About page**: New "What we offer" section added between the Pillars and Find Us sections — four service rows (Bespoke Custom, Free Consultation, Cover-Up & Rework, Touch-Ups & Aftercare) in the same numbered editorial row layout, descriptions only, zero pricing language. Includes Book / Consultation CTAs below the list.
+- **Home page**: "All Services & Pricing" button → "About the Studio" linking to `/about`.
+- **`/services` redirect**: `next.config.js` now returns a permanent (308) redirect from `/services` → `/about`. Any old bookmarks or search engine links are forwarded cleanly. The `/services/page.tsx` file remains in the codebase but is unreachable in production.
+- User journey is now: Home (overview) → Portfolio (meet artists, discover flash days) → About (philosophy, what we offer, credentials, find us) → Book.
+
 **Items still pending user action (not code blockers):**
 - [ ] Verify `studio@hallofmirrorstattoo.com` as SendGrid Single Sender
 - [ ] Confirm `FRONTEND_URL=https://hall-of-mirrors-tattoo.vercel.app` in Railway env vars
@@ -398,7 +407,7 @@ More effective than email for same-day nudges.
 - Email: `sendFlashSlotClaimed` — confirmation to client + studio notification
 - `/flash` public page — hero, countdown badges, slot grid, claim modal with validation
 - Artist dashboard "Flash Days" tab — create/delete days, add/delete/release slots, view claim details
-- "Flash Days" added to site nav (Header.tsx)
+- "Flash Days" added to site nav (Header.tsx) — subsequently moved off main nav (commit `bcf96c0`); now accessible via Portfolio page teaser and Footer
 
 **7.4 Gift vouchers**
 Stripe purchase → unique code emailed to recipient → redeemable against deposit.
@@ -483,9 +492,9 @@ frontend/app/
 ├── globals.css                   ENTIRE design system (tokens, utilities, keyframes)
 ├── page.tsx                      Homepage (Server Component)
 ├── booking/page.tsx              Booking form (mode toggle: session / consultation)
-├── portfolio/page.tsx            Artists page: fully dynamic from GET /api/artist — bio, specialties, socials, coming-soon state
-├── services/page.tsx             4 services, studio credentials, SEO metadata
-├── about/page.tsx                Studio identity — story, vision, credentials, JSON-LD TattooParlor schema (no artist names)
+├── portfolio/page.tsx            Artists page: fully dynamic from GET /api/artist — bio, specialties, socials, coming-soon state; Flash Days teaser section with /flash link
+├── services/page.tsx             RETIRED — permanent redirect → /about via next.config.js
+├── about/page.tsx                Studio identity — story, vision, "What we offer" (4 services no prices), credentials, JSON-LD TattooParlor schema (no artist names)
 ├── contact/page.tsx              Contact form
 ├── aftercare/page.tsx            Aftercare instructions
 ├── artist/
