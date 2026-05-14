@@ -142,7 +142,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function ArtistDashboard() {
   const router = useRouter();
   const { artist, accessToken, logout, isLoading: authLoading } = useAuth();
-  const [tab, setTab] = useState<'bookings' | 'calendar' | 'consultations' | 'availability' | 'stats' | 'flash'>('bookings');
+  const [tab, setTab] = useState<'bookings' | 'calendar' | 'consultations' | 'availability' | 'stats' | 'flash' | 'settings'>('bookings');
 
   // Bookings state
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -265,6 +265,46 @@ export default function ArtistDashboard() {
   const [newSlotFile, setNewSlotFile] = useState<File | null>(null);
   const [newSlotSubmitting, setNewSlotSubmitting] = useState(false);
 
+  // ── Settings state ─────────────────────────────────────────────────────────
+  interface StudioSettings {
+    id: string;
+    studio_name: string;
+    address: string;
+    postcode: string;
+    phone: string;
+    email: string;
+    hours_monday_start: string; hours_monday_end: string;
+    hours_tuesday_start: string; hours_tuesday_end: string;
+    hours_wednesday_start: string; hours_wednesday_end: string;
+    hours_thursday_start: string; hours_thursday_end: string;
+    hours_friday_start: string; hours_friday_end: string;
+    hours_saturday_start: string; hours_saturday_end: string;
+    hours_sunday_start: string; hours_sunday_end: string;
+    deposit_amount_fixed: string;
+    cancellation_policy_hours: string;
+    instagram_handle: string;
+    facebook_url: string;
+    tiktok_handle: string;
+    about_section: string;
+  }
+  const emptySettings: StudioSettings = {
+    id: '', studio_name: '', address: '', postcode: '', phone: '', email: '',
+    hours_monday_start: '', hours_monday_end: '',
+    hours_tuesday_start: '', hours_tuesday_end: '',
+    hours_wednesday_start: '', hours_wednesday_end: '',
+    hours_thursday_start: '', hours_thursday_end: '',
+    hours_friday_start: '', hours_friday_end: '',
+    hours_saturday_start: '', hours_saturday_end: '',
+    hours_sunday_start: '', hours_sunday_end: '',
+    deposit_amount_fixed: '', cancellation_policy_hours: '',
+    instagram_handle: '', facebook_url: '', tiktok_handle: '', about_section: '',
+  };
+  const [settings, setSettings] = useState<StudioSettings>(emptySettings);
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsError, setSettingsError] = useState('');
+  const [settingsSaved, setSettingsSaved] = useState(false);
+
   const avMonthKey = `${avYear}-${String(avMonth + 1).padStart(2, '0')}`;
 
   const fetchAvailability = useCallback(async () => {
@@ -348,6 +388,79 @@ export default function ArtistDashboard() {
     if (tab === 'flash' && accessToken) fetchFlashDays();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, accessToken]);
+
+  useEffect(() => {
+    if (tab === 'settings' && accessToken) fetchSettings();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, accessToken]);
+
+  const fetchSettings = async () => {
+    if (!accessToken) return;
+    setSettingsLoading(true);
+    setSettingsError('');
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/studio-settings`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) throw new Error('Failed to load settings');
+      const data = await res.json();
+      setSettings({
+        id: data.id ?? '',
+        studio_name: data.studio_name ?? '',
+        address: data.address ?? '',
+        postcode: data.postcode ?? '',
+        phone: data.phone ?? '',
+        email: data.email ?? '',
+        hours_monday_start: data.hours_monday_start ?? '',
+        hours_monday_end: data.hours_monday_end ?? '',
+        hours_tuesday_start: data.hours_tuesday_start ?? '',
+        hours_tuesday_end: data.hours_tuesday_end ?? '',
+        hours_wednesday_start: data.hours_wednesday_start ?? '',
+        hours_wednesday_end: data.hours_wednesday_end ?? '',
+        hours_thursday_start: data.hours_thursday_start ?? '',
+        hours_thursday_end: data.hours_thursday_end ?? '',
+        hours_friday_start: data.hours_friday_start ?? '',
+        hours_friday_end: data.hours_friday_end ?? '',
+        hours_saturday_start: data.hours_saturday_start ?? '',
+        hours_saturday_end: data.hours_saturday_end ?? '',
+        hours_sunday_start: data.hours_sunday_start ?? '',
+        hours_sunday_end: data.hours_sunday_end ?? '',
+        deposit_amount_fixed: data.deposit_amount_fixed != null ? String(data.deposit_amount_fixed) : '',
+        cancellation_policy_hours: data.cancellation_policy_hours != null ? String(data.cancellation_policy_hours) : '',
+        instagram_handle: data.instagram_handle ?? '',
+        facebook_url: data.facebook_url ?? '',
+        tiktok_handle: data.tiktok_handle ?? '',
+        about_section: data.about_section ?? '',
+      });
+    } catch {
+      setSettingsError('Could not load studio settings.');
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
+  const saveSettings = async (fields: Partial<StudioSettings>) => {
+    if (!accessToken) return;
+    setSettingsSaving(true);
+    setSettingsError('');
+    setSettingsSaved(false);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/studio-settings`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(fields),
+      });
+      if (!res.ok) throw new Error('Save failed');
+      const data = await res.json();
+      setSettings(prev => ({ ...prev, ...fields, ...data }));
+      setSettingsSaved(true);
+      setTimeout(() => setSettingsSaved(false), 3000);
+    } catch {
+      setSettingsError('Failed to save settings. Please try again.');
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
 
   const fetchFlashDays = async () => {
     if (!accessToken) return;
@@ -1829,6 +1942,7 @@ export default function ArtistDashboard() {
             { key: 'availability', label: 'Availability', badge: 0 },
             { key: 'stats',        label: 'Stats',        badge: 0 },
             { key: 'flash',        label: 'Flash Days',   badge: 0 },
+            { key: 'settings',     label: 'Settings',     badge: 0 },
           ] as const).map(({ key, label, badge }) => (
             <button
               key={key}
@@ -3245,6 +3359,190 @@ export default function ArtistDashboard() {
                   </div>
                 );
               })}
+            </div>
+          );
+        })()}
+
+        {/* ── Settings tab ─────────────────────────────────────────────────── */}
+        {tab === 'settings' && (() => {
+          const field = (label: string, key: keyof StudioSettings, type = 'text', placeholder = '') => (
+            <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <label style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-mid)', textTransform: 'uppercase' }}>{label}</label>
+              <input
+                type={type}
+                value={settings[key] ?? ''}
+                placeholder={placeholder}
+                onChange={e => setSettings(prev => ({ ...prev, [key]: e.target.value }))}
+                style={{
+                  background: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '0.5rem',
+                  padding: '0.625rem 0.875rem',
+                  fontFamily: '"DM Sans", sans-serif',
+                  fontSize: '0.875rem',
+                  color: 'var(--cream)',
+                  outline: 'none',
+                  width: '100%',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+          );
+
+          const hoursPair = (day: string, startKey: keyof StudioSettings, endKey: keyof StudioSettings) => (
+            <div key={day} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: 'var(--text-mid)', width: '4.5rem', flexShrink: 0 }}>{day}</span>
+              <input
+                type="time"
+                value={settings[startKey] ?? ''}
+                onChange={e => setSettings(prev => ({ ...prev, [startKey]: e.target.value }))}
+                style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.375rem', padding: '0.375rem 0.5rem', fontFamily: '"DM Mono", monospace', fontSize: '0.8rem', color: 'var(--cream)', width: '8rem' }}
+              />
+              <span style={{ color: 'var(--text-mid)', fontSize: '0.8rem' }}>–</span>
+              <input
+                type="time"
+                value={settings[endKey] ?? ''}
+                onChange={e => setSettings(prev => ({ ...prev, [endKey]: e.target.value }))}
+                style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.375rem', padding: '0.375rem 0.5rem', fontFamily: '"DM Mono", monospace', fontSize: '0.8rem', color: 'var(--cream)', width: '8rem' }}
+              />
+              <button
+                onClick={() => setSettings(prev => ({ ...prev, [startKey]: '', [endKey]: '' }))}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-mid)', fontSize: '0.75rem', fontFamily: '"DM Sans", sans-serif', padding: '0.25rem 0.5rem' }}
+              >
+                Closed
+              </button>
+            </div>
+          );
+
+          const sectionTitle = (title: string) => (
+            <h3 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.25rem', fontWeight: 300, color: 'var(--gold)', margin: '0 0 1.25rem 0', letterSpacing: '-0.01em' }}>{title}</h3>
+          );
+
+          const sectionCard = (children: React.ReactNode, onSave: () => void) => (
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.875rem', padding: '1.75rem 2rem 1.5rem', marginBottom: '1.5rem' }}>
+              {children}
+              <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={onSave}
+                  disabled={settingsSaving}
+                  className="btn-primary"
+                  style={{ fontSize: '0.8125rem', padding: '0.5625rem 1.375rem', opacity: settingsSaving ? 0.7 : 1 }}
+                >
+                  <span>{settingsSaving ? 'Saving…' : 'Save'}</span>
+                </button>
+              </div>
+            </div>
+          );
+
+          if (settingsLoading) return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {[1,2,3,4].map(i => (
+                <div key={i} className="skeleton" style={{ height: '120px', borderRadius: '0.875rem' }} />
+              ))}
+            </div>
+          );
+
+          return (
+            <div style={{ maxWidth: '640px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                <h2 style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1.75rem', fontWeight: 300, letterSpacing: '-0.02em', color: 'var(--cream)', margin: 0 }}>Studio Settings</h2>
+                {settingsSaved && (
+                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: '#81c784', letterSpacing: '0.05em' }}>✓ SAVED</span>
+                )}
+              </div>
+
+              {settingsError && (
+                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: '#e57373', letterSpacing: '0.05em', marginBottom: '1rem' }}>{settingsError}</p>
+              )}
+
+              {/* Contact info */}
+              {sectionCard(
+                <>
+                  {sectionTitle('Contact & Location')}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    {field('Studio Name', 'studio_name', 'text', 'Hall of Mirrors Tattoo')}
+                    {field('Email', 'email', 'email', 'bookings@...')}
+                    {field('Phone', 'phone', 'tel', '+44 ...')}
+                    {field('Postcode', 'postcode', 'text', 'L1 1AB')}
+                  </div>
+                  <div style={{ marginTop: '1rem' }}>
+                    {field('Address', 'address', 'text', '123 Castle Street, Liverpool')}
+                  </div>
+                </>,
+                () => saveSettings({ studio_name: settings.studio_name, address: settings.address, postcode: settings.postcode, phone: settings.phone, email: settings.email })
+              )}
+
+              {/* Opening hours */}
+              {sectionCard(
+                <>
+                  {sectionTitle('Opening Hours')}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {hoursPair('Mon', 'hours_monday_start', 'hours_monday_end')}
+                    {hoursPair('Tue', 'hours_tuesday_start', 'hours_tuesday_end')}
+                    {hoursPair('Wed', 'hours_wednesday_start', 'hours_wednesday_end')}
+                    {hoursPair('Thu', 'hours_thursday_start', 'hours_thursday_end')}
+                    {hoursPair('Fri', 'hours_friday_start', 'hours_friday_end')}
+                    {hoursPair('Sat', 'hours_saturday_start', 'hours_saturday_end')}
+                    {hoursPair('Sun', 'hours_sunday_start', 'hours_sunday_end')}
+                  </div>
+                </>,
+                () => saveSettings({
+                  hours_monday_start: settings.hours_monday_start, hours_monday_end: settings.hours_monday_end,
+                  hours_tuesday_start: settings.hours_tuesday_start, hours_tuesday_end: settings.hours_tuesday_end,
+                  hours_wednesday_start: settings.hours_wednesday_start, hours_wednesday_end: settings.hours_wednesday_end,
+                  hours_thursday_start: settings.hours_thursday_start, hours_thursday_end: settings.hours_thursday_end,
+                  hours_friday_start: settings.hours_friday_start, hours_friday_end: settings.hours_friday_end,
+                  hours_saturday_start: settings.hours_saturday_start, hours_saturday_end: settings.hours_saturday_end,
+                  hours_sunday_start: settings.hours_sunday_start, hours_sunday_end: settings.hours_sunday_end,
+                })
+              )}
+
+              {/* Booking policy */}
+              {sectionCard(
+                <>
+                  {sectionTitle('Booking Policy')}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    {field('Deposit Amount (£)', 'deposit_amount_fixed', 'number', '50')}
+                    {field('Cancellation Notice (hours)', 'cancellation_policy_hours', 'number', '24')}
+                  </div>
+                </>,
+                () => saveSettings({ deposit_amount_fixed: settings.deposit_amount_fixed, cancellation_policy_hours: settings.cancellation_policy_hours })
+              )}
+
+              {/* Social handles */}
+              {sectionCard(
+                <>
+                  {sectionTitle('Social & About')}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {field('Instagram Handle', 'instagram_handle', 'text', 'hallofmirrorstattoo')}
+                    {field('Facebook URL', 'facebook_url', 'url', 'https://facebook.com/...')}
+                    {field('TikTok Handle', 'tiktok_handle', 'text', 'hallofmirrorstattoo')}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <label style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-mid)', textTransform: 'uppercase' }}>About Section</label>
+                      <textarea
+                        value={settings.about_section ?? ''}
+                        placeholder="A few sentences about the studio…"
+                        rows={4}
+                        onChange={e => setSettings(prev => ({ ...prev, about_section: e.target.value }))}
+                        style={{
+                          background: 'var(--surface)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '0.5rem',
+                          padding: '0.625rem 0.875rem',
+                          fontFamily: '"DM Sans", sans-serif',
+                          fontSize: '0.875rem',
+                          color: 'var(--cream)',
+                          outline: 'none',
+                          width: '100%',
+                          resize: 'vertical',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                  </div>
+                </>,
+                () => saveSettings({ instagram_handle: settings.instagram_handle, facebook_url: settings.facebook_url, tiktok_handle: settings.tiktok_handle, about_section: settings.about_section })
+              )}
             </div>
           );
         })()}
