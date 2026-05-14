@@ -150,7 +150,7 @@ export async function getArtistBySlug(req: Request, res: Response) {
   try {
     await db.connect();
     const result = await db.query(
-      `SELECT id, full_name, specialties, years_experience, bio, instagram_handle
+      `SELECT id, full_name, specialties, years_experience, bio, instagram_handle, portrait_url
        FROM "Artist" WHERE is_active = true ORDER BY full_name ASC`
     );
     const { slug } = req.params;

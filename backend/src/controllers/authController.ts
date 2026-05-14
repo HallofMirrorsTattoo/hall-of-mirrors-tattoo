@@ -176,7 +176,7 @@ export async function getArtistProfile(req: Request, res: Response) {
     await client.connect();
 
     const result = await client.query(
-      `SELECT id, email, full_name, specialties, years_experience, bio, instagram_handle, is_active
+      `SELECT id, email, full_name, specialties, years_experience, bio, instagram_handle, is_active, portrait_url
        FROM "Artist" WHERE id = $1`,
       [req.artist.id]
     );

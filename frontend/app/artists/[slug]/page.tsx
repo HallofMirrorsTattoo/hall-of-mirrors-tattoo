@@ -13,6 +13,7 @@ interface ArtistData {
   instagram_handle: string | null;
   booking_count: number;
   photos: { id: string; public_url: string }[];
+  portrait_url: string | null;
 }
 
 async function fetchArtist(slug: string): Promise<ArtistData | null> {
@@ -157,35 +158,40 @@ export default async function ArtistPage({ params }: { params: { slug: string } 
             background: 'var(--surface)',
             border: '1px solid var(--border)',
             borderRadius: '0.25rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
             overflow: 'hidden',
             position: 'relative',
           }}>
-            {/* Corner marks */}
-            {['top-0 left-0', 'top-0 right-0', 'bottom-0 left-0', 'bottom-0 right-0'].map((pos, i) => (
-              <span key={i} aria-hidden="true" style={{
-                position: 'absolute',
-                width: '1.25rem', height: '1.25rem',
-                borderTop: ['top-0 left-0','top-0 right-0'].includes(pos) ? '1px solid rgba(201,168,76,0.3)' : 'none',
-                borderBottom: ['bottom-0 left-0','bottom-0 right-0'].includes(pos) ? '1px solid rgba(201,168,76,0.3)' : 'none',
-                borderLeft: ['top-0 left-0','bottom-0 left-0'].includes(pos) ? '1px solid rgba(201,168,76,0.3)' : 'none',
-                borderRight: ['top-0 right-0','bottom-0 right-0'].includes(pos) ? '1px solid rgba(201,168,76,0.3)' : 'none',
-                top: pos.includes('top') ? '0.75rem' : 'auto',
-                bottom: pos.includes('bottom') ? '0.75rem' : 'auto',
-                left: pos.includes('left-0') ? '0.75rem' : 'auto',
-                right: pos.includes('right-0') ? '0.75rem' : 'auto',
-              }} />
-            ))}
-            <div style={{ textAlign: 'center' }}>
-              <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '3rem', fontWeight: 300, color: 'rgba(201,168,76,0.15)', margin: 0, lineHeight: 1 }}>
-                {artist.full_name.charAt(0)}
-              </p>
-              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)', margin: '0.5rem 0 0' }}>
-                Portrait coming soon
-              </p>
-            </div>
+            {artist.portrait_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={artist.portrait_url}
+                alt={`${artist.full_name} — tattoo artist`}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+            ) : (
+              <>
+                {/* Corner marks */}
+                {['top-0 left-0', 'top-0 right-0', 'bottom-0 left-0', 'bottom-0 right-0'].map((pos, i) => (
+                  <span key={i} aria-hidden="true" style={{
+                    position: 'absolute',
+                    width: '1.25rem', height: '1.25rem',
+                    borderTop: ['top-0 left-0','top-0 right-0'].includes(pos) ? '1px solid rgba(201,168,76,0.3)' : 'none',
+                    borderBottom: ['bottom-0 left-0','bottom-0 right-0'].includes(pos) ? '1px solid rgba(201,168,76,0.3)' : 'none',
+                    borderLeft: ['top-0 left-0','bottom-0 left-0'].includes(pos) ? '1px solid rgba(201,168,76,0.3)' : 'none',
+                    borderRight: ['top-0 right-0','bottom-0 right-0'].includes(pos) ? '1px solid rgba(201,168,76,0.3)' : 'none',
+                    top: pos.includes('top') ? '0.75rem' : 'auto',
+                    bottom: pos.includes('bottom') ? '0.75rem' : 'auto',
+                    left: pos.includes('left-0') ? '0.75rem' : 'auto',
+                    right: pos.includes('right-0') ? '0.75rem' : 'auto',
+                  }} />
+                ))}
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                  <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '3rem', fontWeight: 300, color: 'rgba(201,168,76,0.15)', margin: 0, lineHeight: 1 }}>
+                    {artist.full_name.charAt(0)}
+                  </p>
+                </div>
+              </>
+            )}
           </div>
           {/* Stat strip below portrait */}
           <div style={{ display: 'flex', gap: '1.5rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>

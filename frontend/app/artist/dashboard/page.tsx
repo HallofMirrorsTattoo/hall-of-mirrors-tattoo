@@ -272,10 +272,12 @@ export default function ArtistDashboard() {
     specialties: string;
     years_experience: string;
     instagram_handle: string;
+    portrait_url: string;
   }
-  const emptyProfile: ArtistProfile = { full_name: '', bio: '', specialties: '', years_experience: '', instagram_handle: '' };
+  const emptyProfile: ArtistProfile = { full_name: '', bio: '', specialties: '', years_experience: '', instagram_handle: '', portrait_url: '' };
   const [profile, setProfile] = useState<ArtistProfile>(emptyProfile);
   const [profileSaving, setProfileSaving] = useState(false);
+  const [portraitUploading, setPortraitUploading] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [editingSection, setEditingSection] = useState<string | null>(null);
 
@@ -285,45 +287,6 @@ export default function ArtistDashboard() {
   const [portfolioLoading, setPortfolioLoading] = useState(false);
   const [portfolioUploading, setPortfolioUploading] = useState(false);
   const [portfolioError, setPortfolioError] = useState('');
-
-  // ── Settings state ─────────────────────────────────────────────────────────
-  interface StudioSettings {
-    id: string;
-    studio_name: string;
-    address: string;
-    postcode: string;
-    phone: string;
-    email: string;
-    hours_monday_start: string; hours_monday_end: string;
-    hours_tuesday_start: string; hours_tuesday_end: string;
-    hours_wednesday_start: string; hours_wednesday_end: string;
-    hours_thursday_start: string; hours_thursday_end: string;
-    hours_friday_start: string; hours_friday_end: string;
-    hours_saturday_start: string; hours_saturday_end: string;
-    hours_sunday_start: string; hours_sunday_end: string;
-    deposit_amount_fixed: string;
-    cancellation_policy_hours: string;
-    instagram_handle: string;
-    facebook_url: string;
-    tiktok_handle: string;
-    about_section: string;
-  }
-  const emptySettings: StudioSettings = {
-    id: '', studio_name: '', address: '', postcode: '', phone: '', email: '',
-    hours_monday_start: '', hours_monday_end: '',
-    hours_tuesday_start: '', hours_tuesday_end: '',
-    hours_wednesday_start: '', hours_wednesday_end: '',
-    hours_thursday_start: '', hours_thursday_end: '',
-    hours_friday_start: '', hours_friday_end: '',
-    hours_saturday_start: '', hours_saturday_end: '',
-    hours_sunday_start: '', hours_sunday_end: '',
-    deposit_amount_fixed: '', cancellation_policy_hours: '',
-    instagram_handle: '', facebook_url: '', tiktok_handle: '', about_section: '',
-  };
-  const [settings, setSettings] = useState<StudioSettings>(emptySettings);
-  const [settingsLoading, setSettingsLoading] = useState(false);
-  const [settingsSaving, setSettingsSaving] = useState(false);
-  const [settingsError, setSettingsError] = useState('');
 
   const avMonthKey = `${avYear}-${String(avMonth + 1).padStart(2, '0')}`;
 
@@ -410,7 +373,7 @@ export default function ArtistDashboard() {
   }, [tab, accessToken]);
 
   useEffect(() => {
-    if (tab === 'settings' && accessToken) { fetchSettings(); fetchProfile(); }
+    if (tab === 'settings' && accessToken) fetchProfile();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, accessToken]);
 
@@ -427,12 +390,14 @@ export default function ArtistDashboard() {
       });
       if (!res.ok) return;
       const data = await res.json();
+      const a = data.artist ?? data;
       setProfile({
-        full_name: data.full_name ?? '',
-        bio: data.bio ?? '',
-        specialties: data.specialties ?? '',
-        years_experience: data.years_experience != null ? String(data.years_experience) : '',
-        instagram_handle: data.instagram_handle ?? '',
+        full_name: a.full_name ?? '',
+        bio: a.bio ?? '',
+        specialties: a.specialties ?? '',
+        years_experience: a.years_experience != null ? String(a.years_experience) : '',
+        instagram_handle: a.instagram_handle ?? '',
+        portrait_url: a.portrait_url ?? '',
       });
     } catch { /* non-critical */ }
   };
@@ -463,6 +428,28 @@ export default function ArtistDashboard() {
       return false;
     } finally {
       setProfileSaving(false);
+    }
+  };
+
+  const uploadPortrait = async (file: File) => {
+    if (!accessToken) return;
+    setPortraitUploading(true);
+    setProfileError('');
+    try {
+      const form = new FormData();
+      form.append('portrait', file);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/portrait`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: form,
+      });
+      const responseData = await res.json();
+      if (!res.ok) throw new Error(responseData.error ?? 'Upload failed');
+      setProfile(prev => ({ ...prev, portrait_url: responseData.portrait_url }));
+    } catch (err: any) {
+      setProfileError(err.message ?? 'Portrait upload failed.');
+    } finally {
+      setPortraitUploading(false);
     }
   };
 
@@ -517,76 +504,6 @@ export default function ArtistDashboard() {
       setPortfolioPhotos(prev => prev.filter(p => p.id !== id));
     } catch {
       setPortfolioError('Could not delete photo. Please try again.');
-    }
-  };
-
-  const fetchSettings = async () => {
-    if (!accessToken) return;
-    setSettingsLoading(true);
-    setSettingsError('');
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/studio-settings`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (!res.ok) throw new Error('Failed to load settings');
-      const data = await res.json();
-      setSettings({
-        id: data.id ?? '',
-        studio_name: data.studio_name ?? '',
-        address: data.address ?? '',
-        postcode: data.postcode ?? '',
-        phone: data.phone ?? '',
-        email: data.email ?? '',
-        hours_monday_start: data.hours_monday_start ?? '',
-        hours_monday_end: data.hours_monday_end ?? '',
-        hours_tuesday_start: data.hours_tuesday_start ?? '',
-        hours_tuesday_end: data.hours_tuesday_end ?? '',
-        hours_wednesday_start: data.hours_wednesday_start ?? '',
-        hours_wednesday_end: data.hours_wednesday_end ?? '',
-        hours_thursday_start: data.hours_thursday_start ?? '',
-        hours_thursday_end: data.hours_thursday_end ?? '',
-        hours_friday_start: data.hours_friday_start ?? '',
-        hours_friday_end: data.hours_friday_end ?? '',
-        hours_saturday_start: data.hours_saturday_start ?? '',
-        hours_saturday_end: data.hours_saturday_end ?? '',
-        hours_sunday_start: data.hours_sunday_start ?? '',
-        hours_sunday_end: data.hours_sunday_end ?? '',
-        deposit_amount_fixed: data.deposit_amount_fixed != null ? String(data.deposit_amount_fixed) : '',
-        cancellation_policy_hours: data.cancellation_policy_hours != null ? String(data.cancellation_policy_hours) : '',
-        instagram_handle: data.instagram_handle ?? '',
-        facebook_url: data.facebook_url ?? '',
-        tiktok_handle: data.tiktok_handle ?? '',
-        about_section: data.about_section ?? '',
-      });
-    } catch {
-      setSettingsError('Could not load studio settings.');
-    } finally {
-      setSettingsLoading(false);
-    }
-  };
-
-  const saveSettings = async (fields: Partial<StudioSettings>): Promise<boolean> => {
-    if (!accessToken) return false;
-    setSettingsSaving(true);
-    setSettingsError('');
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/studio-settings`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(fields),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? 'Save failed');
-      }
-      const data = await res.json();
-      setSettings(prev => ({ ...prev, ...fields, ...data }));
-      return true;
-    } catch (err: any) {
-      setSettingsError(err.message ?? 'Failed to save settings. Please try again.');
-      return false;
-    } finally {
-      setSettingsSaving(false);
     }
   };
 
@@ -3595,27 +3512,10 @@ export default function ArtistDashboard() {
           // ── Shared input styles ────────────────────────────────────────────
           const inputSt: React.CSSProperties = { background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '0.5rem', padding: '0.625rem 0.875rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--cream)', outline: 'none', width: '100%', boxSizing: 'border-box' };
 
-          const field = (label: string, key: keyof StudioSettings, type = 'text', placeholder = '') => (
-            <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              <label style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-mid)', textTransform: 'uppercase' }}>{label}</label>
-              <input type={type} value={settings[key] ?? ''} placeholder={placeholder} onChange={e => setSettings(prev => ({ ...prev, [key]: e.target.value }))} style={inputSt} />
-            </div>
-          );
-
           const profileField = (label: string, key: keyof ArtistProfile, type = 'text', placeholder = '') => (
             <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               <label style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-mid)', textTransform: 'uppercase' }}>{label}</label>
               <input type={type} value={profile[key] ?? ''} placeholder={placeholder} onChange={e => setProfile(prev => ({ ...prev, [key]: e.target.value }))} style={inputSt} />
-            </div>
-          );
-
-          const hoursPair = (day: string, startKey: keyof StudioSettings, endKey: keyof StudioSettings) => (
-            <div key={day} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: 'var(--text-mid)', width: '4.5rem', flexShrink: 0 }}>{day}</span>
-              <input type="time" value={settings[startKey] ?? ''} onChange={e => setSettings(prev => ({ ...prev, [startKey]: e.target.value }))} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '0.375rem', padding: '0.375rem 0.5rem', fontFamily: '"DM Mono", monospace', fontSize: '0.8rem', color: 'var(--cream)', width: '8rem' }} />
-              <span style={{ color: 'var(--text-mid)', fontSize: '0.8rem' }}>–</span>
-              <input type="time" value={settings[endKey] ?? ''} onChange={e => setSettings(prev => ({ ...prev, [endKey]: e.target.value }))} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '0.375rem', padding: '0.375rem 0.5rem', fontFamily: '"DM Mono", monospace', fontSize: '0.8rem', color: 'var(--cream)', width: '8rem' }} />
-              <button onClick={() => setSettings(prev => ({ ...prev, [startKey]: '', [endKey]: '' }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-mid)', fontSize: '0.75rem', fontFamily: '"DM Sans", sans-serif', padding: '0.25rem 0.5rem' }}>Closed</button>
             </div>
           );
 
@@ -3631,8 +3531,6 @@ export default function ArtistDashboard() {
               {viewVal(value)}
             </div>
           );
-          const fmtHours = (s: string, e: string) => s && e ? `${s} – ${e}` : 'Closed';
-
           // ── Section card with view / edit toggle ──────────────────────────
           const EDIT_BTN: React.CSSProperties = { background: 'none', border: '1px solid rgba(201,168,76,0.25)', borderRadius: '0.3rem', padding: '0.25rem 0.75rem', cursor: 'pointer', fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)' };
           const CANCEL_BTN: React.CSSProperties = { background: 'none', border: '1px solid var(--border)', borderRadius: '0.375rem', padding: '0.5rem 1rem', cursor: 'pointer', fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-mid)' };
@@ -3655,14 +3553,14 @@ export default function ArtistDashboard() {
                 {isEditing ? editContent : viewContent}
                 {isEditing && (
                   <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-                    <button style={CANCEL_BTN} onClick={() => { (onCancel ?? fetchSettings)(); setEditingSection(null); }}>Cancel</button>
+                    <button style={CANCEL_BTN} onClick={() => { (onCancel ?? fetchProfile)(); setEditingSection(null); }}>Cancel</button>
                     <button
                       onClick={async () => { const ok = await onSave(); if (ok !== false) setEditingSection(null); }}
-                      disabled={settingsSaving || profileSaving}
+                      disabled={profileSaving}
                       className="btn-primary"
-                      style={{ fontSize: '0.8125rem', padding: '0.5625rem 1.375rem', opacity: (settingsSaving || profileSaving) ? 0.7 : 1 }}
+                      style={{ fontSize: '0.8125rem', padding: '0.5625rem 1.375rem', opacity: profileSaving ? 0.7 : 1 }}
                     >
-                      <span>{(settingsSaving || profileSaving) ? 'Saving…' : 'Save'}</span>
+                      <span>{profileSaving ? 'Saving…' : 'Save'}</span>
                     </button>
                   </div>
                 )}
@@ -3670,18 +3568,12 @@ export default function ArtistDashboard() {
             );
           };
 
-          if (settingsLoading) return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {[1,2,3,4,5].map(i => <div key={i} className="skeleton" style={{ height: '120px', borderRadius: '0.875rem' }} />)}
-            </div>
-          );
-
           return (
             <div style={{ maxWidth: '640px' }}>
 
-              {(settingsError || profileError) && (
+              {profileError && (
                 <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: '#e57373', letterSpacing: '0.05em', marginBottom: '1.25rem' }}>
-                  {settingsError || profileError}
+                  {profileError}
                 </p>
               )}
 
@@ -3691,19 +3583,32 @@ export default function ArtistDashboard() {
                 'profile',
                 'Artist Profile',
                 /* view */
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    {viewRow('Full Name', profile.full_name)}
-                    {viewRow('Instagram', profile.instagram_handle ? `@${profile.instagram_handle.replace('@','')}` : null)}
-                    {viewRow('Specialties', profile.specialties)}
-                    {viewRow('Years Experience', profile.years_experience ? `${profile.years_experience} years` : null)}
+                <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+                  {/* Portrait thumbnail */}
+                  <div style={{ flexShrink: 0 }}>
+                    {profile.portrait_url ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={profile.portrait_url} alt="Portrait" style={{ width: '80px', height: '100px', objectFit: 'cover', borderRadius: '0.25rem', border: '1px solid var(--border)', display: 'block' }} />
+                    ) : (
+                      <div style={{ width: '80px', height: '100px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.55rem', letterSpacing: '0.08em', color: 'var(--text-low)', textTransform: 'uppercase', textAlign: 'center', padding: '0 0.25rem' }}>No portrait</span>
+                      </div>
+                    )}
                   </div>
-                  {viewRow('Bio', profile.bio)}
-                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.08em', color: 'var(--text-low)', margin: 0 }}>Appears on your public artist page</p>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                      {viewRow('Full Name', profile.full_name)}
+                      {viewRow('Instagram', profile.instagram_handle ? `@${profile.instagram_handle.replace('@','')}` : null)}
+                      {viewRow('Specialties', profile.specialties)}
+                      {viewRow('Years Experience', profile.years_experience ? `${profile.years_experience} years` : null)}
+                    </div>
+                    {viewRow('Bio', profile.bio)}
+                    <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.08em', color: 'var(--text-low)', margin: 0 }}>Appears on your public artist page</p>
+                  </div>
                 </div>,
                 /* edit */
-                <div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     {profileField('Full Name', 'full_name', 'text', 'Your name')}
                     {profileField('Instagram Handle', 'instagram_handle', 'text', 'yourhandle')}
                     {profileField('Specialties', 'specialties', 'text', 'Neo-traditional, colour realism…')}
@@ -3714,92 +3619,26 @@ export default function ArtistDashboard() {
                     <textarea value={profile.bio ?? ''} placeholder="A few sentences about you and your work…" rows={5} onChange={e => setProfile(prev => ({ ...prev, bio: e.target.value }))} style={{ ...inputSt, resize: 'vertical' }} />
                     <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.06em', color: 'var(--text-low)' }}>Appears on your public artist page</span>
                   </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <label style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-mid)', textTransform: 'uppercase' }}>Portrait Photo</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      {profile.portrait_url && (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={profile.portrait_url} alt="Current portrait" style={{ width: '56px', height: '70px', objectFit: 'cover', borderRadius: '0.25rem', border: '1px solid var(--border)', display: 'block' }} />
+                      )}
+                      <label style={{ cursor: portraitUploading ? 'wait' : 'pointer', opacity: portraitUploading ? 0.6 : 1 }}>
+                        <input type="file" accept="image/*" style={{ display: 'none' }} disabled={portraitUploading}
+                          onChange={e => { const f = e.target.files?.[0]; if (f) uploadPortrait(f); e.target.value = ''; }} />
+                        <span className="btn-secondary" style={{ fontSize: '0.8rem', padding: '0.4rem 0.875rem', pointerEvents: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                          {portraitUploading ? 'Uploading…' : (profile.portrait_url ? 'Change portrait' : 'Upload portrait')}
+                        </span>
+                      </label>
+                    </div>
+                    <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.06em', color: 'var(--text-low)' }}>Shown as hero image on your artist page · max 5 MB</span>
+                  </div>
                 </div>,
                 saveProfile,
                 () => { fetchProfile(); },
-              )}
-
-              {/* ── Studio Settings ── */}
-              <h2 style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1.75rem', fontWeight: 300, letterSpacing: '-0.02em', color: 'var(--cream)', margin: '1.5rem 0 1.25rem' }}>Studio Settings</h2>
-
-              {sectionCard(
-                'contact',
-                'Contact & Location',
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  {viewRow('Studio Name', settings.studio_name)}
-                  {viewRow('Email', settings.email)}
-                  {viewRow('Phone', settings.phone)}
-                  {viewRow('Postcode', settings.postcode)}
-                  <div style={{ gridColumn: '1 / -1' }}>{viewRow('Address', settings.address)}</div>
-                </div>,
-                <div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    {field('Studio Name', 'studio_name', 'text', 'Hall of Mirrors Tattoo')}
-                    {field('Email', 'email', 'email', 'bookings@...')}
-                    {field('Phone', 'phone', 'tel', '+44 ...')}
-                    {field('Postcode', 'postcode', 'text', 'L1 1AB')}
-                  </div>
-                  <div style={{ marginTop: '1rem' }}>{field('Address', 'address', 'text', '123 Castle Street, Liverpool')}</div>
-                </div>,
-                () => saveSettings({ studio_name: settings.studio_name, address: settings.address, postcode: settings.postcode, phone: settings.phone, email: settings.email }),
-              )}
-
-              {sectionCard(
-                'hours',
-                'Opening Hours',
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem' }}>
-                  {(['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] as const).map((day, i) => {
-                    const keys = [['hours_monday_start','hours_monday_end'],['hours_tuesday_start','hours_tuesday_end'],['hours_wednesday_start','hours_wednesday_end'],['hours_thursday_start','hours_thursday_end'],['hours_friday_start','hours_friday_end'],['hours_saturday_start','hours_saturday_end'],['hours_sunday_start','hours_sunday_end']] as const;
-                    return viewRow(day, fmtHours(settings[keys[i][0]] ?? '', settings[keys[i][1]] ?? ''));
-                  })}
-                </div>,
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {hoursPair('Mon', 'hours_monday_start', 'hours_monday_end')}
-                  {hoursPair('Tue', 'hours_tuesday_start', 'hours_tuesday_end')}
-                  {hoursPair('Wed', 'hours_wednesday_start', 'hours_wednesday_end')}
-                  {hoursPair('Thu', 'hours_thursday_start', 'hours_thursday_end')}
-                  {hoursPair('Fri', 'hours_friday_start', 'hours_friday_end')}
-                  {hoursPair('Sat', 'hours_saturday_start', 'hours_saturday_end')}
-                  {hoursPair('Sun', 'hours_sunday_start', 'hours_sunday_end')}
-                </div>,
-                () => saveSettings({ hours_monday_start: settings.hours_monday_start, hours_monday_end: settings.hours_monday_end, hours_tuesday_start: settings.hours_tuesday_start, hours_tuesday_end: settings.hours_tuesday_end, hours_wednesday_start: settings.hours_wednesday_start, hours_wednesday_end: settings.hours_wednesday_end, hours_thursday_start: settings.hours_thursday_start, hours_thursday_end: settings.hours_thursday_end, hours_friday_start: settings.hours_friday_start, hours_friday_end: settings.hours_friday_end, hours_saturday_start: settings.hours_saturday_start, hours_saturday_end: settings.hours_saturday_end, hours_sunday_start: settings.hours_sunday_start, hours_sunday_end: settings.hours_sunday_end }),
-              )}
-
-              {sectionCard(
-                'policy',
-                'Booking Policy',
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  {viewRow('Deposit Amount', settings.deposit_amount_fixed ? `£${settings.deposit_amount_fixed}` : null)}
-                  {viewRow('Cancellation Notice', settings.cancellation_policy_hours ? `${settings.cancellation_policy_hours} hours` : null)}
-                </div>,
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  {field('Deposit Amount (£)', 'deposit_amount_fixed', 'number', '50')}
-                  {field('Cancellation Notice (hours)', 'cancellation_policy_hours', 'number', '24')}
-                </div>,
-                () => saveSettings({ deposit_amount_fixed: settings.deposit_amount_fixed, cancellation_policy_hours: settings.cancellation_policy_hours }),
-              )}
-
-              {sectionCard(
-                'social',
-                'Social & About',
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    {viewRow('Instagram', settings.instagram_handle ? `@${settings.instagram_handle}` : null)}
-                    {viewRow('TikTok', settings.tiktok_handle ? `@${settings.tiktok_handle}` : null)}
-                    <div style={{ gridColumn: '1 / -1' }}>{viewRow('Facebook', settings.facebook_url)}</div>
-                  </div>
-                  {viewRow('About Section', settings.about_section)}
-                </div>,
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  {field('Instagram Handle', 'instagram_handle', 'text', 'hallofmirrorstattoo')}
-                  {field('Facebook URL', 'facebook_url', 'url', 'https://facebook.com/...')}
-                  {field('TikTok Handle', 'tiktok_handle', 'text', 'hallofmirrorstattoo')}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <label style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-mid)', textTransform: 'uppercase' }}>About Section</label>
-                    <textarea value={settings.about_section ?? ''} placeholder="A few sentences about the studio…" rows={4} onChange={e => setSettings(prev => ({ ...prev, about_section: e.target.value }))} style={{ ...inputSt, resize: 'vertical' }} />
-                  </div>
-                </div>,
-                () => saveSettings({ instagram_handle: settings.instagram_handle, facebook_url: settings.facebook_url, tiktok_handle: settings.tiktok_handle, about_section: settings.about_section }),
               )}
             </div>
           );

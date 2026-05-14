@@ -69,7 +69,7 @@ router.get('/', getAllActiveArtists);
 
 // PATCH /api/artist/profile — artist updates their own Artist row
 router.patch('/profile', authMiddleware, async (req: Request, res: Response) => {
-  const allowed = ['full_name', 'bio', 'specialties', 'years_experience', 'instagram_handle'];
+  const allowed = ['full_name', 'bio', 'specialties', 'years_experience', 'instagram_handle', 'portrait_url'];
   const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k));
   if (updates.length === 0) return res.status(400).json({ error: 'No valid fields provided' });
 
@@ -89,6 +89,47 @@ router.patch('/profile', authMiddleware, async (req: Request, res: Response) => 
     res.json(result.rows[0]);
   } finally {
     await client.end();
+  }
+});
+
+// POST /api/artist/portrait — upload/replace artist profile portrait
+const portraitUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Only image files are allowed'));
+  },
+});
+
+router.post('/portrait', authMiddleware, portraitUpload.single('portrait'), async (req: Request, res: Response) => {
+  if (!req.file) return res.status(400).json({ error: 'No image file provided' });
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceKey) return res.status(500).json({ error: 'Storage not configured' });
+
+  const ext = req.file.originalname.split('.').pop()?.toLowerCase() ?? 'jpg';
+  const fileName = `${req.artist!.id}.${ext}`;
+  const storagePath = `portraits/${fileName}`;
+
+  const storageRes = await fetch(`${supabaseUrl}/storage/v1/object/${PORTFOLIO_BUCKET}/${storagePath}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${serviceKey}`, 'Content-Type': req.file.mimetype, 'x-upsert': 'true' },
+    body: req.file.buffer,
+  });
+  if (!storageRes.ok) {
+    const err = await storageRes.text();
+    return res.status(500).json({ error: `Storage upload failed: ${err}` });
+  }
+  const publicUrl = `${supabaseUrl}/storage/v1/object/public/${PORTFOLIO_BUCKET}/${storagePath}`;
+
+  const db = new Client({ connectionString: process.env.DATABASE_URL });
+  await db.connect();
+  try {
+    await db.query(`UPDATE "Artist" SET portrait_url = $1, updated_at = NOW() WHERE id = $2`, [publicUrl, req.artist!.id]);
+    res.json({ portrait_url: publicUrl });
+  } finally {
+    await db.end();
   }
 });
 
