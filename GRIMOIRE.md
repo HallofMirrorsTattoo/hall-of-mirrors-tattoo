@@ -2,7 +2,7 @@
 ### Hall of Mirrors Tattoo — Master Record
 
 **Last Updated:** 2026-05-14
-**Status:** Production live · Phases 0–5, 6.1, 6.4, 6.5, 7.3 shipped · Phase 6.2+ roadmap active
+**Status:** Production live · Phases 0–5, 6.1, 6.3, 6.4, 6.5, 7.3 shipped · Phase 6.2+ roadmap active
 
 > This is the single source of truth for all past work, current state, and future plans.
 > Read this at the start of every session. Update it at the end of every session.
@@ -276,10 +276,12 @@ Client joins waitlist for cancelled slots. When a confirmed booking cancels, not
 - New endpoints: `POST/DELETE /api/client/waitlist`
 - New email: `sendWaitlistNotification(user, booking)`
 
-**6.3 Studio settings page `/artist/settings`**
-Edit hours, deposit amount, cancellation policy, social handles — currently hardcoded in DB seed.
-- New endpoints: `GET/PATCH /api/artist/studio-settings`
-- New tab or page in artist dashboard
+**6.3 Studio settings page** ✅ Complete (2026-05-14, commit `f962a7a`)
+- `backend/src/routes/studioSettings.ts` — `GET/PATCH /api/artist/studio-settings` behind `authMiddleware`; no new DB tables (Studio table already had all columns)
+- Allowlist-based PATCH: only known fields accepted, dynamic `SET` clauses built from request body
+- Settings tab added to artist dashboard (`'settings'` in tab union)
+- Four save-independent sections: Contact & Location, Opening Hours (Mon–Sun time pickers + Closed button), Booking Policy (deposit £, cancellation notice hours), Social & About (Instagram/Facebook/TikTok handles + about textarea)
+- `settingsSaved` flash confirmation (3s) after each section save; per-section save prevents cross-section data loss
 
 **6.4 Per-artist portfolio page `/artists/[slug]`** ✅ Complete (2026-05-14)
 - Server component at `app/artists/[slug]/page.tsx` — fetches from `GET /api/artist/:slug`
