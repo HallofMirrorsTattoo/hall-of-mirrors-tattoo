@@ -47,7 +47,7 @@ module.exports = {
         '2xl': '40px',
       },
       animation: {
-        'ken-burns':    'kenBurns 8s ease-out forwards',
+        'ken-burns':    'kenBurns1 9s cubic-bezier(0,0,0.2,1) forwards',
         'fade-up':      'fadeUp 0.9s cubic-bezier(0.32,0.72,0,1) forwards',
         'fade-in':      'fadeIn 0.8s ease-out forwards',
         'float':        'float 7s ease-in-out infinite',
@@ -60,9 +60,21 @@ module.exports = {
         'tab-fade-in':  'tabFadeIn 0.18s cubic-bezier(0.22,1,0.36,1) both',
       },
       keyframes: {
-        kenBurns: {
-          '0%':   { transform: 'scale(1.0) translateZ(0)' },
-          '100%': { transform: 'scale(1.12) translateZ(0)' },
+        kenBurns1: {
+          '0%':   { transform: 'scale(1.00) translate(0%,    0%)    translateZ(0)' },
+          '100%': { transform: 'scale(1.10) translate(1.2%,  -0.6%) translateZ(0)' },
+        },
+        kenBurns2: {
+          '0%':   { transform: 'scale(1.09) translate(-1%,   1%)    translateZ(0)' },
+          '100%': { transform: 'scale(1.00) translate(0.4%,  -0.4%) translateZ(0)' },
+        },
+        kenBurns3: {
+          '0%':   { transform: 'scale(1.10) translate(0.8%,  -0.8%) translateZ(0)' },
+          '100%': { transform: 'scale(1.00) translate(-0.4%, 0.4%)  translateZ(0)' },
+        },
+        kenBurns4: {
+          '0%':   { transform: 'scale(1.00) translate(0.4%,  0.4%)  translateZ(0)' },
+          '100%': { transform: 'scale(1.09) translate(-1%,   -0.8%) translateZ(0)' },
         },
         fadeUp: {
           '0%':   { opacity: '0', transform: 'translateY(28px)' },
