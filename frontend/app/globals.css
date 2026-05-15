@@ -368,9 +368,21 @@ section {
 }
 
 /* ─── Keyframes (used via inline styles — must be defined here) ─────────────── */
-@keyframes kenBurns {
-  0%   { transform: scale(1.0) translateZ(0); }
-  100% { transform: scale(1.12) translateZ(0); }
+@keyframes kenBurns1 {
+  0%   { transform: scale(1.00) translate(0%,     0%)    translateZ(0); }
+  100% { transform: scale(1.10) translate(1.2%,  -0.6%)  translateZ(0); }
+}
+@keyframes kenBurns2 {
+  0%   { transform: scale(1.09) translate(-1%,   1%)    translateZ(0); }
+  100% { transform: scale(1.00) translate(0.4%, -0.4%)  translateZ(0); }
+}
+@keyframes kenBurns3 {
+  0%   { transform: scale(1.10) translate(0.8%, -0.8%)  translateZ(0); }
+  100% { transform: scale(1.00) translate(-0.4%, 0.4%)  translateZ(0); }
+}
+@keyframes kenBurns4 {
+  0%   { transform: scale(1.00) translate(0.4%,  0.4%)  translateZ(0); }
+  100% { transform: scale(1.09) translate(-1%,  -0.8%)  translateZ(0); }
 }
 
 @keyframes fadeUp {
