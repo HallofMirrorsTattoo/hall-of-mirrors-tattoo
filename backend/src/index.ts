@@ -37,6 +37,10 @@ const corsOrigins: string[] = [
   'http://localhost:3008',
   'http://localhost:3009',
   'https://hall-of-mirrors-tattoo.vercel.app',
+  'https://hallofmirrorstattoo.com',
+  'https://www.hallofmirrorstattoo.com',
+  'https://hallofmirrorstattoo.co.uk',
+  'https://www.hallofmirrorstattoo.co.uk',
 ];
 if (process.env.CORS_ORIGIN) {
   corsOrigins.push(process.env.CORS_ORIGIN);

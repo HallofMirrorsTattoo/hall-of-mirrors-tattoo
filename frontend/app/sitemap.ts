@@ -1,16 +1,16 @@
 import { MetadataRoute } from 'next';
 
-const BASE_URL = 'https://hall-of-mirrors-tattoo.vercel.app';
+const BASE_URL = 'https://hallofmirrorstattoo.com';
 
 const STATIC_ROUTES: { url: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'] }[] = [
-  { url: '',           priority: 1.0,  changeFrequency: 'weekly' },
-  { url: '/booking',   priority: 0.9,  changeFrequency: 'monthly' },
-  { url: '/portfolio', priority: 0.85, changeFrequency: 'weekly' },
-  { url: '/services',  priority: 0.8,  changeFrequency: 'monthly' },
-  { url: '/about',     priority: 0.7,  changeFrequency: 'monthly' },
-  { url: '/contact',   priority: 0.7,  changeFrequency: 'monthly' },
-  { url: '/aftercare', priority: 0.5,  changeFrequency: 'yearly' },
-  { url: '/testimonials', priority: 0.6, changeFrequency: 'monthly' },
+  { url: '',              priority: 1.0,  changeFrequency: 'weekly' },
+  { url: '/booking',      priority: 0.9,  changeFrequency: 'monthly' },
+  { url: '/portfolio',    priority: 0.85, changeFrequency: 'weekly' },
+  { url: '/about',        priority: 0.75, changeFrequency: 'monthly' },
+  { url: '/flash',        priority: 0.7,  changeFrequency: 'weekly' },
+  { url: '/consultation', priority: 0.65, changeFrequency: 'monthly' },
+  { url: '/aftercare',    priority: 0.5,  changeFrequency: 'yearly' },
+  { url: '/testimonials', priority: 0.55, changeFrequency: 'monthly' },
 ];
 
 async function fetchArtistSlugs(): Promise<string[]> {

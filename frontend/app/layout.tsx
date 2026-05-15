@@ -7,15 +7,24 @@ import { AuthProvider } from '@/lib/authContext';
 import { ClientAuthProvider } from '@/lib/clientAuthContext';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://hallofmirrorstattoo.com'),
   title: 'Hall of Mirrors Tattoo Studio — Liverpool',
   description: 'Bespoke tattoo artistry in Liverpool. Neo-traditional specialist Robyn creates timeless, meticulously crafted work. Book your appointment or free consultation.',
+  alternates: {
+    canonical: 'https://hallofmirrorstattoo.com',
+  },
   openGraph: {
     title: 'Hall of Mirrors Tattoo Studio',
-    description: 'Bespoke tattoo artistry in Liverpool.',
-    url: 'https://hallofmirrors.tattoo',
-    siteName: 'Hall of Mirrors Tattoo',
+    description: 'Bespoke tattoo artistry in Liverpool. Neo-traditional specialist. Every design custom.',
+    url: 'https://hallofmirrorstattoo.com',
+    siteName: 'Hall of Mirrors Tattoo Studio',
     locale: 'en_GB',
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Hall of Mirrors Tattoo Studio — Liverpool',
+    description: 'Bespoke tattoo artistry in Liverpool. Neo-traditional specialist. Every design custom.',
   },
 };
 
