@@ -2,7 +2,7 @@
 ### Hall of Mirrors Tattoo — Master Record
 
 **Last Updated:** 2026-05-15
-**Status:** Production live · Phases 0–5, 6.1, 6.3, 6.4, 6.5, 6.7, 7.3 shipped · Nav streamlined to Home / Portfolio / About · Flash Days teaser in Portfolio · Services absorbed into About (no prices) · Christina placeholder live · Shop carousel updated to new images with directional Ken Burns · Phase 6.2+ roadmap active
+**Status:** Production live on hallofmirrorstattoo.com · Phases 0–5, 6.1, 6.3, 6.4, 6.5, 6.7, 7.3 shipped · Nav streamlined to Home / Portfolio / About · Flash Days teaser in Portfolio · Services absorbed into About (no prices) · Christina placeholder live · Shop carousel updated to new images with directional Ken Burns · Custom domain go-live done (CORS, sitemap, robots, OG meta) · Monday 2026-05-18 opening
 
 > This is the single source of truth for all past work, current state, and future plans.
 > Read this at the start of every session. Update it at the end of every session.
@@ -20,7 +20,7 @@ A full-stack booking and portfolio platform built as a gift by Will for his part
 
 | Environment | URL |
 |---|---|
-| Frontend (Vercel) | https://hall-of-mirrors-tattoo.vercel.app |
+| Frontend (Vercel) | https://hallofmirrorstattoo.com (also .co.uk and hall-of-mirrors-tattoo.vercel.app) |
 | Backend (Railway) | https://hall-of-mirrors-tattoo-production.up.railway.app |
 
 **Test credentials:**
