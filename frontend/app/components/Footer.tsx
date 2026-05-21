@@ -60,18 +60,25 @@ export default async function Footer() {
             }}>
               Studio
             </h4>
-            <address style={{
-              fontFamily: '"DM Sans", sans-serif',
-              fontStyle: 'normal',
-              fontSize: '0.875rem',
-              lineHeight: 2,
-              color: 'var(--text-mid)',
-            }}>
-              Hall of Mirrors Tattoo Studio<br />
-              Suite 3, 34 Castle Street<br />
-              Liverpool, L2 0NR<br />
-              United Kingdom
-            </address>
+            <a
+              href="https://share.google/VD7dtKwuFYH5QnWvh"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="footer-address-link"
+            >
+              <address style={{
+                fontFamily: '"DM Sans", sans-serif',
+                fontStyle: 'normal',
+                fontSize: '0.875rem',
+                lineHeight: 2,
+              }}>
+                Hall of Mirrors Tattoo Studio<br />
+                Suite 3, 34 Castle Street<br />
+                Liverpool, L2 0NR<br />
+                United Kingdom
+                <span className="footer-address-cta">Get directions ↗</span>
+              </address>
+            </a>
           </div>
 
           {/* Navigate */}

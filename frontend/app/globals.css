@@ -485,6 +485,26 @@ a {
 }
 .footer-social:hover { color: var(--gold); }
 
+.footer-address-link {
+  text-decoration: none;
+  display: inline-block;
+  color: var(--text-mid);
+  transition: color 0.25s ease;
+}
+.footer-address-link:hover { color: var(--cream); }
+
+.footer-address-cta {
+  display: block;
+  margin-top: 0.25rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(201,168,76,0.5);
+  transition: color 0.25s ease;
+}
+.footer-address-link:hover .footer-address-cta { color: var(--gold); }
+
 /* ─── Utility ───────────────────────────────────────────────────────────────── */
 .text-gold    { color: var(--gold); }
 .text-cream   { color: var(--cream); }
