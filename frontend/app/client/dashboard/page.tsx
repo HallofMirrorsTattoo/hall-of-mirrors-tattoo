@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -13,14 +13,14 @@ import ProfileTab from './profile';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-const TABS = [
+type TabId = 'bookings' | 'consultations' | 'consent-forms' | 'profile';
+
+const ALL_TABS: { id: TabId; label: string; icon: string }[] = [
   { id: 'bookings',      label: 'Bookings',      icon: '◈' },
-  { id: 'consultations', label: 'Conversations',  icon: '◇' },
+  { id: 'consultations', label: 'Consultations',  icon: '◇' },
   { id: 'consent-forms', label: 'Consent Forms',  icon: '◉' },
   { id: 'profile',       label: 'My Profile',     icon: '○' },
-] as const;
-
-type TabId = typeof TABS[number]['id'];
+];
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
@@ -31,6 +31,12 @@ export default function ClientDashboardPage() {
   const [badges, setBadges] = useState<Partial<Record<TabId, number>>>({});
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Track whether Bookings / Consultations tabs should be shown
+  // Start optimistically true to avoid flicker; set to false once we confirm 0 records
+  const [hasBookings, setHasBookings] = useState(true);
+  const [hasConsultations, setHasConsultations] = useState(true);
+  const defaultTabSet = useRef(false);
+
   const updateBadge = useCallback((tab: TabId, count: number) => {
     setBadges(prev => ({ ...prev, [tab]: count }));
   }, []);
@@ -39,7 +45,33 @@ export default function ClientDashboardPage() {
     setBadges(prev => ({ ...prev, bookings: n }));
   }, []);
 
-  // Consultation badge — unread artist messages
+  // Bookings: fetch count + badge
+  useEffect(() => {
+    if (!accessToken) return;
+    (async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/client/bookings`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const list: { appointment_status: string; counter_offered_by?: string }[] = data.bookings || [];
+        const exists = list.length > 0;
+        setHasBookings(exists);
+        const badge = list.filter(
+          b => b.appointment_status === 'counter_offered' && b.counter_offered_by === 'artist'
+        ).length;
+        updateBadge('bookings', badge);
+        // Set smart default tab once data is known
+        if (!defaultTabSet.current) {
+          defaultTabSet.current = true;
+          if (!exists) setActiveTab('consultations'); // will be corrected by consultations effect if also empty
+        }
+      } catch { /* non-critical */ }
+    })();
+  }, [accessToken, updateBadge]);
+
+  // Consultation badge — unread artist messages + existence check
   useEffect(() => {
     if (!accessToken) return;
     (async () => {
@@ -49,15 +81,25 @@ export default function ClientDashboardPage() {
         });
         if (!res.ok) return;
         const data = await res.json();
-        const badge = (data.consultations || []).reduce(
-          (sum: number, c: { status: string; unread_artist_count: number }) =>
-            sum + (c.status !== 'declined' ? (c.unread_artist_count ?? 0) : 0),
+        const list: { status: string; unread_artist_count: number }[] = data.consultations || [];
+        setHasConsultations(list.length > 0);
+        const badge = list.reduce(
+          (sum, c) => sum + (c.status !== 'declined' ? (c.unread_artist_count ?? 0) : 0),
           0
         );
         updateBadge('consultations', badge);
       } catch { /* non-critical */ }
     })();
   }, [accessToken, updateBadge]);
+
+  // If active tab becomes hidden, redirect to a visible tab
+  useEffect(() => {
+    if (activeTab === 'bookings' && !hasBookings) {
+      setActiveTab(hasConsultations ? 'consultations' : 'profile');
+    } else if (activeTab === 'consultations' && !hasConsultations) {
+      setActiveTab(hasBookings ? 'bookings' : 'profile');
+    }
+  }, [hasBookings, hasConsultations]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Consent forms badge — unsigned forms
   useEffect(() => {
@@ -77,6 +119,13 @@ export default function ClientDashboardPage() {
       } catch { /* non-critical */ }
     })();
   }, [accessToken, updateBadge]);
+
+  // Compute visible tabs
+  const visibleTabs = ALL_TABS.filter(t => {
+    if (t.id === 'bookings') return hasBookings;
+    if (t.id === 'consultations') return hasConsultations;
+    return true; // consent-forms and profile always visible
+  });
 
   const handleLogout = () => {
     logout();
@@ -130,7 +179,7 @@ export default function ClientDashboardPage() {
       {/* Nav items */}
       <nav style={{ flex: 1 }}>
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-          {TABS.map(({ id, label, icon }) => {
+          {visibleTabs.map(({ id, label, icon }) => {
             const isActive = activeTab === id;
             const badge = badges[id] ?? 0;
             return (
@@ -329,7 +378,7 @@ export default function ClientDashboardPage() {
               ≡
             </button>
             <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.5)' }}>
-              {TABS.find(t => t.id === activeTab)?.label}
+              {ALL_TABS.find(t => t.id === activeTab)?.label}
             </span>
             <div style={{ width: '2.75rem' }} /> {/* spacer */}
           </div>

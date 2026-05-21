@@ -153,10 +153,6 @@ export default function ArtistDashboard() {
   const [notesText, setNotesText] = useState('');
   const [notesSaving, setNotesSaving] = useState<'idle' | 'saving' | 'saved'>('idle');
 
-  // Client persistent notes state (saved on User, not Booking)
-  const [clientNotesText, setClientNotesText] = useState('');
-  const [clientNotesSaving, setClientNotesSaving] = useState<'idle' | 'saving' | 'saved'>('idle');
-
   // Post-session actions
   const [aftercareSent, setAftercareSent] = useState<'idle' | 'sending' | 'sent'>('idle');
   const [rebookSent, setRebookSent] = useState<'idle' | 'sending' | 'sent'>('idle');
@@ -539,9 +535,7 @@ export default function ArtistDashboard() {
   // Sync notes + action state when selected booking changes
   useEffect(() => {
     setNotesText(selectedBooking?.artist_notes ?? '');
-    setClientNotesText(selectedBooking?.client_artist_notes ?? '');
     setNotesSaving('idle');
-    setClientNotesSaving('idle');
     setAftercareSent('idle');
     setRebookSent('idle');
     setArtistActionMode('none');
@@ -569,28 +563,6 @@ export default function ArtistDashboard() {
       }
     } catch {
       setNotesSaving('idle');
-    }
-  };
-
-  const saveClientNotes = async () => {
-    if (!selectedBooking?.user_id) return;
-    setClientNotesSaving('saving');
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/clients/${selectedBooking.user_id}/notes`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ notes: clientNotesText }),
-      });
-      if (res.ok) {
-        setClientNotesSaving('saved');
-        setBookings((prev) => prev.map((b) => b.user_id === selectedBooking.user_id ? { ...b, client_artist_notes: clientNotesText } : b));
-        setSelectedBooking((prev) => prev ? { ...prev, client_artist_notes: clientNotesText } : null);
-        setTimeout(() => setClientNotesSaving('idle'), 2000);
-      } else {
-        setClientNotesSaving('idle');
-      }
-    } catch {
-      setClientNotesSaving('idle');
     }
   };
 
@@ -1144,11 +1116,11 @@ export default function ArtistDashboard() {
           </div>
         )}
 
-        {/* Private notes — not visible to client */}
+        {/* Notes — private to artist only */}
         <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem', marginBottom: '1.25rem' }}>
-          <span style={{ ...labelStyle, marginBottom: '0.25rem' }}>Private notes</span>
+          <span style={{ ...labelStyle, marginBottom: '0.25rem' }}>Notes</span>
           <p style={{ margin: '0 0 0.625rem', fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--text-low)' }}>
-            Not visible to the client
+            Private — visible to you only
           </p>
           <textarea
             value={notesText}
@@ -1167,34 +1139,6 @@ export default function ArtistDashboard() {
               {notesSaving === 'saving' ? 'Saving…' : 'Save notes'}
             </button>
             {notesSaving === 'saved' && (
-              <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', color: 'rgba(34,197,94,0.8)' }}>Saved ✓</span>
-            )}
-          </div>
-        </div>
-
-        {/* Client persistent notes — saved on User, visible across all their bookings */}
-        <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem', marginBottom: '1.25rem' }}>
-          <span style={{ ...labelStyle, marginBottom: '0.25rem' }}>Client notes</span>
-          <p style={{ margin: '0 0 0.625rem', fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--text-low)' }}>
-            Persists across all {selectedBooking.first_name}&apos;s bookings — allergies, preferences, anything worth remembering
-          </p>
-          <textarea
-            value={clientNotesText}
-            onChange={(e) => { setClientNotesText(e.target.value); setClientNotesSaving('idle'); }}
-            placeholder="e.g. latex allergy, prefers short sessions, sensititive skin on left arm…"
-            rows={3}
-            style={{ width: '100%', resize: 'vertical', minHeight: '5rem' }}
-          />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
-            <button
-              type="button"
-              onClick={saveClientNotes}
-              disabled={clientNotesSaving === 'saving'}
-              style={{ padding: '0.4rem 0.875rem', background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.3)', color: 'var(--gold)', fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', borderRadius: '0.25rem', cursor: clientNotesSaving === 'saving' ? 'default' : 'pointer', opacity: clientNotesSaving === 'saving' ? 0.6 : 1 }}
-            >
-              {clientNotesSaving === 'saving' ? 'Saving…' : 'Save client notes'}
-            </button>
-            {clientNotesSaving === 'saved' && (
               <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', color: 'rgba(34,197,94,0.8)' }}>Saved ✓</span>
             )}
           </div>
