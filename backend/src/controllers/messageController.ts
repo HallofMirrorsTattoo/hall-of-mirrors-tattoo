@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { randomUUID } from 'crypto';
 import pkg from 'pg';
+import { uploadToSupabase } from '../utils/storage.js';
 
 const { Client } = pkg;
 
@@ -72,7 +73,7 @@ export async function getClientMessages(req: Request, res: Response) {
     );
 
     const result = await db.query(
-      `SELECT id, booking_id, sender_type, body, created_at, read_at
+      `SELECT id, booking_id, sender_type, body, image_url, created_at, read_at
        FROM "Message" WHERE booking_id = $1 ORDER BY created_at ASC`,
       [bookingId]
     );
@@ -91,10 +92,17 @@ export async function sendClientMessage(req: Request, res: Response) {
   try {
     if (!req.user) return res.status(401).json({ success: false, error: 'Not authenticated' });
     const { bookingId } = req.params;
-    const { body } = req.body;
+    const body: string = req.body.body || '';
+    const hasImage = !!(req as any).file;
 
-    if (!body?.trim()) {
-      return res.status(400).json({ success: false, error: 'Message body is required' });
+    if (!body.trim() && !hasImage) {
+      return res.status(400).json({ success: false, error: 'Message body or image is required' });
+    }
+
+    let imageUrl: string | null = null;
+    if (hasImage) {
+      const file = (req as any).file;
+      imageUrl = await uploadToSupabase(file.buffer, file.originalname, file.mimetype);
     }
 
     await db.connect();
@@ -105,10 +113,10 @@ export async function sendClientMessage(req: Request, res: Response) {
 
     const id = randomUUID();
     const result = await db.query(
-      `INSERT INTO "Message" (id, booking_id, sender_type, sender_id, body, created_at)
-       VALUES ($1, $2, 'client', $3, $4, NOW())
-       RETURNING id, booking_id, sender_type, body, created_at`,
-      [id, bookingId, req.user.id, body.trim()]
+      `INSERT INTO "Message" (id, booking_id, sender_type, sender_id, body, image_url, created_at)
+       VALUES ($1, $2, 'client', $3, $4, $5, NOW())
+       RETURNING id, booking_id, sender_type, body, image_url, created_at`,
+      [id, bookingId, req.user.id, body.trim() || null, imageUrl]
     );
 
     res.status(201).json({ success: true, message: result.rows[0] });
@@ -176,7 +184,7 @@ export async function getArtistMessages(req: Request, res: Response) {
     );
 
     const result = await db.query(
-      `SELECT id, booking_id, sender_type, body, created_at, read_at
+      `SELECT id, booking_id, sender_type, body, image_url, created_at, read_at
        FROM "Message" WHERE booking_id = $1 ORDER BY created_at ASC`,
       [bookingId]
     );
@@ -195,10 +203,17 @@ export async function sendArtistMessage(req: Request, res: Response) {
   try {
     if (!req.artist) return res.status(401).json({ success: false, error: 'Not authenticated' });
     const { bookingId } = req.params;
-    const { body } = req.body;
+    const body: string = req.body.body || '';
+    const hasImage = !!(req as any).file;
 
-    if (!body?.trim()) {
-      return res.status(400).json({ success: false, error: 'Message body is required' });
+    if (!body.trim() && !hasImage) {
+      return res.status(400).json({ success: false, error: 'Message body or image is required' });
+    }
+
+    let imageUrl: string | null = null;
+    if (hasImage) {
+      const file = (req as any).file;
+      imageUrl = await uploadToSupabase(file.buffer, file.originalname, file.mimetype);
     }
 
     await db.connect();
@@ -213,10 +228,10 @@ export async function sendArtistMessage(req: Request, res: Response) {
 
     const id = randomUUID();
     const result = await db.query(
-      `INSERT INTO "Message" (id, booking_id, sender_type, sender_id, body, created_at)
-       VALUES ($1, $2, 'artist', $3, $4, NOW())
-       RETURNING id, booking_id, sender_type, body, created_at`,
-      [id, bookingId, req.artist.id, body.trim()]
+      `INSERT INTO "Message" (id, booking_id, sender_type, sender_id, body, image_url, created_at)
+       VALUES ($1, $2, 'artist', $3, $4, $5, NOW())
+       RETURNING id, booking_id, sender_type, body, image_url, created_at`,
+      [id, bookingId, req.artist.id, body.trim() || null, imageUrl]
     );
 
     res.status(201).json({ success: true, message: result.rows[0] });
@@ -276,7 +291,7 @@ export async function getConsultationMessages(req: Request, res: Response) {
     }
 
     const result = await db.query(
-      `SELECT id, consultation_id, sender_type, body, created_at, read_at
+      `SELECT id, consultation_id, sender_type, body, image_url, created_at, read_at
        FROM "Message" WHERE consultation_id = $1 ORDER BY created_at ASC`,
       [consultationId]
     );
@@ -294,10 +309,17 @@ export async function sendConsultationMessage(req: Request, res: Response) {
   const db = new Client({ connectionString: process.env.DATABASE_URL });
   try {
     const { consultationId } = req.params;
-    const { body } = req.body;
+    const body: string = req.body.body || '';
+    const hasImage = !!(req as any).file;
 
-    if (!body?.trim()) {
-      return res.status(400).json({ success: false, error: 'Message body is required' });
+    if (!body.trim() && !hasImage) {
+      return res.status(400).json({ success: false, error: 'Message body or image is required' });
+    }
+
+    let imageUrl: string | null = null;
+    if (hasImage) {
+      const file = (req as any).file;
+      imageUrl = await uploadToSupabase(file.buffer, file.originalname, file.mimetype);
     }
 
     await db.connect();
@@ -336,10 +358,10 @@ export async function sendConsultationMessage(req: Request, res: Response) {
 
     const id = randomUUID();
     const result = await db.query(
-      `INSERT INTO "Message" (id, consultation_id, sender_type, sender_id, body, created_at)
-       VALUES ($1, $2, $3, $4, $5, NOW())
-       RETURNING id, consultation_id, sender_type, body, created_at`,
-      [id, consultationId, senderType, senderId, body.trim()]
+      `INSERT INTO "Message" (id, consultation_id, sender_type, sender_id, body, image_url, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW())
+       RETURNING id, consultation_id, sender_type, body, image_url, created_at`,
+      [id, consultationId, senderType, senderId, body.trim() || null, imageUrl]
     );
 
     res.status(201).json({ success: true, message: result.rows[0] });

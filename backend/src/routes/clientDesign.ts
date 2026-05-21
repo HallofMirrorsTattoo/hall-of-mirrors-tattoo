@@ -1,60 +1,16 @@
 import { Router, Request, Response } from 'express';
 import pkg from 'pg';
 import { randomUUID } from 'crypto';
-import multer from 'multer';
+import { multerUpload, uploadToSupabase } from '../utils/storage.js';
 import { clientAuthMiddleware } from '../middleware/clientAuth.js';
 
 const { Client } = pkg;
 const router = Router();
 
-// Memory storage — we stream the buffer to Supabase Storage
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
-  fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed'));
-    }
-  },
-});
-
 router.use(clientAuthMiddleware);
 
-// Upload a file to Supabase Storage and return its public URL
-async function uploadToSupabase(buffer: Buffer, fileName: string, mimeType: string): Promise<string> {
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !serviceKey) {
-    throw new Error('Supabase storage is not configured (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY missing)');
-  }
-
-  const bucket = 'design-ideas';
-  const path = `uploads/${Date.now()}-${fileName}`;
-  const uploadUrl = `${supabaseUrl}/storage/v1/object/${bucket}/${path}`;
-
-  const response = await fetch(uploadUrl, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${serviceKey}`,
-      'Content-Type': mimeType,
-      'x-upsert': 'true',
-    },
-    body: buffer,
-  });
-
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Storage upload failed: ${err}`);
-  }
-
-  return `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
-}
-
 // POST /api/client/design-ideas — accepts file upload OR image_url
-router.post('/', upload.single('image'), async (req: Request, res: Response) => {
+router.post('/', multerUpload.single('image'), async (req: Request, res: Response) => {
   const client = new Client({ connectionString: process.env.DATABASE_URL });
 
   try {
@@ -67,9 +23,7 @@ router.post('/', upload.single('image'), async (req: Request, res: Response) => 
 
     if (req.file) {
       // File upload path
-      const ext = req.file.originalname.split('.').pop() || 'jpg';
-      const fileName = `${randomUUID()}.${ext}`;
-      imageUrl = await uploadToSupabase(req.file.buffer, fileName, req.file.mimetype);
+      imageUrl = await uploadToSupabase(req.file.buffer, req.file.originalname, req.file.mimetype);
     } else if (req.body.image_url) {
       // URL path (backward compatible)
       imageUrl = req.body.image_url;

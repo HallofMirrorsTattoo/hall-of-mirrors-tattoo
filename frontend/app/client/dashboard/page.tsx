@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { useClientAuth } from '@/lib/clientAuthContext';
 import { ClientProtectedRoute } from '@/lib/clientProtectedRoute';
 import BookingsTab from './bookings';
-import DesignIdeasTab from './design-ideas';
 import ConsultationsTab from './consultations';
 import ConsentFormsTab from './consent-forms';
 import ProfileTab from './profile';
@@ -16,8 +15,7 @@ import ProfileTab from './profile';
 
 const TABS = [
   { id: 'bookings',      label: 'Bookings',      icon: '◈' },
-  { id: 'consultations', label: 'Consultations',  icon: '◇' },
-  { id: 'design-ideas',  label: 'Design Ideas',   icon: '◻' },
+  { id: 'consultations', label: 'Conversations',  icon: '◇' },
   { id: 'consent-forms', label: 'Consent Forms',  icon: '◉' },
   { id: 'profile',       label: 'My Profile',     icon: '○' },
 ] as const;
@@ -344,7 +342,6 @@ export default function ClientDashboardPage() {
           >
             {activeTab === 'bookings'      && <BookingsTab onBadgeUpdate={onBookingsBadge} />}
             {activeTab === 'consultations' && <ConsultationsTab />}
-            {activeTab === 'design-ideas'  && <DesignIdeasTab />}
             {activeTab === 'consent-forms' && <ConsentFormsTab />}
             {activeTab === 'profile'       && <ProfileTab />}
           </div>

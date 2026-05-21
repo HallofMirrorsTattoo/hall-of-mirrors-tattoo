@@ -88,7 +88,7 @@ router.get('/', async (req: Request, res: Response) => {
     await client.connect();
 
     const result = await client.query(
-      `SELECT c.consultation_id, c.artist_id, c.message, c.preferred_dates, c.status, c.artist_response, c.created_at, c.updated_at,
+      `SELECT c.consultation_id, c.artist_id, c.booking_id, c.message, c.preferred_dates, c.status, c.artist_response, c.created_at, c.updated_at,
               a.full_name as artist_name, a.specialties, a.instagram_handle,
               (SELECT COUNT(*) FROM "Message" m WHERE m.consultation_id = c.consultation_id AND m.sender_type = 'artist')::int AS artist_message_count,
               (SELECT COUNT(*) FROM "Message" m WHERE m.consultation_id = c.consultation_id AND m.sender_type = 'artist' AND m.read_at IS NULL)::int AS unread_artist_count
@@ -158,6 +158,106 @@ router.get('/:id', async (req: Request, res: Response) => {
       success: false,
       error: 'Failed to fetch consultation',
     });
+  } finally {
+    await client.end();
+  }
+});
+
+// POST /:id/book — convert a standalone consultation into a formal booking
+router.post('/:id/book', async (req: Request, res: Response) => {
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: 'Not authenticated' });
+    }
+
+    const { id } = req.params;
+    const { placement, estimated_size, preferred_date, notes } = req.body;
+
+    if (!placement?.trim()) {
+      return res.status(400).json({ success: false, error: 'Placement is required' });
+    }
+
+    await client.connect();
+
+    // Fetch the consultation — must belong to this user and not be declined
+    const consultResult = await client.query(
+      `SELECT c.consultation_id, c.artist_id, c.booking_id, c.message, c.user_id
+       FROM "Consultation" c
+       WHERE c.consultation_id = $1 AND c.user_id = $2 AND c.status != 'declined'`,
+      [id, req.user.id]
+    );
+
+    if (consultResult.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Consultation not found' });
+    }
+
+    const consultation = consultResult.rows[0];
+
+    if (consultation.booking_id) {
+      return res.status(400).json({ success: false, error: 'This consultation already has a linked booking' });
+    }
+
+    // Build appointment datetime if a preferred date was provided
+    let appointmentDateTime: string | null = null;
+    if (preferred_date) {
+      appointmentDateTime = new Date(preferred_date).toISOString();
+    }
+
+    // Create the booking
+    const bookingId = randomUUID();
+    const bookingReference = `BK-${Date.now()}`;
+
+    await client.query(
+      `INSERT INTO "Booking" (
+        id, studio_id, user_id, artist_id, appointment_date_time,
+        appointment_status, tattoo_description, placement, estimated_size,
+        artist_notes, deposit_amount, balance_due, booking_reference,
+        payment_method, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())`,
+      [
+        bookingId,
+        'default-studio',
+        req.user.id,
+        consultation.artist_id,
+        appointmentDateTime,
+        'pending',
+        consultation.message,
+        placement.trim(),
+        estimated_size || null,
+        notes || null,
+        '0',
+        '0',
+        bookingReference,
+        'not_set',
+      ]
+    );
+
+    // Link the consultation to this new booking
+    await client.query(
+      `UPDATE "Consultation" SET booking_id = $1, updated_at = NOW() WHERE consultation_id = $2`,
+      [bookingId, id]
+    );
+
+    // Return the new booking
+    const bookingResult = await client.query(
+      `SELECT b.id, b.booking_reference, b.appointment_date_time, b.appointment_status,
+              b.placement, b.estimated_size, a.full_name as artist_name
+       FROM "Booking" b
+       LEFT JOIN "Artist" a ON b.artist_id = a.id
+       WHERE b.id = $1`,
+      [bookingId]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Booking created from consultation',
+      booking: bookingResult.rows[0],
+    });
+  } catch (error) {
+    console.error('Convert consultation to booking error:', error);
+    res.status(500).json({ success: false, error: 'Failed to create booking' });
   } finally {
     await client.end();
   }
