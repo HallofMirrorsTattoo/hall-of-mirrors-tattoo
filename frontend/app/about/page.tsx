@@ -414,21 +414,6 @@ export default async function About() {
               </div>
             ))}
           </div>
-          <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
-            <Link
-              href="/faq"
-              style={{
-                fontFamily: '"DM Mono", monospace',
-                fontSize: '0.7rem',
-                letterSpacing: '0.15em',
-                textTransform: 'uppercase',
-                color: 'rgba(201,168,76,0.6)',
-                textDecoration: 'none',
-              }}
-            >
-              Read all FAQs ↗
-            </Link>
-          </div>
         </AccordionItem>
 
       </section>

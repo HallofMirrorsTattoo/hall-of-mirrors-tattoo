@@ -8,13 +8,11 @@ import { ClientProtectedRoute } from '@/lib/clientProtectedRoute';
 import BookingsTab from './bookings';
 import DesignIdeasTab from './design-ideas';
 import ConsultationsTab from './consultations';
-import AftercareTab from './aftercare';
 
 const BASE_TABS = [
   { id: 'bookings',      label: 'Your Bookings' },
   { id: 'consultations', label: 'Consultations' },
   { id: 'design-ideas',  label: 'Design Ideas' },
-  { id: 'aftercare',     label: 'Aftercare' },
 ] as const;
 
 type TabId = typeof BASE_TABS[number]['id'];
@@ -137,7 +135,6 @@ export default function ClientDashboardPage() {
             {activeTab === 'bookings'      && <BookingsTab onBadgeUpdate={onBookingsBadge} />}
             {activeTab === 'consultations' && <ConsultationsTab />}
             {activeTab === 'design-ideas'  && <DesignIdeasTab />}
-            {activeTab === 'aftercare'     && <AftercareTab />}
           </div>
 
           {/* Quick Actions */}

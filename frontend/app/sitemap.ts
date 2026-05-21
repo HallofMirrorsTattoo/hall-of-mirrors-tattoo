@@ -7,11 +7,6 @@ const STATIC_ROUTES: { url: string; priority: number; changeFrequency: MetadataR
   { url: '/booking',      priority: 0.9,  changeFrequency: 'monthly' },
   { url: '/portfolio',    priority: 0.85, changeFrequency: 'weekly' },
   { url: '/about',        priority: 0.75, changeFrequency: 'monthly' },
-  { url: '/flash',        priority: 0.7,  changeFrequency: 'weekly' },
-  { url: '/consultation', priority: 0.65, changeFrequency: 'monthly' },
-  { url: '/faq',          priority: 0.65, changeFrequency: 'yearly' },
-  { url: '/aftercare',    priority: 0.55, changeFrequency: 'yearly' },
-  { url: '/testimonials', priority: 0.55, changeFrequency: 'monthly' },
 ];
 
 async function fetchArtistSlugs(): Promise<string[]> {
