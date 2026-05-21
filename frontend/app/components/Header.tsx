@@ -20,6 +20,11 @@ export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
 
+  // Hide header on dashboard pages — dashboards have their own sidebar navigation
+  if (pathname.startsWith('/client/dashboard') || pathname.startsWith('/artist/dashboard')) {
+    return null;
+  }
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
     window.addEventListener('scroll', onScroll, { passive: true });

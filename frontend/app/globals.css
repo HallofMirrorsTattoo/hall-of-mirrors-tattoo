@@ -559,6 +559,10 @@ a {
   100% { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Scrollable containers that hide the scrollbar (tabs, horizontal lists) */
 .scroll-no-bar {
   scrollbar-width: none;

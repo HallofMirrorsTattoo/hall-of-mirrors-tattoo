@@ -2,39 +2,46 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useClientAuth } from '@/lib/clientAuthContext';
 import { ClientProtectedRoute } from '@/lib/clientProtectedRoute';
 import BookingsTab from './bookings';
 import DesignIdeasTab from './design-ideas';
 import ConsultationsTab from './consultations';
+import ConsentFormsTab from './consent-forms';
+import ProfileTab from './profile';
 
-const BASE_TABS = [
-  { id: 'bookings',      label: 'Your Bookings' },
-  { id: 'consultations', label: 'Consultations' },
-  { id: 'design-ideas',  label: 'Design Ideas' },
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+const TABS = [
+  { id: 'bookings',      label: 'Bookings',      icon: '◈' },
+  { id: 'consultations', label: 'Consultations',  icon: '◇' },
+  { id: 'design-ideas',  label: 'Design Ideas',   icon: '◻' },
+  { id: 'consent-forms', label: 'Consent Forms',  icon: '◉' },
+  { id: 'profile',       label: 'My Profile',     icon: '○' },
 ] as const;
 
-type TabId = typeof BASE_TABS[number]['id'];
+type TabId = typeof TABS[number]['id'];
+
+// ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function ClientDashboardPage() {
   const router = useRouter();
   const { user, logout, accessToken } = useClientAuth();
   const [activeTab, setActiveTab] = useState<TabId>('bookings');
   const [badges, setBadges] = useState<Partial<Record<TabId, number>>>({});
-
-  const handleLogout = () => {
-    logout();
-    router.push('/');
-  };
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const updateBadge = useCallback((tab: TabId, count: number) => {
     setBadges(prev => ({ ...prev, [tab]: count }));
   }, []);
 
-  const onBookingsBadge = useCallback((n: number) => setBadges(prev => ({ ...prev, bookings: n })), []);
+  const onBookingsBadge = useCallback((n: number) => {
+    setBadges(prev => ({ ...prev, bookings: n }));
+  }, []);
 
-  // Fetch consultation badge count (pending consults with artist messages)
+  // Consultation badge — unread artist messages
   useEffect(() => {
     if (!accessToken) return;
     (async () => {
@@ -44,131 +51,301 @@ export default function ClientDashboardPage() {
         });
         if (!res.ok) return;
         const data = await res.json();
-        const consultations = data.consultations || [];
-        const badge = consultations.reduce((sum: number, c: { status: string; unread_artist_count: number }) =>
-          sum + (c.status !== 'declined' ? (c.unread_artist_count ?? 0) : 0), 0
+        const badge = (data.consultations || []).reduce(
+          (sum: number, c: { status: string; unread_artist_count: number }) =>
+            sum + (c.status !== 'declined' ? (c.unread_artist_count ?? 0) : 0),
+          0
         );
         updateBadge('consultations', badge);
       } catch { /* non-critical */ }
     })();
   }, [accessToken, updateBadge]);
 
-  return (
-    <ClientProtectedRoute>
-      <div style={{ backgroundColor: 'var(--bg)', minHeight: '100vh', paddingTop: '8rem', paddingBottom: '5rem' }}>
-        <div style={{ maxWidth: '72rem', margin: '0 auto', padding: '0 1rem' }}>
+  // Consent forms badge — unsigned forms
+  useEffect(() => {
+    if (!accessToken) return;
+    (async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/client/consent`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const unsigned = (data.bookings || []).filter((b: { consent_form_id: string | null }) => !b.consent_form_id).length;
+        updateBadge('consent-forms', unsigned);
+      } catch { /* non-critical */ }
+    })();
+  }, [accessToken, updateBadge]);
 
-          {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '3rem' }}>
-            <div>
-              <p className="eyebrow" style={{ marginBottom: '0.5rem' }}>Client Portal</p>
-              <h1 style={{
-                fontFamily: '"Cormorant Garamond", serif',
-                fontStyle: 'italic',
-                fontWeight: 300,
-                fontSize: 'clamp(2rem, 5vw, 3.5rem)',
-                color: 'var(--cream)',
-                letterSpacing: '-0.02em',
-                lineHeight: 1.1,
-                marginBottom: '0.5rem',
-              }}>
-                Welcome back{user?.first_name ? `, ${user.first_name}` : ''}
-              </h1>
-              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.6 }}>
-                Your bookings, consultations, and creative space
-              </p>
-            </div>
-            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexShrink: 0, marginTop: '0.5rem' }}>
-              <Link href="/client/profile" className="btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.8125rem' }}>
-                Profile
-              </Link>
-              <button onClick={handleLogout} className="btn-secondary">
-                Log out
-              </button>
-            </div>
-          </div>
+  const handleLogout = () => {
+    logout();
+    router.push('/');
+  };
 
-          {/* Tab Navigation */}
-          <div className="scroll-no-bar" style={{ borderBottom: '1px solid var(--border)', marginBottom: '2.5rem', display: 'flex', gap: '0', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-            {BASE_TABS.map((tab) => {
-              const isActive = activeTab === tab.id;
-              const badge = badges[tab.id] ?? 0;
-              return (
+  const handleTabChange = (id: TabId) => {
+    setActiveTab(id);
+    setSidebarOpen(false);
+  };
+
+  // ── Sidebar content ──────────────────────────────────────────────────────
+  const SidebarContent = () => (
+    <>
+      {/* Logo + identity */}
+      <div style={{ marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '1.25rem' }}>
+          <Image
+            src="/assets/logos/White Logo.png"
+            alt="Hall of Mirrors"
+            width={32}
+            height={32}
+            style={{ width: '2rem', height: 'auto', opacity: 0.85 }}
+          />
+          <span style={{
+            fontFamily: '"DM Mono", monospace',
+            fontSize: '0.65rem',
+            letterSpacing: '0.2em',
+            textTransform: 'uppercase',
+            color: 'rgba(201,168,76,0.55)',
+          }}>
+            Client Portal
+          </span>
+        </div>
+        <p style={{
+          fontFamily: '"Cormorant Garamond", serif',
+          fontStyle: 'italic',
+          fontWeight: 300,
+          fontSize: '1.1rem',
+          color: 'var(--cream)',
+          lineHeight: 1.2,
+          margin: 0,
+        }}>
+          {user?.first_name ? `Welcome back, ${user.first_name}` : 'Welcome back'}
+        </p>
+      </div>
+
+      {/* Divider */}
+      <div style={{ height: '1px', background: 'rgba(201,168,76,0.1)', marginBottom: '1.25rem' }} />
+
+      {/* Nav items */}
+      <nav style={{ flex: 1 }}>
+        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          {TABS.map(({ id, label, icon }) => {
+            const isActive = activeTab === id;
+            const badge = badges[id] ?? 0;
+            return (
+              <li key={id}>
                 <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabChange(id)}
                   style={{
-                    paddingBottom: '1rem',
-                    paddingRight: '1.5rem',
-                    paddingLeft: '0',
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.5rem',
+                    padding: '0.625rem 0.875rem',
+                    borderRadius: '0.5rem',
+                    backgroundColor: isActive ? 'rgba(201,168,76,0.09)' : 'transparent',
+                    borderTop: 'none',
+                    borderRight: 'none',
+                    borderBottom: 'none',
+                    borderLeft: isActive ? '2px solid var(--gold)' : '2px solid transparent',
+                    color: isActive ? 'var(--gold)' : 'var(--text-mid)',
                     fontFamily: '"DM Sans", sans-serif',
                     fontSize: '0.875rem',
                     fontWeight: isActive ? 500 : 400,
-                    color: isActive ? 'var(--gold)' : 'var(--text-mid)',
-                    background: 'none',
-                    border: 'none',
-                    borderBottom: isActive ? '2px solid var(--gold)' : '2px solid transparent',
-                    marginBottom: '-1px',
                     cursor: 'pointer',
-                    transition: 'color 0.2s ease',
-                    whiteSpace: 'nowrap',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.375rem',
+                    textAlign: 'left',
+                    transition: 'color 0.2s ease, background-color 0.2s ease',
                   }}
                   onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = 'var(--cream)'; }}
                   onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = 'var(--text-mid)'; }}
                 >
-                  {tab.label}
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                    <span style={{ fontSize: '0.7rem', opacity: isActive ? 1 : 0.5 }}>{icon}</span>
+                    {label}
+                  </span>
                   {badge > 0 && (
-                    <span style={{ padding: '0.1rem 0.4rem', background: 'var(--gold)', color: 'var(--bg)', borderRadius: '2rem', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', fontWeight: 600 }}>
+                    <span style={{
+                      padding: '0.1rem 0.45rem',
+                      background: 'var(--gold)',
+                      color: 'var(--bg)',
+                      borderRadius: '2rem',
+                      fontFamily: '"DM Mono", monospace',
+                      fontSize: '0.65rem',
+                      fontWeight: 700,
+                      lineHeight: 1.5,
+                      flexShrink: 0,
+                    }}>
                       {badge}
                     </span>
                   )}
                 </button>
-              );
-            })}
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      {/* Footer actions */}
+      <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(201,168,76,0.1)', display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+        <Link
+          href="/booking"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.5rem 0.875rem',
+            borderRadius: '0.5rem',
+            fontFamily: '"DM Sans", sans-serif',
+            fontSize: '0.8125rem',
+            color: 'var(--text-mid)',
+            textDecoration: 'none',
+            transition: 'color 0.2s ease',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cream)')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-mid)')}
+        >
+          <span style={{ opacity: 0.5, fontSize: '0.7rem' }}>↗</span>
+          Book a session
+        </Link>
+        <button
+          onClick={handleLogout}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.5rem 0.875rem',
+            borderRadius: '0.5rem',
+            fontFamily: '"DM Sans", sans-serif',
+            fontSize: '0.8125rem',
+            color: 'var(--text-low)',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            textAlign: 'left',
+            transition: 'color 0.2s ease',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cream)')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-low)')}
+        >
+          <span style={{ opacity: 0.4, fontSize: '0.7rem' }}>←</span>
+          Sign out
+        </button>
+      </div>
+    </>
+  );
+
+  // ── Render ───────────────────────────────────────────────────────────────
+  return (
+    <ClientProtectedRoute>
+      <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg)' }}>
+
+        {/* ── Desktop sidebar ── */}
+        <aside
+          className="hidden md:flex"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '220px',
+            height: '100vh',
+            backgroundColor: 'rgba(14,12,9,0.97)',
+            backdropFilter: 'blur(24px) saturate(1.6)',
+            WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
+            borderRight: '1px solid rgba(201,168,76,0.1)',
+            flexDirection: 'column',
+            padding: '1.75rem 1rem',
+            zIndex: 50,
+            overflowY: 'auto',
+          }}
+        >
+          <SidebarContent />
+        </aside>
+
+        {/* ── Mobile sidebar overlay ── */}
+        {sidebarOpen && (
+          <div
+            className="md:hidden"
+            style={{ position: 'fixed', inset: 0, zIndex: 60 }}
+            onClick={() => setSidebarOpen(false)}
+          >
+            {/* Backdrop */}
+            <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(2px)' }} />
+            {/* Sidebar */}
+            <aside
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '280px',
+                height: '100%',
+                backgroundColor: 'rgba(14,12,9,0.98)',
+                borderRight: '1px solid rgba(201,168,76,0.12)',
+                display: 'flex',
+                flexDirection: 'column',
+                padding: '1.75rem 1.125rem',
+                overflowY: 'auto',
+                animation: 'fadeIn 0.18s ease both',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <SidebarContent />
+            </aside>
+          </div>
+        )}
+
+        {/* ── Main content ── */}
+        <main
+          className="md:ml-[220px]"
+          style={{
+            flex: 1,
+            minHeight: '100vh',
+            backgroundColor: 'var(--bg)',
+            padding: '2.5rem 1.5rem',
+          }}
+        >
+          {/* Mobile header bar */}
+          <div
+            className="flex md:hidden"
+            style={{ alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}
+          >
+            <button
+              onClick={() => setSidebarOpen(true)}
+              style={{
+                background: 'none',
+                border: '1px solid rgba(201,168,76,0.2)',
+                borderRadius: '0.5rem',
+                padding: '0.5rem 0.75rem',
+                color: 'var(--cream)',
+                cursor: 'pointer',
+                fontFamily: '"DM Sans", sans-serif',
+                fontSize: '1rem',
+                lineHeight: 1,
+              }}
+              aria-label="Open menu"
+            >
+              ≡
+            </button>
+            <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.5)' }}>
+              {TABS.find(t => t.id === activeTab)?.label}
+            </span>
+            <div style={{ width: '2.75rem' }} /> {/* spacer */}
           </div>
 
-          {/* Tab Content */}
-          <div key={activeTab} className="tab-content" style={{ minHeight: '24rem' }}>
+          {/* Tab content */}
+          <div
+            style={{ maxWidth: '860px', margin: '0 auto' }}
+            key={activeTab}
+            className="tab-content"
+          >
             {activeTab === 'bookings'      && <BookingsTab onBadgeUpdate={onBookingsBadge} />}
             {activeTab === 'consultations' && <ConsultationsTab />}
             {activeTab === 'design-ideas'  && <DesignIdeasTab />}
+            {activeTab === 'consent-forms' && <ConsentFormsTab />}
+            {activeTab === 'profile'       && <ProfileTab />}
           </div>
+        </main>
 
-          {/* Quick Actions */}
-          <div className="card-premium" style={{ marginTop: '4rem' }}>
-            <div className="card-premium-inner">
-              <div className="grid md:grid-cols-2 gap-8">
-                <div>
-                  <h3 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.25rem', fontWeight: 400, color: 'var(--cream)', marginBottom: '0.75rem' }}>
-                    Ready for your next piece?
-                  </h3>
-                  <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
-                    Book your next session directly — choose a date and time that works for you.
-                  </p>
-                  <Link href="/booking" className="btn-primary">
-                    <span>Book a session</span>
-                    <span className="btn-icon" aria-hidden="true">↗</span>
-                  </Link>
-                </div>
-                <div>
-                  <h3 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.25rem', fontWeight: 400, color: 'var(--cream)', marginBottom: '0.75rem' }}>
-                    Have a question?
-                  </h3>
-                  <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
-                    Open a consultation and Robyn will reply directly. You can message back and forth from there.
-                  </p>
-                  <button onClick={() => setActiveTab('consultations')} className="btn-secondary">
-                    Consultations
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
       </div>
     </ClientProtectedRoute>
   );

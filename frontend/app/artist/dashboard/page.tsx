@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/lib/authContext';
 import AvailabilityCalendar, { AvailabilityData } from '@/app/components/AvailabilityCalendar';
 import TimeSlotPicker from '@/app/components/TimeSlotPicker';
@@ -24,26 +26,10 @@ const TIME_SLOTS = [
   { id: '20:00', label: '8pm' },
 ];
 
-// ── Calendar constants ─────────────────────────────────────────────────────────
-
-const CAL_HOURS = Array.from({ length: 12 }, (_, i) => 9 + i); // 9 to 20
-const HOUR_PX = 48;
-
-function toDateStr(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
 function fmtH(h: number): string {
   if (h < 12) return `${h}am`;
   if (h === 12) return '12pm';
   return `${h - 12}pm`;
-}
-function getMonday(d: Date): Date {
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  const mon = new Date(d);
-  mon.setDate(d.getDate() + diff);
-  mon.setHours(0, 0, 0, 0);
-  return mon;
 }
 
 interface AvailabilityBlock {
@@ -64,6 +50,14 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 const DAYS_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+const ARTIST_TABS = [
+  { id: 'bookings',      label: 'Bookings',      icon: '◈' },
+  { id: 'consultations', label: 'Consultations',  icon: '◇' },
+  { id: 'availability',  label: 'Availability',   icon: '◻' },
+  { id: 'stats',         label: 'Stats',          icon: '◉' },
+  { id: 'profile',       label: 'Profile',        icon: '○' },
+] as const;
 
 interface Booking {
   id: string;
@@ -142,7 +136,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function ArtistDashboard() {
   const router = useRouter();
   const { artist, accessToken, logout, isLoading: authLoading } = useAuth();
-  const [tab, setTab] = useState<'bookings' | 'calendar' | 'consultations' | 'availability' | 'stats' | 'portfolio' | 'settings'>('bookings');
+  const [tab, setTab] = useState<'bookings' | 'consultations' | 'availability' | 'stats' | 'profile'>('bookings');
 
   // Bookings state
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -186,6 +180,12 @@ export default function ArtistDashboard() {
   const [showPastBookings, setShowPastBookings] = useState(false);
   const [showDeclinedConsults, setShowDeclinedConsults] = useState(false);
   const [showCompletedChats, setShowCompletedChats] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [archivedConsultIds, setArchivedConsultIds] = useState<Set<string>>(new Set());
+  const [closingConsultId, setClosingConsultId] = useState<string | null>(null);
+  const [closingNoteText, setClosingNoteText] = useState('');
+  const [closingNoteActing, setClosingNoteActing] = useState(false);
+  const [showArchivedConsults, setShowArchivedConsults] = useState(false);
 
   // Consultation chat state
   interface ConsultMsg { id: string; consultation_id: string; sender_type: 'client' | 'artist'; body: string; created_at: string; }
@@ -225,11 +225,6 @@ export default function ArtistDashboard() {
   const [priceOfferActing, setPriceOfferActing] = useState(false);
   const [priceOfferError, setPriceOfferError] = useState('');
 
-  // Calendar state
-  const [calWeekStart, setCalWeekStart] = useState<Date>(() => getMonday(new Date()));
-  const calPrevWeek = () => setCalWeekStart((d) => { const n = new Date(d); n.setDate(n.getDate() - 7); return n; });
-  const calNextWeek = () => setCalWeekStart((d) => { const n = new Date(d); n.setDate(n.getDate() + 7); return n; });
-  const calGoToday = () => setCalWeekStart(getMonday(new Date()));
 
   // Availability state
   const today = new Date();
@@ -344,12 +339,10 @@ export default function ArtistDashboard() {
   }, [tab, fetchAvailability]);
 
   useEffect(() => {
-    if (tab === 'settings' && accessToken) fetchProfile();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, accessToken]);
-
-  useEffect(() => {
-    if (tab === 'portfolio' && accessToken) fetchPortfolioPhotos();
+    if (tab === 'profile' && accessToken) {
+      fetchProfile();
+      fetchPortfolioPhotos();
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, accessToken]);
 
@@ -898,6 +891,27 @@ export default function ArtistDashboard() {
     }
   };
 
+  const archiveConsultation = (consultId: string) => {
+    setArchivedConsultIds(prev => new Set([...prev, consultId]));
+    if (openConsultChatId === consultId) setOpenConsultChatId(null);
+  };
+
+  const closeConsultThread = async (consultId: string, note: string) => {
+    setClosingNoteActing(true);
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/consultations/${consultId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ action: 'complete', ...(note.trim() ? { response_message: note.trim() } : {}) }),
+      }).catch(() => null);
+      setConsultations(prev => prev.map(c => c.consultation_id === consultId ? { ...c, status: 'completed' } : c));
+    } finally {
+      setClosingConsultId(null);
+      setClosingNoteText('');
+      setClosingNoteActing(false);
+    }
+  };
+
   const activeStatuses = ['pending_consent', 'confirmed', 'rescheduled', 'counter_offered'];
   const filteredBookings = bookings.filter((b) => statusFilter === 'all' || b.appointment_status === statusFilter);
   const pastBookingsAll = bookings.filter((b) => !activeStatuses.includes(b.appointment_status));
@@ -943,26 +957,7 @@ export default function ArtistDashboard() {
 
   const pendingConsultations = consultations.reduce((sum, c) => sum + (c.unread_count ?? 0), 0);
 
-  // ── Calendar derived data ───────────────────────────────────────────────────
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(calWeekStart);
-    d.setDate(d.getDate() + i);
-    return d;
-  });
-  const weekDayStrs = weekDays.map(toDateStr);
-  const weekBookings = bookings.filter((b) => {
-    const ds = b.appointment_date_time.substring(0, 10);
-    return weekDayStrs.includes(ds) && b.appointment_status !== 'cancelled';
-  });
-
-  const CAL_STATUS: Record<string, { bg: string; border: string; color: string }> = {
-    pending_consent: { bg: 'rgba(234,179,8,0.18)', border: 'rgba(234,179,8,0.45)', color: '#EAB308' },
-    confirmed:       { bg: 'rgba(34,197,94,0.15)',  border: 'rgba(34,197,94,0.4)',  color: '#16A34A' },
-    completed:       { bg: 'rgba(201,168,76,0.15)', border: 'rgba(201,168,76,0.4)', color: 'var(--gold)' },
-    rescheduled:     { bg: 'rgba(99,102,241,0.15)', border: 'rgba(99,102,241,0.4)', color: '#818CF8' },
-  };
-
-  // ── Booking detail panel (shared between Bookings + Calendar tabs) ──────────
+  // ── Booking detail panel ──────────────────────────────────────────────────
   const renderBookingDetailPanel = (extraStyle?: React.CSSProperties) => {
     if (!selectedBooking) return null;
     return (
@@ -1683,45 +1678,133 @@ export default function ArtistDashboard() {
     );
   }
 
-  return (
-    <div className="min-h-[100dvh]" style={{ background: 'var(--bg)' }}>
-      {/* Header */}
-      <header style={{
-        position: 'sticky', top: 0, zIndex: 40,
-        background: 'rgba(14,12,9,0.92)', backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid var(--border)', padding: '1rem 1.5rem',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      }}>
-        <div>
-          <p style={{ margin: 0, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.25rem', fontWeight: 300, color: 'var(--cream)' }}>
-            Hall of Mirrors
-          </p>
-          <p style={{ margin: '2px 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
-            {artist?.full_name}
-          </p>
+  // ── Sidebar nav content ──────────────────────────────────────────────────
+  const SidebarContent = () => (
+    <>
+      <div style={{ marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '1.25rem' }}>
+          <Image src="/assets/logos/White Logo.png" alt="Hall of Mirrors" width={32} height={32} style={{ width: '2rem', height: 'auto', opacity: 0.85 }} />
+          <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.55)' }}>
+            Artist Studio
+          </span>
         </div>
+        <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1.1rem', color: 'var(--cream)', lineHeight: 1.2, margin: 0 }}>
+          {artist?.full_name ? `Welcome back, ${artist.full_name.split(' ')[0]}` : 'Welcome back'}
+        </p>
+      </div>
+      <div style={{ height: '1px', background: 'rgba(201,168,76,0.1)', marginBottom: '1.25rem' }} />
+      <nav style={{ flex: 1 }}>
+        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          {ARTIST_TABS.map(({ id, label, icon }) => {
+            const isActive = tab === id;
+            const badge = id === 'bookings' ? pendingCounterOffers : id === 'consultations' ? pendingConsultations : 0;
+            return (
+              <li key={id}>
+                <button
+                  onClick={() => { setTab(id); setSidebarOpen(false); }}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    gap: '0.5rem', padding: '0.625rem 0.875rem', borderRadius: '0.5rem',
+                    backgroundColor: isActive ? 'rgba(201,168,76,0.09)' : 'transparent',
+                    borderTop: 'none', borderRight: 'none', borderBottom: 'none',
+                    borderLeft: isActive ? '2px solid var(--gold)' : '2px solid transparent',
+                    color: isActive ? 'var(--gold)' : 'var(--text-mid)',
+                    fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', fontWeight: isActive ? 500 : 400,
+                    cursor: 'pointer', textAlign: 'left', transition: 'color 0.2s ease, background-color 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = 'var(--cream)'; }}
+                  onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = 'var(--text-mid)'; }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                    <span style={{ fontSize: '0.7rem', opacity: isActive ? 1 : 0.5 }}>{icon}</span>
+                    {label}
+                  </span>
+                  {badge > 0 && (
+                    <span style={{ padding: '0.1rem 0.45rem', background: 'var(--gold)', color: 'var(--bg)', borderRadius: '2rem', fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', fontWeight: 700, lineHeight: 1.5, flexShrink: 0 }}>
+                      {badge}
+                    </span>
+                  )}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+      <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(201,168,76,0.1)', display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+        {artist?.full_name && (
+          <Link
+            href={`/artists/${artist.full_name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.875rem', borderRadius: '0.5rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-mid)', textDecoration: 'none', transition: 'color 0.2s ease' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cream)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-mid)')}
+          >
+            <span style={{ opacity: 0.5, fontSize: '0.7rem' }}>↗</span>
+            View public profile
+          </Link>
+        )}
         <button
           onClick={() => { logout(); router.push('/artist/login'); }}
-          style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-mid)', background: 'none', border: '1px solid var(--border)', padding: '0.5rem 0.875rem', borderRadius: '2rem', cursor: 'pointer', transition: 'border-color 0.3s ease' }}
-          onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
-          onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.875rem', borderRadius: '0.5rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-low)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'color 0.2s ease' }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--cream)')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-low)')}
         >
+          <span style={{ opacity: 0.4, fontSize: '0.7rem' }}>←</span>
           Sign out
         </button>
-      </header>
+      </div>
+    </>
+  );
 
-      <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '2.5rem 1.5rem' }}>
+  return (
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg)' }}>
 
-        {/* Welcome greeting */}
-        <div style={{ marginBottom: '2.5rem' }}>
-          <p className="eyebrow" style={{ marginBottom: '0.5rem' }}>Artist Studio</p>
-          <h1 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: 'clamp(2rem, 5vw, 3.5rem)', color: 'var(--cream)', letterSpacing: '-0.02em', lineHeight: 1.1, margin: '0 0 0.5rem' }}>
-            Welcome back{artist?.full_name ? `, ${artist.full_name.split(' ')[0]}` : ''}
-          </h1>
-          <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.6, margin: 0 }}>
-            Manage your bookings, availability, and client conversations
-          </p>
+      {/* ── Desktop sidebar ── */}
+      <aside
+        className="hidden md:flex"
+        style={{ position: 'fixed', top: 0, left: 0, width: '220px', height: '100vh', backgroundColor: 'rgba(14,12,9,0.97)', backdropFilter: 'blur(24px) saturate(1.6)', WebkitBackdropFilter: 'blur(24px) saturate(1.6)', borderRight: '1px solid rgba(201,168,76,0.1)', flexDirection: 'column', padding: '1.75rem 1rem', zIndex: 50, overflowY: 'auto' }}
+      >
+        <SidebarContent />
+      </aside>
+
+      {/* ── Mobile sidebar overlay ── */}
+      {sidebarOpen && (
+        <div
+          className="md:hidden"
+          style={{ position: 'fixed', inset: 0, zIndex: 60 }}
+          onClick={() => setSidebarOpen(false)}
+        >
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(2px)' }} />
+          <aside
+            style={{ position: 'absolute', top: 0, left: 0, width: '280px', height: '100%', backgroundColor: 'rgba(14,12,9,0.98)', borderRight: '1px solid rgba(201,168,76,0.12)', display: 'flex', flexDirection: 'column', padding: '1.75rem 1.125rem', overflowY: 'auto', animation: 'fadeIn 0.18s ease both' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <SidebarContent />
+          </aside>
         </div>
+      )}
+
+      {/* ── Main content ── */}
+      <main
+        className="md:ml-[220px]"
+        style={{ flex: 1, minHeight: '100vh', backgroundColor: 'var(--bg)', padding: '2.5rem 1.5rem' }}
+      >
+        {/* Mobile header bar */}
+        <div
+          className="flex md:hidden"
+          style={{ alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}
+        >
+          <button
+            onClick={() => setSidebarOpen(true)}
+            style={{ background: 'none', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '0.5rem', padding: '0.5rem 0.75rem', color: 'var(--cream)', cursor: 'pointer', fontFamily: '"DM Sans", sans-serif', fontSize: '1rem', lineHeight: 1 }}
+            aria-label="Open menu"
+          >≡</button>
+          <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.5)' }}>
+            {ARTIST_TABS.find(t => t.id === tab)?.label}
+          </span>
+          <div style={{ width: '2.75rem' }} />
+        </div>
+
+        <div style={{ maxWidth: '860px', margin: '0 auto' }}>
 
         {/* ── Today's schedule / next session hub ───────────────────────────── */}
         {(() => {
@@ -1839,48 +1922,6 @@ export default function ArtistDashboard() {
           );
         })()}
 
-        {/* Tab bar */}
-        <div className="scroll-no-bar" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderBottom: '1px solid var(--border)', marginBottom: '2.5rem' }}>
-          <div style={{ display: 'flex', gap: 0, minWidth: 'max-content' }}>
-          {([
-            { key: 'bookings', label: 'Bookings', badge: pendingCounterOffers },
-            { key: 'calendar', label: 'Calendar', badge: 0 },
-            { key: 'consultations', label: 'Consultations', badge: pendingConsultations },
-            { key: 'availability', label: 'Availability', badge: 0 },
-            { key: 'stats',        label: 'Stats',        badge: 0 },
-            { key: 'portfolio',    label: 'Portfolio',    badge: 0 },
-            { key: 'settings',     label: 'Settings',     badge: 0 },
-          ] as const).map(({ key, label, badge }) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              style={{
-                paddingBottom: '1rem',
-                paddingRight: '1.5rem',
-                paddingLeft: '0',
-                background: 'none',
-                border: 'none',
-                borderBottom: tab === key ? '2px solid var(--gold)' : '2px solid transparent',
-                cursor: 'pointer',
-                fontFamily: '"DM Sans", sans-serif',
-                fontSize: '0.875rem',
-                fontWeight: tab === key ? 500 : 400,
-                color: tab === key ? 'var(--gold)' : 'var(--text-mid)',
-                transition: 'color 0.2s ease',
-                marginBottom: '-1px',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {label}
-              {badge > 0 && (
-                <span style={{ marginLeft: '0.5rem', padding: '0.1rem 0.4rem', background: 'var(--gold)', color: 'var(--bg)', borderRadius: '2rem', fontSize: '0.72rem' }}>
-                  {badge}
-                </span>
-              )}
-            </button>
-          ))}
-          </div>
-        </div>
 
         <div key={tab} className="tab-content">
 
@@ -1979,164 +2020,6 @@ export default function ArtistDashboard() {
           </div>
         )}
 
-        {/* ── Calendar tab ─────────────────────────────────────────────────── */}
-        {tab === 'calendar' && (
-          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
-            {/* Calendar column */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              {/* Week navigation */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', gap: '0.25rem' }}>
-                  {[{ fn: calPrevWeek, icon: '←' }, { fn: calNextWeek, icon: '→' }].map(({ fn, icon }) => (
-                    <button
-                      type="button"
-                      key={icon}
-                      onClick={fn}
-                      style={{ width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid var(--border)', borderRadius: '50%', cursor: 'pointer', color: 'var(--text-mid)', fontSize: '0.875rem', transition: 'border-color 0.25s ease' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
-                      onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
-                    >{icon}</button>
-                  ))}
-                </div>
-                <span style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1.125rem', color: 'var(--cream)', flex: 1 }}>
-                  {(() => {
-                    const end = new Date(calWeekStart);
-                    end.setDate(end.getDate() + 6);
-                    return `${calWeekStart.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })} – ${end.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`;
-                  })()}
-                </span>
-                <button
-                  type="button"
-                  onClick={calGoToday}
-                  style={{ padding: '0.3rem 0.875rem', borderRadius: '2rem', border: '1px solid var(--border)', background: 'none', color: 'var(--text-mid)', fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.25s ease' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--gold)'; e.currentTarget.style.color = 'var(--gold)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-mid)'; }}
-                >Today</button>
-              </div>
-
-              {/* Calendar grid */}
-              <div style={{ overflowX: 'auto', borderRadius: '0.75rem', border: '1px solid var(--border)' }}>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: `52px repeat(7, minmax(80px, 1fr))`,
-                  gridTemplateRows: `48px repeat(${CAL_HOURS.length}, ${HOUR_PX}px)`,
-                  background: 'var(--surface)',
-                  minWidth: '560px',
-                  position: 'relative',
-                }}>
-                  {/* Top-left corner */}
-                  <div style={{ gridColumn: 1, gridRow: 1, borderRight: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }} />
-
-                  {/* Day headers */}
-                  {weekDays.map((day, di) => {
-                    const ds = toDateStr(day);
-                    const isToday = ds === toDateStr(new Date());
-                    return (
-                      <div key={ds} style={{
-                        gridColumn: di + 2, gridRow: 1,
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                        borderBottom: '1px solid var(--border)',
-                        borderRight: di < 6 ? '1px solid var(--border)' : 'none',
-                        padding: '0.5rem',
-                        background: isToday ? 'rgba(201,168,76,0.04)' : 'transparent',
-                      }}>
-                        <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: isToday ? 'var(--gold)' : 'var(--text-low)' }}>
-                          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][di]}
-                        </span>
-                        <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', fontWeight: isToday ? 600 : 400, color: isToday ? 'var(--gold)' : 'var(--text)', marginTop: '0.125rem' }}>
-                          {day.getDate()}
-                        </span>
-                      </div>
-                    );
-                  })}
-
-                  {/* Hour labels + background cells */}
-                  {CAL_HOURS.map((hour, hi) => [
-                    <div key={`lbl-${hour}`} style={{
-                      gridColumn: 1, gridRow: hi + 2,
-                      display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end',
-                      paddingTop: '0.3rem', paddingRight: '0.5rem',
-                      borderRight: '1px solid var(--border)',
-                      borderBottom: hi < CAL_HOURS.length - 1 ? '1px solid rgba(42,37,32,0.6)' : 'none',
-                    }}>
-                      <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--text-low)', whiteSpace: 'nowrap' }}>
-                        {fmtH(hour)}
-                      </span>
-                    </div>,
-                    ...weekDays.map((day, di) => (
-                      <div key={`cell-${hour}-${di}`} style={{
-                        gridColumn: di + 2, gridRow: hi + 2,
-                        borderRight: di < 6 ? '1px solid var(--border)' : 'none',
-                        borderBottom: hi < CAL_HOURS.length - 1 ? '1px solid rgba(42,37,32,0.6)' : 'none',
-                        background: toDateStr(day) === toDateStr(new Date()) ? 'rgba(201,168,76,0.018)' : 'transparent',
-                      }} />
-                    )),
-                  ])}
-
-                  {/* Booking blocks */}
-                  {weekBookings.map((booking) => {
-                    const dateStr = booking.appointment_date_time.substring(0, 10);
-                    const di = weekDayStrs.indexOf(dateStr);
-                    if (di === -1) return null;
-                    const startHour = booking.appointment_time ? parseInt(booking.appointment_time.substring(0, 2), 10) : null;
-                    if (startHour === null || startHour < 9 || startHour > 20) return null;
-                    const durationH = booking.estimated_duration_minutes
-                      ? Math.min(Math.max(1, Math.round(booking.estimated_duration_minutes / 60)), 21 - startHour)
-                      : 1;
-                    const st = CAL_STATUS[booking.appointment_status] ?? { bg: 'rgba(155,155,155,0.1)', border: 'rgba(155,155,155,0.25)', color: 'var(--text-mid)' };
-                    const rowStart = startHour - 7; // row 2 = 9am → 9 - 7 = 2 ✓
-                    const isSelected = selectedBooking?.id === booking.id;
-
-                    return (
-                      <button
-                        type="button"
-                        key={booking.id}
-                        onClick={() => { setSelectedBooking(isSelected ? null : booking); setArtistActionMode('none'); setCounterOfferDate(null); setCounterOfferSlot(null); setCounterOfferNote(''); setPriceOfferAmount(''); setPriceOfferNote(''); setPriceOfferError(''); }}
-                        style={{
-                          gridColumn: di + 2,
-                          gridRow: `${rowStart} / span ${durationH}`,
-                          zIndex: 2,
-                          margin: '2px',
-                          background: isSelected ? st.bg.replace(/[\d.]+\)$/, '0.35)') : st.bg,
-                          border: `1px solid ${isSelected ? st.color : st.border}`,
-                          borderRadius: '0.375rem',
-                          padding: '0.375rem 0.5rem',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                          overflow: 'hidden',
-                          transition: 'all 0.15s ease',
-                        }}
-                        onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.borderColor = st.color; }}
-                        onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.borderColor = st.border; }}
-                      >
-                        <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.6875rem', fontWeight: 500, color: st.color, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.3 }}>
-                          {booking.first_name} {booking.last_name}
-                        </p>
-                        <p style={{ margin: '0.1rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.05em', color: st.color, opacity: 0.7, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {fmtH(startHour)}{booking.estimated_duration_minutes ? ` → ${fmtH(startHour + Math.round(booking.estimated_duration_minutes / 60))}` : ''}
-                        </p>
-                        {durationH >= 2 && booking.placement && (
-                          <p style={{ margin: '0.125rem 0 0', fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem', color: 'var(--text-mid)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {booking.placement}
-                          </p>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {weekBookings.length === 0 && !isLoading && (
-                <p style={{ marginTop: '1.5rem', color: 'var(--text-low)', fontSize: '0.875rem', fontFamily: '"DM Sans", sans-serif', textAlign: 'center' }}>
-                  No bookings this week.
-                </p>
-              )}
-            </div>
-
-            {/* Detail panel */}
-            {renderBookingDetailPanel({ width: '380px', flexShrink: 0 })}
-          </div>
-        )}
 
         {/* ── Consultations tab ────────────────────────────────────────────── */}
         {tab === 'consultations' && (
@@ -2147,10 +2030,10 @@ export default function ArtistDashboard() {
               </div>
             )}
 
-            {consultations.filter(c => c.status !== 'declined').length === 0 && consultations.filter(c => c.status === 'declined').length === 0 ? (
+            {consultations.filter(c => c.status !== 'declined' && !archivedConsultIds.has(c.consultation_id)).length === 0 && consultations.length === 0 ? (
               <p style={{ color: 'var(--text-low)', fontSize: '0.9rem', padding: '2rem 0' }}>No consultation requests yet.</p>
             ) : (
-              consultations.filter(c => c.status !== 'declined').map((c) => {
+              consultations.filter(c => c.status !== 'declined' && !archivedConsultIds.has(c.consultation_id)).map((c) => {
                 const actionKey = consultActionId?.startsWith(c.consultation_id) ? consultActionId : null;
                 const isChatOpen = openConsultChatId === c.consultation_id;
                 return (
@@ -2178,7 +2061,27 @@ export default function ArtistDashboard() {
                           {c.preferred_dates ? ` · preferred: ${c.preferred_dates}` : ''}
                         </p>
                       </div>
-                      <StatusBadge status={c.status} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                        <StatusBadge status={c.status} />
+                        {c.status === 'approved' && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => archiveConsultation(c.consultation_id)}
+                              style={{ padding: '0.2rem 0.6rem', background: 'none', border: '1px solid var(--border)', borderRadius: '2rem', cursor: 'pointer', fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-low)' }}
+                            >
+                              Archive
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setClosingConsultId(c.consultation_id); setClosingNoteText(''); }}
+                              style={{ padding: '0.2rem 0.6rem', background: 'none', border: '1px solid rgba(201,168,76,0.25)', borderRadius: '2rem', cursor: 'pointer', fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)' }}
+                            >
+                              Close thread
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
 
                     {/* Pending — approve / decline actions */}
@@ -2383,6 +2286,52 @@ export default function ArtistDashboard() {
                         </div>
                       );
                     })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Archived consultations — collapsed */}
+            {archivedConsultIds.size > 0 && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowArchivedConsults(p => !p)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', padding: '0.75rem 0', cursor: 'pointer', borderTop: '1px solid var(--border)', width: '100%', textAlign: 'left' }}
+                >
+                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+                    Archived ({archivedConsultIds.size})
+                  </span>
+                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', color: 'var(--text-low)', marginLeft: 'auto' }}>
+                    {showArchivedConsults ? '↑ Hide' : '↓ Show'}
+                  </span>
+                </button>
+                {showArchivedConsults && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', opacity: 0.7, marginTop: '0.5rem' }}>
+                    {consultations.filter(c => archivedConsultIds.has(c.consultation_id)).map((c) => (
+                      <div
+                        key={c.consultation_id}
+                        style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', overflow: 'hidden' }}
+                      >
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'start', gap: '1rem', padding: '1.25rem 1.5rem' }}>
+                          <div>
+                            <p style={{ margin: '0 0 0.25rem', fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.1rem', fontWeight: 300, color: 'var(--text-mid)' }}>
+                              {c.first_name} {c.last_name}
+                            </p>
+                            <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--text-mid)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '520px' }}>
+                              {c.message}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setArchivedConsultIds(prev => { const next = new Set(prev); next.delete(c.consultation_id); return next; })}
+                            style={{ padding: '0.2rem 0.6rem', background: 'none', border: '1px solid rgba(201,168,76,0.25)', borderRadius: '2rem', cursor: 'pointer', fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)', whiteSpace: 'nowrap', flexShrink: 0 }}
+                          >
+                            Restore
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -3022,8 +2971,8 @@ export default function ArtistDashboard() {
           );
         })()}
 
-        {/* ── Portfolio tab ─────────────────────────────────────────────────── */}
-        {tab === 'portfolio' && (
+        {/* ── Profile tab — Portfolio + Artist Profile settings ─────────────── */}
+        {tab === 'profile' && (
           <div>
             <div style={{ marginBottom: '2rem' }}>
               <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: 'clamp(1.5rem, 3vw, 2rem)', color: 'var(--cream)', marginBottom: '0.375rem' }}>
@@ -3119,8 +3068,8 @@ export default function ArtistDashboard() {
           </div>
         )}
 
-        {/* ── Settings tab ─────────────────────────────────────────────────── */}
-        {tab === 'settings' && (() => {
+        {/* ── Profile tab — Artist Profile settings (merged with portfolio above) ─ */}
+        {tab === 'profile' && (() => {
 
           // ── Shared input styles ────────────────────────────────────────────
           const inputSt: React.CSSProperties = { background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '0.5rem', padding: '0.625rem 0.875rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--cream)', outline: 'none', width: '100%', boxSizing: 'border-box' };
@@ -3183,6 +3132,9 @@ export default function ArtistDashboard() {
 
           return (
             <div style={{ maxWidth: '640px' }}>
+
+              {/* Divider between Portfolio section above and Artist Profile below */}
+              <div style={{ height: '1px', background: 'rgba(201,168,76,0.1)', margin: '3rem 0 2.5rem' }} />
 
               {profileError && (
                 <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: '#e57373', letterSpacing: '0.05em', marginBottom: '1.25rem' }}>
@@ -3258,8 +3210,58 @@ export default function ArtistDashboard() {
         })()}
 
         </div>{/* end tab-content */}
+      </div>{/* end maxWidth 860px wrapper */}
 
       </main>
+
+      {/* ── Closing note modal ────────────────────────────────────────────── */}
+      {closingConsultId && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          {/* Backdrop */}
+          <div
+            style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(2px)' }}
+            onClick={() => { setClosingConsultId(null); setClosingNoteText(''); }}
+          />
+          {/* Modal */}
+          <div style={{ position: 'relative', background: 'rgba(14,12,9,0.98)', border: '1px solid rgba(201,168,76,0.18)', borderRadius: '0.875rem', padding: '2rem', maxWidth: '480px', width: '100%', zIndex: 1 }}>
+            <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1.5rem', color: 'var(--cream)', margin: '0 0 0.375rem' }}>
+              Close thread
+            </p>
+            <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-low)', lineHeight: 1.6, margin: '0 0 1.25rem' }}>
+              Optionally leave a closing note for the client. Once closed, neither party can send further messages.
+            </p>
+            <textarea
+              value={closingNoteText}
+              onChange={(e) => setClosingNoteText(e.target.value)}
+              placeholder="Optional: a note for the client, or a nudge to book their next appointment…"
+              rows={4}
+              style={{ width: '100%', padding: '0.75rem 1rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--cream)', fontSize: '0.875rem', lineHeight: 1.6, resize: 'vertical', outline: 'none', boxSizing: 'border-box', marginBottom: '1.25rem', fontFamily: '"DM Sans", sans-serif', transition: 'border-color 0.2s ease' }}
+              onFocus={(e) => (e.target.style.borderColor = 'rgba(201,168,76,0.5)')}
+              onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+            />
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                type="button"
+                onClick={() => closeConsultThread(closingConsultId, closingNoteText)}
+                disabled={closingNoteActing}
+                className="btn-primary"
+                style={{ flex: 1, opacity: closingNoteActing ? 0.6 : 1, cursor: closingNoteActing ? 'default' : 'pointer' }}
+              >
+                <span>{closingNoteActing ? 'Closing…' : 'Close thread'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setClosingConsultId(null); setClosingNoteText(''); }}
+                className="btn-secondary"
+                style={{ padding: '0.875rem 1.25rem' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
