@@ -9,8 +9,8 @@ import { useRouter } from 'next/navigation';
 
 const navLinks = [
   { href: '/',            label: 'Home' },
-  { href: '/portfolio',   label: 'Portfolio' },
-  { href: '/about',       label: 'About' },
+  { href: '/portfolio',   label: 'Artists' },
+  { href: '/about',       label: 'Studio' },
 ];
 
 export default function Header() {

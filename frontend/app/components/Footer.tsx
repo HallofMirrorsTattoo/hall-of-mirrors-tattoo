@@ -109,13 +109,8 @@ export default async function Footer() {
             </h4>
             <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
               {[
-                { href: '/booking',      label: 'Book Appointment' },
-                { href: '/portfolio',    label: 'Portfolio' },
-                { href: '/flash',        label: 'Flash Days' },
-                { href: '/consultation', label: 'Consultation' },
-                { href: '/about',        label: 'About' },
-                { href: '/faq',          label: 'FAQ' },
-                { href: '/testimonials', label: 'Reviews' },
+                { href: '/portfolio', label: 'Artists' },
+                { href: '/about',     label: 'Studio' },
               ].map(({ href, label }) => (
                 <li key={href}>
                   <Link href={href} className="footer-link">{label}</Link>
@@ -139,10 +134,9 @@ export default async function Footer() {
             </h4>
             <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
               {[
-                { href: '/terms',     label: 'Terms' },
-                { href: '/privacy',   label: 'Privacy' },
-                { href: '/cookies',   label: 'Cookies' },
-                { href: '/aftercare', label: 'Aftercare' },
+                { href: '/terms',   label: 'Terms' },
+                { href: '/privacy', label: 'Privacy' },
+                { href: '/cookies', label: 'Cookies' },
               ].map(({ href, label }) => (
                 <li key={href}>
                   <Link href={href} className="footer-link">{label}</Link>
