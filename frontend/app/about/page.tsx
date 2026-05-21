@@ -26,6 +26,68 @@ export const metadata: Metadata = {
   },
 };
 
+function ParagraphDivider() {
+  return (
+    <div aria-hidden="true" style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '0.75rem',
+      margin: '1.75rem 0',
+    }}>
+      <div style={{ width: '2.5rem', height: '1px', background: 'rgba(201,168,76,0.2)' }} />
+      <span style={{
+        fontFamily: '"Cormorant Garamond", serif',
+        fontStyle: 'italic',
+        fontSize: '0.75rem',
+        color: 'rgba(201,168,76,0.35)',
+        lineHeight: 1,
+        letterSpacing: '0.1em',
+      }}>
+        ✦
+      </span>
+      <div style={{ width: '2.5rem', height: '1px', background: 'rgba(201,168,76,0.2)' }} />
+    </div>
+  );
+}
+
+const paraStyle: React.CSSProperties = {
+  fontFamily: '"DM Sans", sans-serif',
+  fontSize: '1rem',
+  color: 'var(--text-mid)',
+  lineHeight: 1.85,
+};
+
+const subheadStyle: React.CSSProperties = {
+  fontFamily: '"DM Mono", monospace',
+  fontSize: '0.7rem',
+  letterSpacing: '0.15em',
+  textTransform: 'uppercase',
+  color: 'rgba(201,168,76,0.7)',
+  marginBottom: '0.875rem',
+  marginTop: '1.75rem',
+};
+
+const numberedItemStyle: React.CSSProperties = {
+  display: 'flex',
+  gap: '1rem',
+  fontFamily: '"DM Sans", sans-serif',
+  fontSize: '0.9375rem',
+  color: 'var(--text-mid)',
+  lineHeight: 1.75,
+};
+
+const numStyle: React.CSSProperties = {
+  fontFamily: '"Cormorant Garamond", serif',
+  fontStyle: 'italic',
+  fontSize: '1.25rem',
+  fontWeight: 300,
+  color: 'rgba(201,168,76,0.5)',
+  flexShrink: 0,
+  lineHeight: 1.3,
+  minWidth: '1.25rem',
+};
+
 export default async function About() {
   const studio = await getStudioSettings();
 
@@ -61,7 +123,7 @@ export default async function About() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* Header */}
+      {/* ── HEADER + STUDIO PARAGRAPHS ─────────────────────────────── */}
       <section style={{ padding: '5rem 1.5rem 3rem', maxWidth: '48rem', margin: '0 auto' }}>
         <p className="eyebrow" style={{ marginBottom: '1.5rem' }}>The Studio</p>
         <h1 style={{
@@ -77,76 +139,44 @@ export default async function About() {
           About Hall of Mirrors
         </h1>
 
-        <p style={{
-          fontFamily: '"DM Sans", sans-serif',
-          fontSize: '1rem',
-          color: 'var(--text-mid)',
-          lineHeight: 1.85,
-          marginBottom: '1.25rem',
-        }}>
+        <p style={paraStyle}>
           Hall of Mirrors is a female-owned, private tattoo studio located at Suite 3, 34 Castle
           Street, Liverpool, L2 0NR. We are a fully inclusive space — a safe and welcoming home
           for everyone and we reserve the right to refuse services to those who do not align with
           our principles.
         </p>
 
-        <p style={{
-          fontFamily: '"DM Sans", sans-serif',
-          fontSize: '1rem',
-          color: 'var(--text-mid)',
-          lineHeight: 1.85,
-          marginBottom: '1.25rem',
-        }}>
+        <ParagraphDivider />
+
+        <p style={paraStyle}>
           Fully licensed by Liverpool City Council. We will happily accept Walk-ins if we have
           time on the day.
         </p>
 
-        <p style={{
-          fontFamily: '"DM Sans", sans-serif',
-          fontSize: '1rem',
-          color: 'var(--text-mid)',
-          lineHeight: 1.85,
-          marginBottom: '1.25rem',
-        }}>
+        <ParagraphDivider />
+
+        <p style={paraStyle}>
           Every piece here is drawn from scratch — custom work built entirely around your story,
           your references, and your vision. There are no off-the-shelf designs and no compromises.
           Just the time, the space, and the skill to make something that is entirely yours.
         </p>
 
-        <p style={{
-          fontFamily: '"DM Sans", sans-serif',
-          fontSize: '1rem',
-          color: 'var(--text-mid)',
-          lineHeight: 1.85,
-          marginBottom: '2.5rem',
-        }}>
-          We understand that tattooing is a luxury service and your needs are the priority. We
+        <ParagraphDivider />
+
+        <p style={paraStyle}>
+          We understand that tattooing is a luxury service and your needs are the priority, we
           pride ourselves on our ability to listen and cater to your vision. We will always give
           our honest opinion artistically and practically, and we will make suggestions in your
           best interests so that you will have the best possible tattoo.
         </p>
-
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <Link href="/booking" className="btn-primary">
-            <span>Book Appointment</span>
-            <span className="btn-icon" aria-hidden="true">↗</span>
-          </Link>
-          <Link href="/portfolio" className="btn-secondary">Meet Our Artists</Link>
-        </div>
       </section>
 
-      {/* Accordion sections */}
-      <section style={{ maxWidth: '48rem', margin: '0 auto', padding: '2rem 1.5rem 7rem', borderTop: '1px solid var(--border)' }}>
+      {/* ── ACCORDION SECTIONS ─────────────────────────────────────── */}
+      <section style={{ maxWidth: '48rem', margin: '0 auto', padding: '2rem 1.5rem 3rem', borderTop: '1px solid var(--border)' }}>
 
-        {/* ── HOW TO FIND US ──────────────────────────────────────────── */}
+        {/* HOW TO FIND US */}
         <AccordionItem title="How to Find Us">
-          <p style={{
-            fontFamily: '"DM Sans", sans-serif',
-            fontSize: '0.9375rem',
-            color: 'var(--text-mid)',
-            lineHeight: 1.8,
-            marginBottom: '1.25rem',
-          }}>
+          <p style={{ ...paraStyle, fontSize: '0.9375rem', marginBottom: '1.25rem' }}>
             We are at{' '}
             <strong style={{ color: 'var(--cream)', fontWeight: 500 }}>
               Hall of Mirrors Tattoo Studio, Suite 3, 34 Castle Street, Liverpool, L2 0NR
@@ -154,16 +184,7 @@ export default async function About() {
             — in the heart of the city centre, in the business district.
           </p>
 
-          <p style={{
-            fontFamily: '"DM Mono", monospace',
-            fontSize: '0.7rem',
-            letterSpacing: '0.15em',
-            textTransform: 'uppercase',
-            color: 'rgba(201,168,76,0.7)',
-            marginBottom: '0.75rem',
-          }}>
-            Nearest stations
-          </p>
+          <p style={subheadStyle as React.CSSProperties}>Nearest stations</p>
           <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {[
               ['Liverpool Central', '~8 min walk'],
@@ -180,7 +201,7 @@ export default async function About() {
             ))}
           </ul>
 
-          <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.8, marginBottom: '1.25rem' }}>
+          <p style={{ ...paraStyle, fontSize: '0.9375rem', marginBottom: '1.25rem' }}>
             Paid parking is available on Castle Street and Water Street if you are driving.
           </p>
 
@@ -201,160 +222,158 @@ export default async function About() {
           </a>
         </AccordionItem>
 
-        {/* ── PRE-APPOINTMENT PREP ─────────────────────────────────────── */}
+        {/* PRE-APPOINTMENT PREP */}
         <AccordionItem title="Pre-Appointment Prep">
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
             {[
-              'Be well rested before getting tattooed — the experience may be more difficult if you are tired.',
-              'Avoid drugs and alcohol the night before your appointment. Alcohol thins the blood and can cause issues during the process.',
-              'Make sure you eat before your appointment so your body has the energy it needs. Bring snacks on the day — chocolate or fruit helps keep your energy levels up.',
-              'Bring water and make sure you are well hydrated.',
-              'Avoid sunbeds for a few weeks prior to your appointment and moisturise regularly. Well-hydrated skin tattoos better and heals better.',
+              'Be well rested before getting tattooed. The experience may be more difficult if you are tired.',
+              'Please avoid drugs and alcohol the night before the appointment. Alcohol thins the blood and can cause issues during the process.',
+              'Make sure you eat before your appointment, so your body can have the energy it needs to get you through. Bring some chocolate or fruits with you on the day to keep your energy levels up.',
+              'Bring water. Make sure you are well hydrated.',
+              "Avoid sunbeds for a few weeks prior to your appointment and regularly moisturise your skin. It's easier to tattoo a well hydrated skin and the result will be better.",
             ].map((item, i) => (
-              <li key={i} style={{ display: 'flex', gap: '0.75rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.7 }}>
-                <span style={{ color: 'rgba(201,168,76,0.5)', flexShrink: 0, marginTop: '0.15em' }}>—</span>
-                <span>{item}</span>
-              </li>
+              <div key={i} style={numberedItemStyle}>
+                <span style={numStyle}>{i + 1}</span>
+                <p style={{ margin: 0, fontSize: '0.9375rem', fontFamily: '"DM Sans", sans-serif', color: 'var(--text-mid)', lineHeight: 1.75 }}>{item}</p>
+              </div>
             ))}
-          </ul>
+          </div>
         </AccordionItem>
 
-        {/* ── DAY OF THE APPOINTMENT ───────────────────────────────────── */}
+        {/* DAY OF THE APPOINTMENT */}
         <AccordionItem title="Day of the Appointment">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            {[
-              'Take a shower before your appointment. Please do not shave the area — your artist will do this for you, which reduces the chance of post-shave irritation. If you have long body hair, you may trim the area, but please leave the shaving to your artist.',
-              'Wear comfortable clothes that allow easy access to the area being tattooed. You may get changed at the studio. Avoid wearing anything you aren\'t prepared to get ink on — accidents can happen.',
-              'If you need to take a break or stop for food and drink during your appointment, that is completely fine. If you feel unwell at any point, please communicate with your artist. They are there for you.',
-            ].map((item, i) => (
-              <div key={i} style={{ display: 'flex', gap: '1rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.75 }}>
-                <span style={{
-                  fontFamily: '"Cormorant Garamond", serif',
-                  fontStyle: 'italic',
-                  fontSize: '1.25rem',
-                  fontWeight: 300,
-                  color: 'rgba(201,168,76,0.5)',
-                  flexShrink: 0,
-                  lineHeight: 1.3,
-                  minWidth: '1.25rem',
-                }}>
-                  {i + 1}
-                </span>
-                <span>{item}</span>
-              </div>
-            ))}
+            <div style={numberedItemStyle}>
+              <span style={numStyle}>1</span>
+              <p style={{ margin: 0, fontSize: '0.9375rem', fontFamily: '"DM Sans", sans-serif', color: 'var(--text-mid)', lineHeight: 1.75 }}>
+                Take a shower before your appointment to wash away any extra bacteria. Please do
+                not shave the area — your artist prefers to shave the area for you, less chance of
+                post-shave irritation. If you have long body hair, you may trim the area but
+                please leave the shaving to your artist.
+              </p>
+            </div>
+            <div style={numberedItemStyle}>
+              <span style={numStyle}>2</span>
+              <p style={{ margin: 0, fontSize: '0.9375rem', fontFamily: '"DM Sans", sans-serif', color: 'var(--text-mid)', lineHeight: 1.75 }}>
+                Please wear comfortable clothes which allow easy access to the area being tattooed
+                (you may get changed at the studio) and don&apos;t wear anything that you
+                aren&apos;t prepared to get ink on — accidents can happen.
+              </p>
+            </div>
+            <p style={{ ...paraStyle, fontSize: '0.9375rem', marginTop: '0.25rem' }}>
+              If you need to take a break, or stop for food/drink during your appointment, this is
+              completely fine. If you feel unwell at any point during your appointment, please do
+              communicate with your artist. They are here for you.
+            </p>
           </div>
         </AccordionItem>
 
-        {/* ── AFTERCARE ADVICE ─────────────────────────────────────────── */}
+        {/* AFTERCARE ADVICE */}
         <AccordionItem title="Aftercare Advice">
 
-          <p style={{
-            fontFamily: '"DM Mono", monospace',
-            fontSize: '0.7rem',
-            letterSpacing: '0.15em',
-            textTransform: 'uppercase',
-            color: 'rgba(201,168,76,0.7)',
-            marginBottom: '1rem',
-          }}>
-            If your artist used Secondskin adhesive
+          <p style={{ ...paraStyle, fontSize: '0.9375rem', marginBottom: '1.25rem' }}>
+            If your tattoo artist has used Secondskin adhesive:
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '1.75rem' }}>
+            <div style={numberedItemStyle}>
+              <span style={numStyle}>1</span>
+              <p style={{ margin: 0, fontSize: '0.9375rem', fontFamily: '"DM Sans", sans-serif', color: 'var(--text-mid)', lineHeight: 1.75 }}>
+                Your artist will cover your tattoo and give you a second piece of Secondskin to
+                take home with you. They will show you how to apply the second piece yourself at
+                home.
+              </p>
+            </div>
+            <div style={numberedItemStyle}>
+              <span style={numStyle}>2</span>
+              <p style={{ margin: 0, fontSize: '0.9375rem', fontFamily: '"DM Sans", sans-serif', color: 'var(--text-mid)', lineHeight: 1.75 }}>
+                In the first 12 hours after you&apos;ve been tattooed, the area will be quite
+                swollen and your skin will be expelling excess blood and plasma. There will likely
+                be some goop underneath the Secondskin — this is perfectly normal. Just try to let
+                it be and wear loose clothing.
+              </p>
+            </div>
+            <div style={numberedItemStyle}>
+              <span style={numStyle}>3</span>
+              <p style={{ margin: 0, fontSize: '0.9375rem', fontFamily: '"DM Sans", sans-serif', color: 'var(--text-mid)', lineHeight: 1.75 }}>
+                Avoid showering immediately after your appointment as this may cause the adhesive
+                to soften and the Secondskin to come off.
+              </p>
+            </div>
+          </div>
+
+          <p style={{ ...subheadStyle, marginTop: 0 } as React.CSSProperties}>
+            What to do if your Secondskin comes off prematurely
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '1.75rem' }}>
             {[
-              'Your artist will cover your tattoo and leave you with a second piece of Secondskin to apply at home. They will show you how.',
-              'In the first 12 hours, the area will be swollen and expelling excess blood and plasma. Some fluid under the Secondskin is perfectly normal — leave it be and wear loose clothing.',
-              'Avoid showering immediately after your appointment as this may cause the adhesive to soften and the Secondskin to come off early.',
+              'If the Secondskin comes off prematurely, wash the area and pat dry with a paper towel.',
+              'Apply the second piece your artist provided to the dry area within 5–10 minutes (leave a generous border).',
+              'Do not apply the Secondskin if your tattoo has had contact with the open air for longer than 20 minutes as this changes the practice of wet healing.',
+              "If you aren't able to apply your Secondskin within 20 minutes, discard it and allow the tattoo to completely dry out. Clean and moisturise as many times as your artist suggested.",
             ].map((item, i) => (
-              <div key={i} style={{ display: 'flex', gap: '1rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.75 }}>
-                <span style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.25rem', fontWeight: 300, color: 'rgba(201,168,76,0.5)', flexShrink: 0, lineHeight: 1.3, minWidth: '1.25rem' }}>
-                  {i + 1}
-                </span>
-                <span>{item}</span>
+              <div key={i} style={numberedItemStyle}>
+                <span style={numStyle}>{i + 1}</span>
+                <p style={{ margin: 0, fontSize: '0.9375rem', fontFamily: '"DM Sans", sans-serif', color: 'var(--text-mid)', lineHeight: 1.75 }}>{item}</p>
               </div>
             ))}
           </div>
 
-          <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)', marginBottom: '1rem' }}>
-            If the Secondskin comes off prematurely
-          </p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '1.75rem' }}>
-            {[
-              'Wash the area and pat dry with a clean paper towel.',
-              'Apply the second piece to the dry area within 5–10 minutes, leaving a generous border.',
-              'Do not apply Secondskin if the tattoo has been exposed to open air for longer than 20 minutes — this changes the wet healing process.',
-              'If you cannot apply it within 20 minutes, discard the Secondskin and allow the tattoo to dry out completely. Clean and moisturise as your artist instructed.',
-            ].map((item, i) => (
-              <div key={i} style={{ display: 'flex', gap: '1rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.75 }}>
-                <span style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.25rem', fontWeight: 300, color: 'rgba(201,168,76,0.5)', flexShrink: 0, lineHeight: 1.3, minWidth: '1.25rem' }}>
-                  {i + 1}
-                </span>
-                <span>{item}</span>
-              </div>
-            ))}
-          </div>
-
-          <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)', marginBottom: '1rem' }}>
+          <p style={{ ...subheadStyle, marginTop: 0 } as React.CSSProperties}>
             Removing the Secondskin
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '1.75rem' }}>
             {[
-              'Shower the following morning and very gently peel the adhesive off as lukewarm water trickles over the area.',
-              'Gently wash the tattoo with antibacterial soap and pat dry with a clean paper towel.',
-              'Apply the second piece to the dry area within 5–10 minutes, leaving a generous border. Leave it on for 2–4 days — the longer the better.',
-              'If it begins to peel and there is an entry point to the tattoo, remove the whole thing. We would not want bacteria to get in and not get out.',
-              'After a few days, remove the Secondskin and wash, dry, and moisturise as normal. Your tattoo will look more muted while the new skin heals over it — allow 2–3 weeks to see the full finished result.',
+              'Ideally you will shower when you wake up the following day and (very gently) peel the adhesive off as the lukewarm water trickles over the area.',
+              'Gently wash the tattoo in the shower with anti-bacterial soap and pat dry with a clean paper towel.',
+              'Apply the second piece your artist provided to the dry area within 5–10 minutes (leave a generous border). Leave this piece on for 2–4 days — the longer it stays on the better.',
+              "If it starts to peel off and there is an entrance point to the tattoo, remove the whole thing. We wouldn't want bacteria to be able to get in and not get out.",
+              'After a few days you can remove the Secondskin, wash/dry/moisturise as normal. During the healing process the new skin is healing over the tattoo so your tattoo will appear more muted until fully healed. Allow 2–3 weeks until you see the full finished result.',
             ].map((item, i) => (
-              <div key={i} style={{ display: 'flex', gap: '1rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.75 }}>
-                <span style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.25rem', fontWeight: 300, color: 'rgba(201,168,76,0.5)', flexShrink: 0, lineHeight: 1.3, minWidth: '1.25rem' }}>
-                  {i + 1}
-                </span>
-                <span>{item}</span>
+              <div key={i} style={numberedItemStyle}>
+                <span style={numStyle}>{i + 1}</span>
+                <p style={{ margin: 0, fontSize: '0.9375rem', fontFamily: '"DM Sans", sans-serif', color: 'var(--text-mid)', lineHeight: 1.75 }}>{item}</p>
               </div>
             ))}
           </div>
 
-          <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)', marginBottom: '1rem' }}>
-            What to avoid during healing (2–3 weeks)
+          <p style={{ ...subheadStyle, marginTop: 0 } as React.CSSProperties}>
+            What to avoid during the healing process (2–3 weeks)
           </p>
 
-          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.75rem', display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '1.75rem' }}>
             {[
-              'No swimming for at least three weeks — chlorinated water will react badly with your tattoo. Avoid hot tubs, saunas, and steam rooms.',
-              'No sunbathing or tanning beds for at least three weeks. After that, use sunscreen to keep your tattoo in good condition.',
-              'Avoid the gym or any activity that causes heavy sweating while the tattoo is still healing.',
-              'Do not allow your pet to have direct contact with your tattoo — tattoos are open wounds and pet hair can contaminate the area and risk infection.',
+              'Do not go swimming for at least three weeks — chlorinated water will react badly with your tattoo. Avoid hot tubs, saunas or steam rooms.',
+              'Avoid sunbathing and tanning beds for at least three weeks and after that use sunscreen to keep your tattoo in good condition.',
+              'Avoid going to the gym or doing activities that are going to make you sweat whilst the tattoo is still healing.',
+              'Do not allow your pet to have direct contact with your tattoo — tattoos are open wounds and pet hairs can contaminate the tattoo and risk infection.',
             ].map((item, i) => (
-              <li key={i} style={{ display: 'flex', gap: '0.75rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.7 }}>
-                <span style={{ color: 'rgba(201,168,76,0.5)', flexShrink: 0, marginTop: '0.15em' }}>—</span>
-                <span>{item}</span>
-              </li>
+              <div key={i} style={numberedItemStyle}>
+                <span style={numStyle}>{i + 1}</span>
+                <p style={{ margin: 0, fontSize: '0.9375rem', fontFamily: '"DM Sans", sans-serif', color: 'var(--text-mid)', lineHeight: 1.75 }}>{item}</p>
+              </div>
             ))}
-          </ul>
+          </div>
 
-          <p style={{
-            fontFamily: '"DM Sans", sans-serif',
-            fontSize: '0.875rem',
-            color: 'var(--text-low)',
-            lineHeight: 1.75,
-            borderTop: '1px solid var(--border)',
-            paddingTop: '1.25rem',
-          }}>
-            Please follow this advice as closely as you can and contact us immediately if
-            something doesn&apos;t seem right. Don&apos;t take advice from friends or internet
-            forums — each artist follows their own procedures. We are always here to help.
+          <p style={{ ...subheadStyle, marginTop: 0 } as React.CSSProperties}>Anything else</p>
+          <p style={{ ...paraStyle, fontSize: '0.9375rem' }}>
+            Please follow the aftercare advice to the best of your ability and contact us
+            immediately if something doesn&apos;t seem right. Please don&apos;t take advice from
+            your friends or internet forums — each tattooist follows their own procedures and
+            aftercare routines to obtain the best results regarding their work. Ultimately please
+            communicate with us if there is anything you feel unsure about. We are here to help.
           </p>
         </AccordionItem>
 
-        {/* ── FAQ ──────────────────────────────────────────────────────── */}
+        {/* FAQ */}
         <AccordionItem title="FAQ">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
             {[
               {
                 q: 'Do you take walk-ins?',
-                a: 'Yes — we will happily take walk-ins if we have time on the day. To guarantee your slot and give your artist time to prepare your design, we recommend booking in advance.',
+                a: 'Yes — we will happily take walk-ins if we have time on the day. To guarantee your slot and give your artist time to prepare your bespoke design, we recommend booking in advance.',
               },
               {
                 q: 'How much does a tattoo cost?',
@@ -389,12 +408,7 @@ export default async function About() {
                 }}>
                   {q}
                 </p>
-                <p style={{
-                  fontFamily: '"DM Sans", sans-serif',
-                  fontSize: '0.9375rem',
-                  color: 'var(--text-mid)',
-                  lineHeight: 1.75,
-                }}>
+                <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.75 }}>
                   {a}
                 </p>
               </div>
@@ -418,6 +432,23 @@ export default async function About() {
         </AccordionItem>
 
       </section>
+
+      {/* ── CTA BUTTONS ────────────────────────────────────────────── */}
+      <section style={{
+        maxWidth: '48rem',
+        margin: '0 auto',
+        padding: '0 1.5rem 6rem',
+        display: 'flex',
+        gap: '0.75rem',
+        flexWrap: 'wrap',
+      }}>
+        <Link href="/booking" className="btn-primary">
+          <span>Book Appointment</span>
+          <span className="btn-icon" aria-hidden="true">↗</span>
+        </Link>
+        <Link href="/portfolio" className="btn-secondary">Meet Our Artists</Link>
+      </section>
+
     </div>
   );
 }
