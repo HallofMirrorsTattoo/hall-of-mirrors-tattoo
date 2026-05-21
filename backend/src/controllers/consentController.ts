@@ -297,7 +297,7 @@ export async function getClientConsentForms(req: Request, res: Response) {
 
     await client.connect();
 
-    // Get all bookings for this user — also match by email (stub-user fallback)
+    // Get bookings for this user — exclude cancelled/declined (no consent needed)
     const result = await client.query(
       `SELECT b.id as booking_id, b.booking_reference, b.appointment_date_time,
               b.placement, b.appointment_status, b.estimated_size,
@@ -307,7 +307,8 @@ export async function getClientConsentForms(req: Request, res: Response) {
        LEFT JOIN "Artist" a ON b.artist_id = a.id
        LEFT JOIN "ConsentForm" cf ON cf.booking_id = b.id
        LEFT JOIN "User" u ON b.user_id = u.id
-       WHERE b.user_id = $1 OR u.email = $2
+       WHERE (b.user_id = $1 OR u.email = $2)
+         AND b.appointment_status NOT IN ('cancelled', 'declined', 'rejected')
        ORDER BY b.appointment_date_time DESC`,
       [req.user.id, req.user.email]
     );

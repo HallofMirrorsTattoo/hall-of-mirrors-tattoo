@@ -71,7 +71,10 @@ export default function ClientDashboardPage() {
         });
         if (!res.ok) return;
         const data = await res.json();
-        const unsigned = (data.bookings || []).filter((b: { consent_form_id: string | null }) => !b.consent_form_id).length;
+        const unsigned = (data.bookings || []).filter(
+          (b: { consent_form_id: string | null; appointment_status: string }) =>
+            !b.consent_form_id && b.appointment_status === 'pending_consent'
+        ).length;
         updateBadge('consent-forms', unsigned);
       } catch { /* non-critical */ }
     })();
