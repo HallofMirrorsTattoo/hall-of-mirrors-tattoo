@@ -4,6 +4,22 @@ import AnimatedSection from '../components/AnimatedSection';
 export const metadata = {
   title: 'Services & Pricing | Hall of Mirrors Tattoo Studio Liverpool',
   description: 'Custom tattoos, cover-ups, and free consultations at Hall of Mirrors Tattoo Studio, Castle Street Liverpool. Neo-traditional specialists. Transparent pricing guide — starting from £150.',
+  alternates: {
+    canonical: 'https://hallofmirrorstattoo.com/about',
+  },
+  openGraph: {
+    title: 'Services & Pricing | Hall of Mirrors Tattoo Studio Liverpool',
+    description: 'Custom tattoos, cover-ups, and free consultations in Liverpool city centre. Bespoke neo-traditional tattooing from £150. No walk-ins — appointment only.',
+    url: 'https://hallofmirrorstattoo.com/about',
+    siteName: 'Hall of Mirrors Tattoo Studio',
+    locale: 'en_GB',
+    type: 'website' as const,
+  },
+  twitter: {
+    card: 'summary_large_image' as const,
+    title: 'Services & Pricing | Hall of Mirrors Tattoo Studio Liverpool',
+    description: 'Custom tattoos, cover-ups, and free consultations in Liverpool city centre. Bespoke neo-traditional tattooing from £150.',
+  },
 };
 
 const services = [
@@ -48,9 +64,73 @@ const pricing = [
   { label: 'Cover-Up',      price: 'Custom quote', note: 'Quoted after in-person consultation' },
 ];
 
+const servicesJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'LocalBusiness',
+  name: 'Hall of Mirrors Tattoo Studio',
+  url: 'https://hallofmirrorstattoo.com',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: 'Suite 3, 34 Castle Street',
+    addressLocality: 'Liverpool',
+    postalCode: 'L2 0NR',
+    addressCountry: 'GB',
+  },
+  hasOfferCatalog: {
+    '@type': 'OfferCatalog',
+    name: 'Tattoo Services',
+    itemListElement: [
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: 'Bespoke Custom Tattoo',
+          description: 'Custom tattoo designs drawn from scratch. Neo-traditional specialist. Every piece created in collaboration with you.',
+        },
+        priceSpecification: {
+          '@type': 'PriceSpecification',
+          priceCurrency: 'GBP',
+          minPrice: 150,
+          description: 'Starting from £150 depending on size and complexity',
+        },
+      },
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: 'Free Tattoo Consultation',
+          description: 'Free consultation at our Castle Street Liverpool studio. Discuss your idea, placement, sizing and the design process.',
+        },
+        price: 0,
+        priceCurrency: 'GBP',
+      },
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: 'Cover-Up & Rework',
+          description: 'Specialist cover-up tattoos and rework of existing tattoos. Consultation required to assess existing ink.',
+        },
+      },
+      {
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: 'Touch-Ups & Aftercare',
+          description: 'Touch-ups for healed Hall of Mirrors tattoos. Colour refresh, line sharpening. Handled case-by-case.',
+        },
+      },
+    ],
+  },
+};
+
 export default function Services() {
   return (
     <div style={{ backgroundColor: 'var(--bg)', minHeight: '100vh' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(servicesJsonLd) }}
+      />
 
       {/* Page header */}
       <section className="px-6 pt-8 pb-16 md:pb-24">

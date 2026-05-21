@@ -2,8 +2,24 @@ import Link from 'next/link';
 import AnimatedSection from '@/app/components/AnimatedSection';
 
 export const metadata = {
-  title: 'Aftercare Guide — Hall of Mirrors Tattoo',
-  description: 'How to care for your new tattoo. Step-by-step aftercare instructions from Hall of Mirrors Tattoo Studio, Liverpool.',
+  title: 'Tattoo Aftercare Guide | Hall of Mirrors Tattoo Studio Liverpool',
+  description: 'How to care for your new tattoo. Step-by-step aftercare instructions from Hall of Mirrors Tattoo Studio, Liverpool. Protect your investment and ensure the best heal.',
+  alternates: {
+    canonical: 'https://hallofmirrorstattoo.com/aftercare',
+  },
+  openGraph: {
+    title: 'Tattoo Aftercare Guide | Hall of Mirrors Liverpool',
+    description: 'Step-by-step tattoo aftercare instructions from Hall of Mirrors Tattoo Studio, Liverpool. How to care for your new tattoo through every phase of healing.',
+    url: 'https://hallofmirrorstattoo.com/aftercare',
+    siteName: 'Hall of Mirrors Tattoo Studio',
+    locale: 'en_GB',
+    type: 'article' as const,
+  },
+  twitter: {
+    card: 'summary_large_image' as const,
+    title: 'Tattoo Aftercare Guide | Hall of Mirrors Liverpool',
+    description: 'Step-by-step tattoo aftercare instructions from Hall of Mirrors Tattoo Studio, Liverpool.',
+  },
 };
 
 const phases = [
@@ -52,9 +68,47 @@ const phases = [
   },
 ];
 
+const howToJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  name: 'How to Care for Your New Tattoo',
+  description: 'Step-by-step tattoo aftercare instructions from Hall of Mirrors Tattoo Studio, Liverpool.',
+  totalTime: 'P4W',
+  step: [
+    {
+      '@type': 'HowToStep',
+      name: 'First 3 Hours',
+      text: 'Keep bandage or protective film on. No water exposure. Avoid direct sunlight. Do not touch or pick at the tattoo.',
+      position: 1,
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'First 24 Hours',
+      text: 'Remove bandage after 2–3 hours. Gently wash with unscented soap and warm water. Pat dry with a clean paper towel. Apply a thin layer of aftercare balm.',
+      position: 2,
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'Days 2–7',
+      text: 'Wash 2–3 times daily with unscented soap. Apply aftercare balm after each wash. Avoid tight clothing over the tattoo. No swimming, baths, or saunas. Do not pick or scratch at peeling skin.',
+      position: 3,
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'Weeks 2–4',
+      text: 'Continue moisturising with lotion or aftercare balm. Apply SPF 30+ sunscreen if going outside. Avoid strenuous exercise or heavy sweating.',
+      position: 4,
+    },
+  ],
+};
+
 export default function Aftercare() {
   return (
     <main style={{ background: 'var(--bg)' }} className="min-h-screen">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }}
+      />
 
       {/* Hero */}
       <section className="pt-40 pb-24 px-6">

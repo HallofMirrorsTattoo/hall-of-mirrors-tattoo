@@ -4,6 +4,22 @@ import AnimatedSection from '../components/AnimatedSection';
 export const metadata = {
   title: 'Our Artists | Hall of Mirrors Tattoo Studio Liverpool',
   description: 'Meet the artists at Hall of Mirrors — a private tattoo studio on Castle Street, Liverpool. Bespoke neo-traditional tattooing, colour realism, and custom design.',
+  alternates: {
+    canonical: 'https://hallofmirrorstattoo.com/portfolio',
+  },
+  openGraph: {
+    title: 'Our Artists | Hall of Mirrors Tattoo Studio Liverpool',
+    description: 'Meet the artists at Hall of Mirrors — a private tattoo studio on Castle Street, Liverpool. Neo-traditional specialists. Every design bespoke.',
+    url: 'https://hallofmirrorstattoo.com/portfolio',
+    siteName: 'Hall of Mirrors Tattoo Studio',
+    locale: 'en_GB',
+    type: 'website' as const,
+  },
+  twitter: {
+    card: 'summary_large_image' as const,
+    title: 'Our Artists | Hall of Mirrors Tattoo Studio Liverpool',
+    description: 'Meet the artists at Hall of Mirrors — a private tattoo studio on Castle Street, Liverpool. Neo-traditional specialists.',
+  },
 };
 
 interface Artist {

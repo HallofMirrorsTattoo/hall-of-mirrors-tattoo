@@ -9,7 +9,8 @@ const STATIC_ROUTES: { url: string; priority: number; changeFrequency: MetadataR
   { url: '/about',        priority: 0.75, changeFrequency: 'monthly' },
   { url: '/flash',        priority: 0.7,  changeFrequency: 'weekly' },
   { url: '/consultation', priority: 0.65, changeFrequency: 'monthly' },
-  { url: '/aftercare',    priority: 0.5,  changeFrequency: 'yearly' },
+  { url: '/faq',          priority: 0.65, changeFrequency: 'yearly' },
+  { url: '/aftercare',    priority: 0.55, changeFrequency: 'yearly' },
   { url: '/testimonials', priority: 0.55, changeFrequency: 'monthly' },
 ];
 

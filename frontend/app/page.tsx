@@ -6,11 +6,21 @@ import AnimatedSection from './components/AnimatedSection';
 export const metadata = {
   title: 'Hall of Mirrors Tattoo Studio | Liverpool City Centre',
   description: 'Hall of Mirrors is a private tattoo studio on Castle Street, Liverpool. Specialising in neo-traditional tattoos, custom bespoke designs, colour realism, and cover-up work. Book online.',
+  alternates: {
+    canonical: 'https://hallofmirrorstattoo.com',
+  },
   openGraph: {
     title: 'Hall of Mirrors Tattoo Studio | Liverpool',
     description: 'Bespoke neo-traditional tattoos in Liverpool city centre. Book online.',
-    url: 'https://hall-of-mirrors-tattoo.vercel.app',
+    url: 'https://hallofmirrorstattoo.com',
+    siteName: 'Hall of Mirrors Tattoo Studio',
+    locale: 'en_GB',
     type: 'website' as const,
+  },
+  twitter: {
+    card: 'summary_large_image' as const,
+    title: 'Hall of Mirrors Tattoo Studio | Liverpool City Centre',
+    description: 'Bespoke neo-traditional tattoos in Liverpool city centre. Book online.',
   },
 };
 
@@ -19,7 +29,7 @@ const localBusinessJsonLd = {
   '@type': ['LocalBusiness', 'TattooShop'],
   name: 'Hall of Mirrors Tattoo Studio',
   description: 'Bespoke neo-traditional tattoos. Private studio on Castle Street, Liverpool city centre.',
-  url: 'https://hall-of-mirrors-tattoo.vercel.app',
+  url: 'https://hallofmirrorstattoo.com',
   email: 'studio@hallofmirrorstattoo.com',
   address: {
     '@type': 'PostalAddress',
@@ -35,15 +45,9 @@ const localBusinessJsonLd = {
   },
   openingHours: ['Mo-Sa 10:00-18:00'],
   priceRange: '££',
-  image: 'https://hall-of-mirrors-tattoo.vercel.app/opengraph-image.png',
+  image: 'https://hallofmirrorstattoo.com/opengraph-image.png',
 };
 
-const cornerStyles: Record<string, string> = {
-  'top-6 left-6':     '1px 0 0 1px',
-  'top-6 right-6':    '1px 1px 0 0',
-  'bottom-6 left-6':  '0 0 1px 1px',
-  'bottom-6 right-6': '0 1px 1px 0',
-};
 
 export default function Home() {
   return (
@@ -334,15 +338,17 @@ export default function Home() {
                   Liverpool&apos;s home for<br />custom tattooing
                 </h2>
                 <p style={{ marginBottom: '1.25rem' }}>
-                  Hall of Mirrors is an independent tattoo studio on Castle Street, Liverpool
-                  city centre — a quiet, private space dedicated to bespoke tattoo design. We
-                  specialise in neo-traditional tattooing, colour realism, and cover-up work,
-                  creating pieces that are built to last and designed to mean something.
+                  Hall of Mirrors is a private tattoo studio on Castle Street, Liverpool
+                  city centre — a quiet space dedicated to bespoke tattoo design and the
+                  telling of your story. We specialise in neo-traditional tattooing, colour
+                  realism, and cover-up work, creating pieces that are built to last and
+                  designed to mean something.
                 </p>
                 <p>
-                  Our artists work one-to-one with every client, taking on a limited number of
-                  bookings to ensure each piece gets the attention it deserves. Every tattoo
-                  begins with a conversation.
+                  Our artists work one-to-one with every client, taking on a limited number
+                  of bookings to ensure each piece receives the attention it deserves. Every
+                  tattoo begins with a conversation — because that&apos;s where the work
+                  really starts.
                 </p>
 
                 <div className="flex gap-10 mt-10">
@@ -368,35 +374,21 @@ export default function Home() {
               </AnimatedSection>
 
               <AnimatedSection delay={200}>
-                {/* Studio image — replace with real photo */}
-                <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: '4/5', background: 'linear-gradient(160deg, var(--surface-2) 0%, var(--bg) 100%)' }}>
-                  {/* Mirror frame ornament */}
-                  <div className="absolute rounded-xl" style={{ inset: '1.5rem', border: '1px solid rgba(201,168,76,0.15)' }} aria-hidden="true" />
-                  <div className="absolute rounded-lg" style={{ inset: '2.5rem', border: '1px solid rgba(201,168,76,0.07)' }} aria-hidden="true" />
-
-                  {/* Corner accents */}
-                  {Object.entries(cornerStyles).map(([pos, bw]) => (
-                    <div
-                      key={pos}
-                      className={`absolute ${pos} w-4 h-4`}
-                      style={{ borderColor: 'rgba(201,168,76,0.25)', borderStyle: 'solid', borderWidth: bw }}
-                      aria-hidden="true"
-                    />
-                  ))}
-
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <Image
-                      src="/assets/logos/White Logo.png"
-                      alt=""
-                      width={80}
-                      height={80}
-                      style={{ opacity: 0.1, width: '5rem', height: 'auto' }}
-                      aria-hidden="true"
-                    />
-                    <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '0.875rem', color: 'rgba(201,168,76,0.3)', marginTop: '1rem', letterSpacing: '0.05em' }}>
-                      Studio photography coming soon
-                    </p>
-                  </div>
+                <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: '4/5' }}>
+                  <Image
+                    src="/assets/shop-carousel/DSCF4101.jpg"
+                    alt="Hall of Mirrors Tattoo Studio — Castle Street, Liverpool"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className="object-cover"
+                    quality={90}
+                  />
+                  {/* Subtle gold vignette overlay */}
+                  <div
+                    className="absolute inset-0 rounded-2xl pointer-events-none"
+                    style={{ boxShadow: 'inset 0 0 0 1px rgba(201,168,76,0.18)' }}
+                    aria-hidden="true"
+                  />
                 </div>
               </AnimatedSection>
 

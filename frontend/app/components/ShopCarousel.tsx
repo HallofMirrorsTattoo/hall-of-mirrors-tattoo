@@ -3,12 +3,21 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
+const BURNS = ['kenBurns1', 'kenBurns2', 'kenBurns3', 'kenBurns4'] as const;
+
 const photos = [
-  { src: '/assets/shop-carousel/IMG_1404.PNG', alt: 'Hall of Mirrors studio — view 1', animation: 'kenBurns1' },
-  { src: '/assets/shop-carousel/IMG_1405.PNG', alt: 'Hall of Mirrors studio — view 2', animation: 'kenBurns2' },
-  { src: '/assets/shop-carousel/IMG_1406.PNG', alt: 'Hall of Mirrors studio — view 3', animation: 'kenBurns3' },
-  { src: '/assets/shop-carousel/IMG_1407.PNG', alt: 'Hall of Mirrors studio — view 4', animation: 'kenBurns4' },
-];
+  { src: '/assets/shop-carousel/DSCF4101.jpg',   alt: 'Hall of Mirrors Tattoo Studio — Castle Street, Liverpool' },
+  { src: '/assets/shop-carousel/DSCF4116.jpg',   alt: 'Bespoke neo-traditional tattooing — Hall of Mirrors Liverpool' },
+  { src: '/assets/shop-carousel/DSCF4137.jpg',   alt: 'Custom tattoo design — Hall of Mirrors, Liverpool city centre' },
+  { src: '/assets/shop-carousel/DSCF4160.jpg',   alt: 'Original tattoo artistry — Hall of Mirrors Liverpool' },
+  { src: '/assets/shop-carousel/DSCF4185.jpg',   alt: 'Neo-traditional tattoo work — Hall of Mirrors' },
+  { src: '/assets/shop-carousel/DSCF4202.jpg',   alt: 'Hall of Mirrors private studio — Liverpool' },
+  { src: '/assets/shop-carousel/E-DSCF3014.jpg', alt: 'Bespoke tattoo — Hall of Mirrors Tattoo Studio Liverpool' },
+  { src: '/assets/shop-carousel/E-DSCF3032.jpg', alt: 'Custom neo-traditional tattoo — Hall of Mirrors' },
+  { src: '/assets/shop-carousel/E-DSCF3034.jpg', alt: 'Hall of Mirrors tattoo studio — Castle Street Liverpool' },
+  { src: '/assets/shop-carousel/E-DSCF3046.jpg', alt: 'Neo-traditional tattoo artistry — Liverpool' },
+  { src: '/assets/shop-carousel/E-DSCF3058.jpg', alt: 'Hall of Mirrors — bespoke tattoo studio, Liverpool city centre' },
+].map((p, i) => ({ ...p, animation: BURNS[i % 4] }));
 
 // Expo-out for the incoming slide: snaps to attention quickly, then settles.
 // Quartic ease-in for the outgoing slide: holds presence, then releases gracefully.
@@ -43,13 +52,13 @@ export default function ShopCarousel() {
             src={src}
             alt={alt}
             fill
+            sizes="100vw"
             className="object-cover"
             style={{
-              // Ease-out: camera drifts assertively then decelerates to rest
               animation: i === current ? `${animation} 9s cubic-bezier(0,0,0.2,1) forwards` : 'none',
             }}
             priority={i === 0}
-            quality={90}
+            quality={85}
           />
           {/* Per-image atmospheric overlay: vertical darken + side vignette */}
           <div

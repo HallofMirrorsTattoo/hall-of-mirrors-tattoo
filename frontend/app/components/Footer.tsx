@@ -115,6 +115,8 @@ export default async function Footer() {
                 { href: '/flash',        label: 'Flash Days' },
                 { href: '/consultation', label: 'Consultation' },
                 { href: '/about',        label: 'About' },
+                { href: '/faq',          label: 'FAQ' },
+                { href: '/testimonials', label: 'Reviews' },
               ].map(({ href, label }) => (
                 <li key={href}>
                   <Link href={href} className="footer-link">{label}</Link>

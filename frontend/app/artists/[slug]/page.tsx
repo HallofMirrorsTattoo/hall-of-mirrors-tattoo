@@ -31,15 +31,29 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const artist = await fetchArtist(params.slug);
   if (!artist) return { title: 'Artist Not Found | Hall of Mirrors' };
 
+  const description = artist.bio
+    ? artist.bio.substring(0, 155)
+    : `${artist.full_name} is a tattoo artist at Hall of Mirrors Studio, Liverpool. ${artist.specialties ? `Specialising in ${artist.specialties}.` : ''} Book online.`;
+
   return {
     title: `${artist.full_name} | Tattoo Artist Liverpool | Hall of Mirrors`,
-    description: artist.bio
-      ? artist.bio.substring(0, 155)
-      : `${artist.full_name} is a tattoo artist at Hall of Mirrors Studio, Liverpool. ${artist.specialties ? `Specialising in ${artist.specialties}.` : ''} Book online.`,
+    description,
+    alternates: {
+      canonical: `https://hallofmirrorstattoo.com/artists/${params.slug}`,
+    },
     openGraph: {
-      title: `${artist.full_name} — Hall of Mirrors Tattoo Studio`,
+      title: `${artist.full_name} — Hall of Mirrors Tattoo Studio, Liverpool`,
+      description: artist.bio?.substring(0, 155) ?? `Tattoo artist at Hall of Mirrors, Liverpool. Bespoke neo-traditional tattooing.`,
+      url: `https://hallofmirrorstattoo.com/artists/${params.slug}`,
+      siteName: 'Hall of Mirrors Tattoo Studio',
+      locale: 'en_GB',
+      type: 'profile',
+      images: artist.portrait_url ? [{ url: artist.portrait_url, alt: `${artist.full_name} — Hall of Mirrors` }] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image' as const,
+      title: `${artist.full_name} | Tattoo Artist Liverpool | Hall of Mirrors`,
       description: artist.bio?.substring(0, 155) ?? `Tattoo artist at Hall of Mirrors, Liverpool.`,
-      url: `https://hall-of-mirrors-tattoo.vercel.app/artists/${params.slug}`,
     },
   };
 }
@@ -128,9 +142,11 @@ export default async function ArtistPage({ params }: { params: { slug: string } 
     worksFor: {
       '@type': 'LocalBusiness',
       name: 'Hall of Mirrors Tattoo Studio',
-      url: 'https://hall-of-mirrors-tattoo.vercel.app',
+      url: 'https://hallofmirrorstattoo.com',
     },
+    url: `https://hallofmirrorstattoo.com/artists/${params.slug}`,
     description: artist.bio ?? undefined,
+    image: artist.portrait_url ?? undefined,
     sameAs: igUrl ? [igUrl] : undefined,
   };
 

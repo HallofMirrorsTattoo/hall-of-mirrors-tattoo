@@ -4,6 +4,22 @@ import AnimatedSection from '../components/AnimatedSection';
 export const metadata = {
   title: 'Client Reviews | Hall of Mirrors Tattoo Studio Liverpool',
   description: 'Read what clients say about Hall of Mirrors Tattoo Studio in Liverpool. Specialising in neo-traditional and custom bespoke tattoos.',
+  alternates: {
+    canonical: 'https://hallofmirrorstattoo.com/testimonials',
+  },
+  openGraph: {
+    title: 'Client Reviews | Hall of Mirrors Tattoo Studio Liverpool',
+    description: 'Read client reviews for Hall of Mirrors Tattoo Studio, Castle Street Liverpool. Neo-traditional specialist. See what people say about their experience.',
+    url: 'https://hallofmirrorstattoo.com/testimonials',
+    siteName: 'Hall of Mirrors Tattoo Studio',
+    locale: 'en_GB',
+    type: 'website' as const,
+  },
+  twitter: {
+    card: 'summary_large_image' as const,
+    title: 'Client Reviews | Hall of Mirrors Tattoo Studio Liverpool',
+    description: 'Read client reviews for Hall of Mirrors Tattoo Studio, Liverpool. Neo-traditional specialist tattoo artist.',
+  },
 };
 
 const reviews = [

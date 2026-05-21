@@ -7,14 +7,22 @@ export const metadata: Metadata = {
   title: 'About | Hall of Mirrors Tattoo Studio | Liverpool City Centre',
   description:
     'Hall of Mirrors is a private bespoke tattoo studio on Castle Street, Liverpool city centre. Neo-traditional specialist. Every design custom made. Liverpool City Council licensed. Book online.',
+  alternates: {
+    canonical: 'https://hallofmirrorstattoo.com/about',
+  },
   openGraph: {
     title: 'About Hall of Mirrors Tattoo Studio — Liverpool',
     description:
       'A private tattoo studio on Castle Street, Liverpool. Specialising in neo-traditional and bespoke custom design. No walk-ins. Every piece is created for you alone.',
-    url: 'https://hallofmirrors.tattoo/about',
-    siteName: 'Hall of Mirrors Tattoo',
+    url: 'https://hallofmirrorstattoo.com/about',
+    siteName: 'Hall of Mirrors Tattoo Studio',
     locale: 'en_GB',
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'About Hall of Mirrors Tattoo Studio — Liverpool',
+    description: 'A private tattoo studio on Castle Street, Liverpool. Bespoke neo-traditional tattooing. No walk-ins. Every piece created for you alone.',
   },
 };
 
@@ -56,9 +64,9 @@ export default async function About() {
     : 'Suite 3, 34 Castle Street, L2 0NR';
 
   const studioInfoStrip = [
-    { title: 'Liverpool',    detail: addressDetail },
-    { title: 'Bespoke Only', detail: 'Every design is created for you alone' },
-    { title: 'Consultation', detail: 'Free initial design consultations available' },
+    { title: 'Castle Street', detail: `${addressDetail} · Minutes from Liverpool Central, Moorfields & Lime Street stations` },
+    { title: 'Bespoke Only',  detail: 'Every design drawn from scratch — no flash sheets, no off-the-shelf work' },
+    { title: 'Consultation',  detail: 'Free initial consultations available — talk through your idea, no obligation' },
   ];
 
   const jsonLd = {
@@ -67,7 +75,7 @@ export default async function About() {
     name: studio?.studio_name ?? 'Hall of Mirrors Tattoo Studio',
     description:
       'Private bespoke tattoo studio on Castle Street, Liverpool city centre. Specialising in neo-traditional tattooing and custom design.',
-    url: 'https://hallofmirrors.tattoo',
+    url: 'https://hallofmirrorstattoo.com',
     address: {
       '@type': 'PostalAddress',
       streetAddress: studio?.address ?? 'Suite 3, 34 Castle Street',
@@ -120,22 +128,24 @@ export default async function About() {
               ) : (
                 <>
                   <p style={{ marginBottom: '1.25rem' }}>
-                    Hall of Mirrors is a private tattoo studio at the heart of Liverpool
-                    city centre — Suite 3, 34 Castle Street. Built on the belief that
-                    tattooing deserves to be taken seriously: as craft, as art, as
-                    something that lasts.
+                    Hall of Mirrors is a private tattoo studio on Castle Street,
+                    Liverpool city centre — Suite 3, 34 Castle Street. We believe in
+                    the telling of your story.
                   </p>
                   <p style={{ marginBottom: '1.25rem' }}>
-                    Everything here is bespoke. There are no flash sheets, no off-the-shelf
-                    designs, no rushing. Every piece begins with a conversation —
-                    understanding what the client brings to the chair and translating that
-                    into something permanent and deeply personal.
+                    The name is a metaphor for self-discovery. Walk through a hall of
+                    mirrors and you see a hundred versions of yourself — different shapes,
+                    different angles. Which is the truest? Only you can decide. It is you
+                    who gets to choose which reflection is your reality, and to alter it as
+                    you wish — without anyone&apos;s permission.
                   </p>
                   <p style={{ marginBottom: '1.25rem' }}>
-                    The studio is home to two resident artists specialising in
-                    neo-traditional tattooing, colour realism, and bespoke custom design —
-                    work that draws from art history, natural forms, and the specific
-                    story of each client.
+                    Tattoos are one of the ways we record that journey: armour, expression,
+                    a permanent and beautifully playful way to bring who you are to the
+                    surface. Every piece here begins as a blank page — drawn from your
+                    story, your references, your vision. The studio is home to two resident
+                    neo-traditional specialists working from our private space in Liverpool
+                    city centre. One client at a time. Every appointment by design.
                   </p>
                 </>
               )}
