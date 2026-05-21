@@ -463,6 +463,9 @@ export default function BookingDetailPage() {
                           </blockquote>
                         )}
                       </div>
+                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-mid)', lineHeight: 1.6, margin: '0 0 1rem' }}>
+                        If you need a different date, send Robyn a message — she can update the booking from her side.
+                      </p>
                       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                         <button
                           onClick={handleAcceptOffer}
@@ -471,13 +474,6 @@ export default function BookingDetailPage() {
                           style={{ fontSize: '0.8125rem', padding: '0.6rem 1.25rem', opacity: acting ? 0.6 : 1 }}
                         >
                           <span>{acting ? 'Accepting…' : 'Accept this time'}</span>
-                        </button>
-                        <button
-                          onClick={() => { setMode('counter-offer'); setCounterDate(null); setCounterSlot(null); setCounterNote(''); }}
-                          className="btn-secondary"
-                          style={{ fontSize: '0.8125rem', padding: '0.6rem 1.25rem' }}
-                        >
-                          Suggest another time
                         </button>
                         <button
                           onClick={() => setMode('cancel-confirm')}
@@ -528,23 +524,35 @@ export default function BookingDetailPage() {
 
                   {/* Action buttons — normal statuses */}
                   {canAct && mode === 'view' && (
-                    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                      {canReschedule && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+                      {within48hrs && canReschedule && (
+                        <div style={{ padding: '0.625rem 0.875rem', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '0.375rem' }}>
+                          <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(239,68,68,0.85)', margin: '0 0 0.2rem' }}>
+                            Deposit at risk
+                          </p>
+                          <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text)', lineHeight: 1.6, margin: 0 }}>
+                            Your appointment is within 48 hours. Rescheduling now will <strong style={{ color: 'rgba(239,68,68,0.9)' }}>forfeit your deposit</strong>.
+                          </p>
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        {canReschedule && (
+                          <button
+                            onClick={() => setMode('reschedule')}
+                            className={within48hrs ? 'btn-secondary' : 'btn-primary'}
+                            style={{ fontSize: '0.8125rem', padding: '0.6rem 1.25rem', ...(within48hrs ? { color: 'rgba(239,68,68,0.8)', borderColor: 'rgba(239,68,68,0.35)' } : {}) }}
+                          >
+                            <span>Reschedule</span>
+                          </button>
+                        )}
                         <button
-                          onClick={() => setMode('reschedule')}
-                          className="btn-primary"
+                          onClick={() => setMode('cancel-confirm')}
+                          className="btn-secondary"
                           style={{ fontSize: '0.8125rem', padding: '0.6rem 1.25rem' }}
                         >
-                          <span>Reschedule</span>
+                          Cancel Booking
                         </button>
-                      )}
-                      <button
-                        onClick={() => setMode('cancel-confirm')}
-                        className="btn-secondary"
-                        style={{ fontSize: '0.8125rem', padding: '0.6rem 1.25rem' }}
-                      >
-                        Cancel Booking
-                      </button>
+                      </div>
                     </div>
                   )}
 

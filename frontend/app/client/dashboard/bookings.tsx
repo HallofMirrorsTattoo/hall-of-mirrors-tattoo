@@ -544,14 +544,30 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
           </div>
         )}
 
-        {/* Reschedule / cancel link for active bookings */}
+        {/* Reschedule / cancel link — not shown when artist has an open counter-offer */}
         {!isPast && detail.appointment_status !== 'counter_offered' && (
-          <Link
-            href={`/client/bookings/${detail.id}`}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', textDecoration: 'none', alignSelf: 'flex-start' }}
-          >
-            Reschedule or cancel →
-          </Link>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {(() => {
+              const hoursUntil = (new Date(detail.appointment_date).getTime() - Date.now()) / 3_600_000;
+              const within48 = hoursUntil >= 0 && hoursUntil < 48;
+              return within48 ? (
+                <div style={{ padding: '0.5rem 0.75rem', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '0.375rem' }}>
+                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(239,68,68,0.8)', margin: '0 0 0.15rem' }}>
+                    Deposit at risk
+                  </p>
+                  <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem', color: 'var(--text)', lineHeight: 1.5, margin: 0 }}>
+                    Rescheduling within 48 hours will forfeit your deposit.
+                  </p>
+                </div>
+              ) : null;
+            })()}
+            <Link
+              href={`/client/bookings/${detail.id}`}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', textDecoration: 'none', alignSelf: 'flex-start' }}
+            >
+              Reschedule or cancel →
+            </Link>
+          </div>
         )}
 
         {/* Message thread */}
