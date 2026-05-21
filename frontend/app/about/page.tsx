@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import AnimatedSection from '../components/AnimatedSection';
 import { getStudioSettings } from '@/lib/studioSettings';
+import AccordionItem from '../components/AccordionItem';
 
 export const metadata: Metadata = {
   title: 'About | Hall of Mirrors Tattoo Studio | Liverpool City Centre',
@@ -26,48 +26,8 @@ export const metadata: Metadata = {
   },
 };
 
-const credentials = [
-  { n: 'I',   label: 'Licensed',        title: 'Liverpool City Council',  detail: 'Ref: A11394900' },
-  { n: 'II',  label: 'Health & Safety', title: 'Autoclave Certified',     detail: 'Hepatitis B Vaccinated' },
-  { n: 'III', label: 'Specialist',      title: 'Neo-Traditional',         detail: 'Bespoke Designs Only' },
-  { n: 'IV',  label: 'Compliant',       title: 'GDPR Compliant',          detail: 'Your data handled with care' },
-];
-
-const studioStats = [
-  { num: '2',     label: 'Resident Artists' },
-  { num: '100%',  label: 'Bespoke Design' },
-  { num: 'Private', label: 'By Appointment' },
-];
-
-const pillars = [
-  {
-    n: '01',
-    title: 'The work is permanent. So we take our time.',
-    body: "Every line, every shade, every colour choice is deliberate. A tattoo lives on your skin for life — so we don't rush, don't guess, and don't compromise.",
-  },
-  {
-    n: '02',
-    title: 'No templates. No shortcuts. No off-the-shelf anything.',
-    body: 'Every piece at Hall of Mirrors is drawn from scratch. Your story, your references, your vision — that\'s where it starts. That\'s where it always starts.',
-  },
-  {
-    n: '03',
-    title: 'We talk before we draw.',
-    body: 'Before anything touches your skin, we have a conversation. About placement, style, meaning — what this piece is for and what it should say. The consultation is where the real work begins.',
-  },
-];
-
 export default async function About() {
   const studio = await getStudioSettings();
-  const addressDetail = studio?.address
-    ? [studio.address, studio.postcode].filter(Boolean).join(', ')
-    : 'Suite 3, 34 Castle Street, L2 0NR';
-
-  const studioInfoStrip = [
-    { title: 'Castle Street', detail: `${addressDetail} · Minutes from Liverpool Central, Moorfields & Lime Street stations` },
-    { title: 'Bespoke Only',  detail: 'Every design drawn from scratch — no flash sheets, no off-the-shelf work' },
-    { title: 'Consultation',  detail: 'Free initial consultations available — talk through your idea, no obligation' },
-  ];
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -101,377 +61,266 @@ export default async function About() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* ── HERO — 2-col split ──────────────────────────────────────────── */}
-      <section className="px-6 pt-8 pb-20 md:pb-32">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24 items-start">
+      {/* Header */}
+      <section style={{ padding: '5rem 1.5rem 3rem', maxWidth: '48rem', margin: '0 auto' }}>
+        <p className="eyebrow" style={{ marginBottom: '1.5rem' }}>The Studio</p>
+        <h1 style={{
+          fontFamily: '"Cormorant Garamond", serif',
+          fontStyle: 'italic',
+          fontWeight: 300,
+          fontSize: 'clamp(3rem, 7vw, 5rem)',
+          color: 'var(--cream)',
+          letterSpacing: '-0.025em',
+          lineHeight: 1.0,
+          marginBottom: '2rem',
+        }}>
+          About Hall of Mirrors
+        </h1>
 
-            <AnimatedSection>
-              <p className="eyebrow">The Studio</p>
-              <h1 style={{
-                fontFamily: '"Cormorant Garamond", serif',
-                fontStyle: 'italic',
-                fontWeight: 300,
-                fontSize: 'clamp(3rem, 7vw, 5.5rem)',
-                color: 'var(--cream)',
-                letterSpacing: '-0.025em',
-                lineHeight: 1.0,
-                marginBottom: '1.75rem',
+        <p style={{
+          fontFamily: '"DM Sans", sans-serif',
+          fontSize: '1rem',
+          color: 'var(--text-mid)',
+          lineHeight: 1.85,
+          marginBottom: '1.25rem',
+        }}>
+          Hall of Mirrors is a female-owned, private tattoo studio at Suite 3, 34 Castle Street,
+          Liverpool L2 0NR. We are a fully inclusive space — a safe and welcoming home for everyone,
+          including the LGBTQ+ community. Fully licensed by Liverpool City Council.
+          Appointment-only.
+        </p>
+        <p style={{
+          fontFamily: '"DM Sans", sans-serif',
+          fontSize: '1rem',
+          color: 'var(--text-mid)',
+          lineHeight: 1.85,
+          marginBottom: '2.5rem',
+        }}>
+          Every piece here is drawn from scratch — bespoke work built entirely around your story,
+          your references, and your vision. There are no off-the-shelf designs and no compromises.
+          Just the time, the space, and the skill to make something that is entirely yours.
+        </p>
+
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <Link href="/booking" className="btn-primary">
+            <span>Book Appointment</span>
+            <span className="btn-icon" aria-hidden="true">↗</span>
+          </Link>
+          <Link href="/portfolio" className="btn-secondary">Meet Our Artists</Link>
+        </div>
+      </section>
+
+      {/* Accordion sections */}
+      <section style={{ maxWidth: '48rem', margin: '0 auto', padding: '2rem 1.5rem 7rem', borderTop: '1px solid var(--border)' }}>
+
+        <AccordionItem title="How to find us">
+          <p style={{
+            fontFamily: '"DM Sans", sans-serif',
+            fontSize: '0.9375rem',
+            color: 'var(--text-mid)',
+            lineHeight: 1.8,
+            marginBottom: '1.25rem',
+          }}>
+            We are at <strong style={{ color: 'var(--cream)', fontWeight: 500 }}>Suite 3, 34 Castle Street, Liverpool L2 0NR</strong> — in the heart of the city centre, in the business district.
+          </p>
+          <p style={{
+            fontFamily: '"DM Mono", monospace',
+            fontSize: '0.7rem',
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            color: 'rgba(201,168,76,0.7)',
+            marginBottom: '0.875rem',
+          }}>
+            Nearest stations
+          </p>
+          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {[
+              ['Liverpool Central', '~3 min walk'],
+              ['Moorfields', '~5 min walk'],
+              ['Liverpool Lime Street', '~10 min walk'],
+            ].map(([station, time]) => (
+              <li key={station} style={{ display: 'flex', gap: '0.75rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.6 }}>
+                <span style={{ color: 'rgba(201,168,76,0.5)', flexShrink: 0 }}>—</span>
+                <span><strong style={{ color: 'var(--cream)', fontWeight: 500 }}>{station}</strong> — {time}</span>
+              </li>
+            ))}
+          </ul>
+          <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.8, marginBottom: '1.25rem' }}>
+            There is paid parking on Castle Street and Water Street if you are driving.
+          </p>
+          <a
+            href="https://maps.google.com/?q=Suite+3,+34+Castle+Street,+Liverpool+L2+0NR"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontFamily: '"DM Mono", monospace',
+              fontSize: '0.7rem',
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+              color: 'rgba(201,168,76,0.6)',
+              textDecoration: 'none',
+            }}
+          >
+            Open in Google Maps ↗
+          </a>
+        </AccordionItem>
+
+        <AccordionItem title="Aftercare advice">
+          <p style={{
+            fontFamily: '"DM Sans", sans-serif',
+            fontSize: '0.9375rem',
+            color: 'var(--text-mid)',
+            lineHeight: 1.8,
+            marginBottom: '1.5rem',
+          }}>
+            This is your new skin story now — look after it and it&apos;ll look after you.
+          </p>
+
+          {[
+            {
+              phase: 'First 2–3 hours',
+              items: [
+                'Keep the bandage or protective film on — do not remove early',
+                'No water exposure',
+                'Avoid direct sunlight',
+                'Do not touch or pick at the tattoo',
+              ],
+            },
+            {
+              phase: 'First 24 hours',
+              items: [
+                'Remove bandage after 2–3 hours',
+                'Gently wash with fragrance-free soap and warm water',
+                'Pat dry with a clean paper towel — never a cloth towel',
+                'Apply a thin layer of unscented aftercare balm',
+                'Let it air dry between applications',
+              ],
+            },
+            {
+              phase: 'Days 2–7',
+              items: [
+                'Wash 2–3 times daily with fragrance-free soap',
+                'Apply aftercare balm after each wash',
+                'Avoid tight clothing over the tattoo',
+                'No swimming, baths, or saunas',
+                'Do not pick or scratch at peeling skin',
+                'Stay out of direct sunlight',
+              ],
+            },
+            {
+              phase: 'Weeks 2–4',
+              items: [
+                'Continue moisturising 2–3 times daily',
+                'Apply SPF 30+ sunscreen if going outside',
+                'Avoid strenuous exercise or heavy sweating',
+                'Some tenderness and itching is normal — do not scratch',
+              ],
+            },
+          ].map(({ phase, items }) => (
+            <div key={phase} style={{ marginBottom: '1.5rem' }}>
+              <p style={{
+                fontFamily: '"DM Mono", monospace',
+                fontSize: '0.7rem',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                color: 'rgba(201,168,76,0.7)',
+                marginBottom: '0.625rem',
               }}>
-                Where craft becomes permanent
-              </h1>
-
-              {studio?.about_section ? (
-                <p style={{ marginBottom: '1.25rem', whiteSpace: 'pre-line' }}>
-                  {studio.about_section}
-                </p>
-              ) : (
-                <>
-                  <p style={{ marginBottom: '1.25rem' }}>
-                    Hall of Mirrors is a private tattoo studio on Castle Street,
-                    Liverpool city centre — Suite 3, 34 Castle Street. We believe in
-                    the telling of your story.
-                  </p>
-                  <p style={{ marginBottom: '1.25rem' }}>
-                    The name is a metaphor for self-discovery. Walk through a hall of
-                    mirrors and you see a hundred versions of yourself — different shapes,
-                    different angles. Which is the truest? Only you can decide. It is you
-                    who gets to choose which reflection is your reality, and to alter it as
-                    you wish — without anyone&apos;s permission.
-                  </p>
-                  <p style={{ marginBottom: '1.25rem' }}>
-                    Tattoos are one of the ways we record that journey: armour, expression,
-                    a permanent and beautifully playful way to bring who you are to the
-                    surface. Every piece here begins as a blank page — drawn from your
-                    story, your references, your vision. The studio is home to two resident
-                    neo-traditional specialists working from our private space in Liverpool
-                    city centre. One client at a time. Every appointment by design.
-                  </p>
-                </>
-              )}
-
-              {/* Studio stats */}
-              <div style={{ display: 'flex', gap: '2.5rem', marginTop: '2.5rem', marginBottom: '2.5rem' }}>
-                {studioStats.map((s) => (
-                  <div key={s.label}>
-                    <p style={{
-                      fontFamily: '"Cormorant Garamond", serif',
-                      fontSize: '1.75rem',
-                      fontWeight: 400,
-                      color: 'var(--gold)',
-                      lineHeight: 1,
-                      marginBottom: '0.25rem',
-                    }}>
-                      {s.num}
-                    </p>
-                    <p style={{
-                      fontFamily: '"DM Mono", monospace',
-                      fontSize: '0.75rem',
-                      letterSpacing: '0.15em',
-                      textTransform: 'uppercase',
-                      color: 'var(--text-low)',
-                      maxWidth: 'none',
-                    }}>
-                      {s.label}
-                    </p>
-                  </div>
+                {phase}
+              </p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                {items.map((item) => (
+                  <li key={item} style={{ display: 'flex', gap: '0.625rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.65 }}>
+                    <span style={{ color: 'rgba(201,168,76,0.5)', flexShrink: 0 }}>—</span>
+                    <span>{item}</span>
+                  </li>
                 ))}
-              </div>
-
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <Link href="/portfolio" className="btn-secondary">Meet Our Artists</Link>
-                <Link href="/booking" className="btn-primary">
-                  <span>Book Appointment</span>
-                  <span className="btn-icon" aria-hidden="true">↗</span>
-                </Link>
-              </div>
-            </AnimatedSection>
-
-            {/* Credentials */}
-            <AnimatedSection delay={150}>
-              <p className="eyebrow" style={{ marginBottom: '2rem' }}>Studio Credentials</p>
-              <div style={{ borderTop: '1px solid var(--border)' }}>
-                {credentials.map((c) => (
-                  <div
-                    key={c.n}
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '2.5rem 1fr',
-                      gap: '1.25rem',
-                      padding: '1.5rem 0',
-                      borderBottom: '1px solid var(--border)',
-                    }}
-                  >
-                    <span style={{
-                      fontFamily: '"Cormorant Garamond", serif',
-                      fontStyle: 'italic',
-                      fontWeight: 300,
-                      fontSize: '1.25rem',
-                      color: 'var(--gold)',
-                      opacity: 0.55,
-                      lineHeight: 1.3,
-                    }}>
-                      {c.n}
-                    </span>
-                    <div>
-                      <p className="eyebrow" style={{ marginBottom: '0.375rem' }}>{c.label}</p>
-                      <p style={{
-                        fontFamily: '"Cormorant Garamond", serif',
-                        fontSize: '1.0625rem',
-                        fontWeight: 400,
-                        color: 'var(--cream)',
-                        lineHeight: 1.3,
-                        marginBottom: '0.25rem',
-                        maxWidth: 'none',
-                      }}>
-                        {c.title}
-                      </p>
-                      <p style={{
-                        fontFamily: '"DM Mono", monospace',
-                        fontSize: '0.75rem',
-                        letterSpacing: '0.12em',
-                        color: 'var(--text-low)',
-                        maxWidth: 'none',
-                      }}>
-                        {c.detail}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </AnimatedSection>
-
-          </div>
-        </div>
-      </section>
-
-      {/* HOM Divider */}
-      <div className="max-w-5xl mx-auto px-6">
-        <div className="section-divider">
-          <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.35em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.35)' }}>HOM</span>
-        </div>
-      </div>
-
-      {/* ── THE PILLARS ────────────────────────────────────────────────── */}
-      <section className="px-6 py-20 md:py-28">
-        <div className="max-w-6xl mx-auto">
-          <AnimatedSection style={{ marginBottom: '3rem' }}>
-            <p className="eyebrow">What we stand for</p>
-            <h2 style={{
-              fontFamily: '"Cormorant Garamond", serif',
-              fontStyle: 'italic',
-              fontWeight: 300,
-              fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
-              color: 'var(--cream)',
-              letterSpacing: '-0.025em',
-              lineHeight: 1.0,
-              marginTop: '0.75rem',
-            }}>
-              The Hall of Mirrors approach
-            </h2>
-          </AnimatedSection>
-          <div style={{ borderTop: '1px solid var(--border)' }}>
-            {pillars.map((p, i) => (
-              <AnimatedSection
-                key={p.n}
-                delay={i * 80}
-                style={{ borderBottom: '1px solid var(--border)' }}
-              >
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '5.5rem 1px 1fr',
-                  alignItems: 'start',
-                  gap: '0 2.5rem',
-                  padding: '2.5rem 0',
-                }}>
-                  <span style={{
-                    fontFamily: '"Cormorant Garamond", serif',
-                    fontStyle: 'italic',
-                    fontSize: 'clamp(2.25rem, 4.5vw, 3.5rem)',
-                    fontWeight: 300,
-                    color: 'var(--gold)',
-                    opacity: 0.35,
-                    lineHeight: 1,
-                    textAlign: 'right',
-                  }}>
-                    {p.n}
-                  </span>
-                  <span style={{ width: '1px', alignSelf: 'stretch', backgroundColor: 'var(--border)' }} aria-hidden="true" />
-                  <div style={{ paddingTop: '0.25rem' }}>
-                    <h3 style={{
-                      fontFamily: '"Cormorant Garamond", serif',
-                      fontStyle: 'italic',
-                      fontSize: 'clamp(1.375rem, 3vw, 2rem)',
-                      fontWeight: 300,
-                      color: 'var(--cream)',
-                      lineHeight: 1.2,
-                      marginBottom: '0.75rem',
-                    }}>
-                      {p.title}
-                    </h3>
-                    <p style={{ fontSize: '0.9rem', maxWidth: '52ch', color: 'var(--text-mid)', lineHeight: 1.75 }}>
-                      {p.body}
-                    </p>
-                  </div>
-                </div>
-              </AnimatedSection>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* HOM Divider */}
-      <div className="max-w-5xl mx-auto px-6">
-        <div className="section-divider">
-          <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.35em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.35)' }}>HOM</span>
-        </div>
-      </div>
-
-      {/* ── WHAT WE OFFER ──────────────────────────────────────────────── */}
-      <section className="px-6 py-20 md:py-28">
-        <div className="max-w-6xl mx-auto">
-          <AnimatedSection style={{ marginBottom: '3rem' }}>
-            <p className="eyebrow">What we offer</p>
-            <h2 style={{
-              fontFamily: '"Cormorant Garamond", serif',
-              fontStyle: 'italic',
-              fontWeight: 300,
-              fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
-              color: 'var(--cream)',
-              letterSpacing: '-0.025em',
-              lineHeight: 1.0,
-              marginTop: '0.75rem',
-            }}>
-              Every appointment, by design
-            </h2>
-          </AnimatedSection>
-          <div style={{ borderTop: '1px solid var(--border)' }}>
-            {([
-              {
-                n: '01',
-                title: 'Bespoke Custom Tattoo',
-                body: 'The foundation of what we do. Every custom tattoo at Hall of Mirrors is drawn from scratch — no flash, no clip art, no compromises. We work through your idea together, from rough concept to polished design, before anything touches your skin. Neo-traditional our speciality, though we work across styles.',
-              },
-              {
-                n: '02',
-                title: 'Free Consultation',
-                body: "Not sure where to start? Book a free consultation at our Castle Street studio. We'll talk through your idea, suitable placement, approximate sizing, and what the design process involves. Most of our clients start here — there's no obligation and no pressure.",
-              },
-              {
-                n: '03',
-                title: 'Cover-Up & Rework',
-                body: "Specialist cover-up tattoos for existing work you want transformed — whether it's a name, an old design that's lost its meaning, or simply a tattoo that was never quite right. Cover-up work requires a consultation first so we can assess the existing ink and recommend the best approach.",
-              },
-              {
-                n: '04',
-                title: 'Touch-Ups & Aftercare',
-                body: 'We stand behind our work. If a healed tattoo needs a touch-up — colour refresh, line sharpening — get in touch. Touch-ups on Hall of Mirrors work are handled case-by-case. We also provide detailed aftercare guidance with every appointment.',
-              },
-            ]).map((item, i) => (
-              <AnimatedSection
-                key={item.n}
-                delay={i * 80}
-                style={{ borderBottom: '1px solid var(--border)' }}
-              >
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '5.5rem 1px 1fr',
-                  alignItems: 'start',
-                  gap: '0 2.5rem',
-                  padding: '2.5rem 0',
-                }}>
-                  <span style={{
-                    fontFamily: '"Cormorant Garamond", serif',
-                    fontStyle: 'italic',
-                    fontSize: 'clamp(2.25rem, 4.5vw, 3.5rem)',
-                    fontWeight: 300,
-                    color: 'var(--gold)',
-                    opacity: 0.35,
-                    lineHeight: 1,
-                    textAlign: 'right',
-                  }}>
-                    {item.n}
-                  </span>
-                  <span style={{ width: '1px', alignSelf: 'stretch', backgroundColor: 'var(--border)' }} aria-hidden="true" />
-                  <div style={{ paddingTop: '0.25rem' }}>
-                    <h3 style={{
-                      fontFamily: '"Cormorant Garamond", serif',
-                      fontStyle: 'italic',
-                      fontSize: 'clamp(1.375rem, 3vw, 2rem)',
-                      fontWeight: 300,
-                      color: 'var(--cream)',
-                      lineHeight: 1.2,
-                      marginBottom: '0.75rem',
-                    }}>
-                      {item.title}
-                    </h3>
-                    <p style={{ fontSize: '0.9rem', maxWidth: '55ch', color: 'var(--text-mid)', lineHeight: 1.75 }}>
-                      {item.body}
-                    </p>
-                  </div>
-                </div>
-              </AnimatedSection>
-            ))}
-          </div>
-          <AnimatedSection delay={350} style={{ marginTop: '3rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <Link href="/booking" className="btn-primary">
-              <span>Book Appointment</span>
-              <span className="btn-icon" aria-hidden="true">↗</span>
-            </Link>
-            <Link href="/booking?mode=consultation" className="btn-secondary">Request a Consultation</Link>
-          </AnimatedSection>
-        </div>
-      </section>
-
-      {/* HOM Divider */}
-      <div className="max-w-5xl mx-auto px-6">
-        <div className="section-divider">
-          <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.35em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.35)' }}>HOM</span>
-        </div>
-      </div>
-
-      {/* ── STUDIO INFO STRIP ──────────────────────────────────────────── */}
-      <section className="px-6 py-20 md:py-28">
-        <div className="max-w-6xl mx-auto">
-          <AnimatedSection>
-            <p className="eyebrow" style={{ marginBottom: '2.5rem' }}>Find us</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-0" style={{ borderTop: '1px solid var(--border)', borderLeft: '1px solid var(--border)' }}>
-              {studioInfoStrip.map((item) => (
-                <div
-                  key={item.title}
-                  style={{
-                    padding: '2rem',
-                    borderRight: '1px solid var(--border)',
-                    borderBottom: '1px solid var(--border)',
-                  }}
-                >
-                  <p style={{
-                    fontFamily: '"Cormorant Garamond", serif',
-                    fontStyle: 'italic',
-                    fontSize: 'clamp(1.5rem, 3vw, 2rem)',
-                    fontWeight: 300,
-                    color: 'var(--gold)',
-                    lineHeight: 1.1,
-                    marginBottom: '0.625rem',
-                  }}>
-                    {item.title}
-                  </p>
-                  <p style={{
-                    fontFamily: '"DM Sans", sans-serif',
-                    fontSize: '0.875rem',
-                    color: 'var(--text-mid)',
-                    lineHeight: 1.6,
-                    maxWidth: 'none',
-                  }}>
-                    {item.detail}
-                  </p>
-                </div>
-              ))}
+              </ul>
             </div>
-          </AnimatedSection>
-        </div>
-      </section>
+          ))}
 
+          <p style={{
+            fontFamily: '"DM Sans", sans-serif',
+            fontSize: '0.875rem',
+            color: 'var(--text-low)',
+            lineHeight: 1.75,
+            borderTop: '1px solid var(--border)',
+            paddingTop: '1.25rem',
+            marginTop: '0.5rem',
+          }}>
+            If you experience excessive redness, swelling, or any signs of infection lasting more than a few days — contact a healthcare professional immediately.
+          </p>
+        </AccordionItem>
+
+        <AccordionItem title="FAQ">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+            {[
+              {
+                q: 'Do you take walk-ins?',
+                a: 'No — Hall of Mirrors is appointment-only. Every session is booked in advance so your artist has time to prepare your design, and you get a private slot without any rush.',
+              },
+              {
+                q: 'How much does a tattoo cost?',
+                a: 'Pricing depends on size and complexity. Small tattoos (1–3") start from £150–£250. Medium work (3–6") typically runs £300–£500. Larger or complex pieces are quoted individually after your consultation. All prices include your bespoke design.',
+              },
+              {
+                q: 'What is a consultation and is it really free?',
+                a: 'Yes, completely free and no obligation. A consultation is a relaxed conversation where we talk through your idea, placement, size, and what the design process will look like. Most clients start here.',
+              },
+              {
+                q: 'Can you cover up an old tattoo?',
+                a: 'Yes — cover-up and rework is one of our specialities. Cover-ups always require a consultation first so we can assess the existing ink and recommend the best approach.',
+              },
+              {
+                q: 'Do I need to pay a deposit?',
+                a: 'Yes. A non-refundable deposit is required to secure your booking, which is deducted from your final session price on the day. Cancellations within 48 hours forfeit the deposit.',
+              },
+              {
+                q: 'What styles do you specialise in?',
+                a: 'Neo-traditional is the foundation — bold outlines, rich colour, classic subject matter with a modern edge, and occasionally a sprinkle of camp humour. We also work in colour realism, fine line, and cover-up work. If you\'re not sure whether your idea fits — just ask.',
+              },
+            ].map(({ q, a }) => (
+              <div key={q}>
+                <p style={{
+                  fontFamily: '"Cormorant Garamond", serif',
+                  fontStyle: 'italic',
+                  fontWeight: 400,
+                  fontSize: '1.125rem',
+                  color: 'var(--cream)',
+                  lineHeight: 1.3,
+                  marginBottom: '0.5rem',
+                }}>
+                  {q}
+                </p>
+                <p style={{
+                  fontFamily: '"DM Sans", sans-serif',
+                  fontSize: '0.9375rem',
+                  color: 'var(--text-mid)',
+                  lineHeight: 1.75,
+                }}>
+                  {a}
+                </p>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
+            <Link
+              href="/faq"
+              style={{
+                fontFamily: '"DM Mono", monospace',
+                fontSize: '0.7rem',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                color: 'rgba(201,168,76,0.6)',
+                textDecoration: 'none',
+              }}
+            >
+              Read all FAQs ↗
+            </Link>
+          </div>
+        </AccordionItem>
+
+      </section>
     </div>
   );
 }

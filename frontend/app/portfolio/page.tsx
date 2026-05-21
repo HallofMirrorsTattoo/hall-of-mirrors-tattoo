@@ -37,7 +37,7 @@ const API = process.env.NEXT_PUBLIC_API_URL || 'https://hall-of-mirrors-tattoo-p
 
 async function fetchArtists(): Promise<Artist[]> {
   try {
-    const res = await fetch(`${API}/api/artist`, { next: { revalidate: 60 } });
+    const res = await fetch(`${API}/api/artist`, { cache: 'no-store' });
     if (!res.ok) return [];
     const data = await res.json();
     return data.artists ?? [];
@@ -199,7 +199,7 @@ export default async function Portfolio() {
                   </p>
 
                   {/* View profile link — only for real artists */}
-                  {hasProfile && (
+                  {!isPlaceholder && (
                     <p style={{
                       fontFamily: '"DM Mono", monospace',
                       fontSize: '0.7rem',
@@ -214,12 +214,12 @@ export default async function Portfolio() {
                 </AnimatedSection>
               );
 
-              return hasProfile ? (
+              return isPlaceholder ? (
+                <div key={artist.id}>{cardContent}</div>
+              ) : (
                 <Link key={artist.id} href={`/artists/${slug}`} style={{ display: 'block', textDecoration: 'none' }}>
                   {cardContent}
                 </Link>
-              ) : (
-                <div key={artist.id}>{cardContent}</div>
               );
             })}
           </div>
