@@ -3,7 +3,7 @@ import AnimatedSection from '../components/AnimatedSection';
 
 export const metadata = {
   title: 'Services & Pricing | Hall of Mirrors Tattoo Studio Liverpool',
-  description: 'Custom tattoos, cover-ups, and free consultations at Hall of Mirrors Tattoo Studio, Castle Street Liverpool. Neo-traditional specialists. Transparent pricing guide — starting from £150.',
+  description: 'Custom tattoos, cover-ups, and free consultations at Hall of Mirrors Tattoo Studio, Suite 3, 34 Castle Street, Liverpool. Neo-traditional specialists from £150. Walk-ins welcome.',
   alternates: {
     canonical: 'https://hallofmirrorstattoo.com/about',
   },
@@ -154,7 +154,7 @@ export default function Services() {
               Her style is neo-traditional at its core — but every person who comes in
               brings their own version of that. Animals, ladies, timeless objects, pop
               culture, nostalgia. Whatever the idea, it starts with your story and ends
-              on your skin. Appointment-only. Always bespoke.
+              on your skin. Walk-ins welcome on the day. Always bespoke.
             </p>
           </AnimatedSection>
         </div>
@@ -228,7 +228,7 @@ export default function Services() {
             <p className="eyebrow" style={{ marginBottom: '2rem' }}>The Studio Experience</p>
             <div className="grid grid-cols-1 md:grid-cols-3" style={{ borderTop: '1px solid var(--border)' }}>
               {([
-                { roman: 'I',   label: 'Appointment Only',  body: "We don't take walk-ins. Every session is booked in advance, giving your artist time to prepare your design and you a dedicated slot with no pressure." },
+                { roman: 'I',   label: 'Walk-Ins Welcome',  body: "We work primarily by appointment — your artist has time to prepare your design and you get a private slot with no pressure. Walk-ins are always welcome when we have time on the day." },
                 { roman: 'II',  label: 'Private Studio',    body: 'One client at a time, in a quiet space that\'s yours for the session. Suite 3, 34 Castle Street, Liverpool, L2 0NR.' },
                 { roman: 'III', label: 'Fully Licensed',    body: 'Licensed by Liverpool City Council (Ref: A11394900). Autoclave sterilisation. Hepatitis B vaccinated. Your safety is non-negotiable.' },
               ] as const).map((item, i) => (

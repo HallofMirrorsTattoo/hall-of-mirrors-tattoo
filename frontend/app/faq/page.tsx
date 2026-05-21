@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 const faqs = [
   {
     q: 'Do you take walk-ins?',
-    a: 'No — Hall of Mirrors is appointment-only. Every session is booked in advance so your artist has time to prepare your design, and you get a dedicated private slot without any rush. Walk-ins don\'t give us the space to do our best work, so we don\'t offer them.',
+    a: 'Yes — we will happily take walk-ins if we have time on the day. To guarantee your slot and give your artist time to prepare your bespoke design, we recommend booking in advance.',
   },
   {
     q: 'How much does a tattoo cost in Liverpool at Hall of Mirrors?',

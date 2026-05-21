@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Book a Tattoo Appointment | Hall of Mirrors Liverpool',
-  description: 'Book your tattoo appointment at Hall of Mirrors, Castle Street Liverpool. Bespoke neo-traditional tattoos, cover-ups, and free consultations. Appointment-only, limited availability.',
+  description: 'Book your tattoo at Hall of Mirrors, Suite 3, 34 Castle Street, Liverpool. Bespoke neo-traditional tattoos, cover-ups, and free consultations. Walk-ins welcome.',
   alternates: {
     canonical: 'https://hallofmirrorstattoo.com/booking',
   },

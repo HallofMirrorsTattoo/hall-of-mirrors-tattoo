@@ -257,9 +257,13 @@ export default async function ArtistPage({ params }: { params: { slug: string } 
           )}
 
           {artist.bio && (
-            <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '1rem', color: 'var(--text-mid)', lineHeight: 1.8, marginBottom: '2rem', maxWidth: '44ch' }}>
-              {artist.bio}
-            </p>
+            <div style={{ marginBottom: '2rem' }}>
+              {artist.bio.split('\n\n').map((para, i) => (
+                <p key={i} style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '1rem', color: 'var(--text-mid)', lineHeight: 1.8, maxWidth: '44ch', marginBottom: i < artist.bio!.split('\n\n').length - 1 ? '1rem' : 0 }}>
+                  {para}
+                </p>
+              ))}
+            </div>
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
