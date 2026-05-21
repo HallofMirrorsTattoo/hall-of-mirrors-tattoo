@@ -1,6 +1,9 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
+
+const imgFilter = 'brightness(0.87) contrast(1.06) saturate(0.72) sepia(0.08)';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://hall-of-mirrors-tattoo-production.up.railway.app';
 
@@ -68,24 +71,27 @@ const GALLERY_PLACEHOLDERS = [
 ];
 
 function GalleryGrid({ photos }: { photos: { id: string; public_url: string }[] }) {
+  const gridStyle = {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: '2px',
+    background: 'var(--border)',
+    borderRadius: '0.5rem',
+    overflow: 'hidden',
+    border: '1px solid var(--border)',
+  };
+
   if (photos.length > 0) {
     return (
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-        gap: '1px',
-        background: 'var(--border)',
-        borderRadius: '0.375rem',
-        overflow: 'hidden',
-        border: '1px solid var(--border)',
-      }}>
+      <div style={gridStyle}>
         {photos.map(photo => (
-          <div key={photo.id} style={{ aspectRatio: '1', overflow: 'hidden', background: 'var(--surface)' }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+          <div key={photo.id} style={{ aspectRatio: '1', overflow: 'hidden', background: 'var(--surface)', position: 'relative' }}>
+            <Image
               src={photo.public_url}
               alt="Portfolio piece"
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              fill
+              sizes="(max-width: 768px) 33vw, 20vw"
+              className="object-cover"
             />
           </div>
         ))}
@@ -94,15 +100,7 @@ function GalleryGrid({ photos }: { photos: { id: string; public_url: string }[] 
   }
 
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-      gap: '1px',
-      background: 'var(--border)',
-      borderRadius: '0.375rem',
-      overflow: 'hidden',
-      border: '1px solid var(--border)',
-    }}>
+    <div style={gridStyle}>
       {GALLERY_PLACEHOLDERS.map((item) => (
         <div key={item.roman} style={{
           aspectRatio: '1',
@@ -178,11 +176,13 @@ export default async function ArtistPage({ params }: { params: { slug: string } 
             position: 'relative',
           }}>
             {artist.portrait_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={artist.portrait_url}
                 alt={`${artist.full_name} — tattoo artist`}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                fill
+                sizes="(max-width: 768px) 100vw, 40vw"
+                className="object-cover"
+                style={{ filter: imgFilter }}
               />
             ) : (
               <>

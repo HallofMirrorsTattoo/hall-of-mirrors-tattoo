@@ -479,93 +479,28 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Section 8 — Meet Robyn */}
-        <section style={{ padding: '9rem 1.5rem 10rem' }}>
-          <div style={{ maxWidth: '72rem', margin: '0 auto' }}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24 items-center">
-              <AnimatedSection delay={0}>
-                <div style={{ position: 'relative', aspectRatio: '4/5', borderRadius: '1rem', overflow: 'hidden' }}>
-                  <Image
-                    src="/assets/shop-carousel/E-DSCF3032.jpg"
-                    alt="Robyn Clove — Hall of Mirrors Tattoo Studio, Liverpool"
-                    fill
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    className="object-cover"
-                    style={{ filter: imgFilter }}
-                    quality={90}
-                  />
-                  <div style={{ position: 'absolute', inset: 0, borderRadius: '1rem', boxShadow: 'inset 0 0 0 1px rgba(201,168,76,0.18)', pointerEvents: 'none' }} aria-hidden="true" />
-                </div>
-              </AnimatedSection>
-              <div>
-                <AnimatedSection delay={150}>
-                  <p className="eyebrow" style={{ marginBottom: '1.5rem' }}>The artist</p>
-                  <h2 style={{
-                    fontFamily: '"Cormorant Garamond", serif',
-                    fontStyle: 'italic',
-                    fontWeight: 300,
-                    fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
-                    color: 'var(--cream)',
-                    lineHeight: 1.1,
-                    letterSpacing: '-0.02em',
-                    marginBottom: '1.5rem',
-                  }}>
-                    My name is Robyn Clove.
-                  </h2>
-                  <p style={{
-                    fontFamily: '"DM Sans", sans-serif',
-                    fontSize: 'clamp(1rem, 2vw, 1.15rem)',
-                    lineHeight: 2,
-                    color: 'var(--text-mid)',
-                    marginBottom: '1rem',
-                  }}>
-                    Neo-traditional at its core — with the occasional sprinkle of camp humour.
-                  </p>
-                  <p style={{
-                    fontFamily: '"DM Sans", sans-serif',
-                    fontSize: 'clamp(1rem, 2vw, 1.15rem)',
-                    lineHeight: 2,
-                    color: 'var(--text-mid)',
-                    marginBottom: '1rem',
-                  }}>
-                    I have always had a huge love for the LGBTQ community — people living dynamically and unapologetically inspires me creatively.
-                  </p>
-                  <p style={{
-                    fontFamily: '"DM Sans", sans-serif',
-                    fontSize: 'clamp(1rem, 2vw, 1.15rem)',
-                    lineHeight: 2,
-                    color: 'var(--text-mid)',
-                    marginBottom: '1.5rem',
-                  }}>
-                    I love to tattoo animals, ladies, timeless objects, pop culture and nostalgia.
-                  </p>
-                  <p style={{
-                    fontFamily: '"Cormorant Garamond", serif',
-                    fontStyle: 'italic',
-                    fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)',
-                    color: 'var(--cream)',
-                    marginBottom: '0.5rem',
-                  }}>
-                    Part time poet. Full time cat mother.
-                  </p>
-                  <p style={{
-                    fontFamily: '"Cormorant Garamond", serif',
-                    fontStyle: 'italic',
-                    fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
-                    color: 'var(--gold)',
-                    marginBottom: '2.5rem',
-                  }}>
-                    I would love to tattoo you.
-                  </p>
-                </AnimatedSection>
-                <AnimatedSection delay={400}>
-                  <Link href="/booking" className="btn-primary">
-                    <span>Book Appointment</span>
-                    <span className="btn-icon" aria-hidden="true">↗</span>
-                  </Link>
-                </AnimatedSection>
-              </div>
-            </div>
+        {/* Meet the Artists CTA */}
+        <section style={{ padding: '6rem 1.5rem', textAlign: 'center' }}>
+          <div style={{ maxWidth: '36rem', margin: '0 auto' }}>
+            <AnimatedSection>
+              <p className="eyebrow" style={{ marginBottom: '1.5rem' }}>The team</p>
+              <h2 style={{
+                fontFamily: '"Cormorant Garamond", serif',
+                fontStyle: 'italic',
+                fontWeight: 300,
+                fontSize: 'clamp(2.5rem, 6vw, 5rem)',
+                color: 'var(--cream)',
+                lineHeight: 1.05,
+                letterSpacing: '-0.02em',
+                marginBottom: '2.5rem',
+              }}>
+                Meet the artists.
+              </h2>
+              <Link href="/portfolio" className="btn-primary">
+                <span>Meet the Artists</span>
+                <span className="btn-icon" aria-hidden="true">↗</span>
+              </Link>
+            </AnimatedSection>
           </div>
         </section>
 
