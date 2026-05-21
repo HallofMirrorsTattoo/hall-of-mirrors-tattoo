@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useClientAuth } from '@/lib/clientAuthContext';
+import BookingActivityLog from '@/app/components/BookingActivityLog';
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
 
@@ -435,16 +436,28 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
         )}
         {needsResponse && (
           <div style={{ padding: '0.875rem 1rem', background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '0.5rem' }}>
-            <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 0.375rem' }}>
+            <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 0.625rem' }}>
               Robyn has proposed a new time
             </p>
-            <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text)', margin: '0 0 0.625rem', lineHeight: 1.6 }}>
-              {detail.counter_offer_date
-                ? new Date(`${detail.counter_offer_date.substring(0, 10)}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
-                : '—'}
-              {detail.counter_offer_time ? ` at ${fmtTime(detail.counter_offer_time)}` : ''}
-              {detail.counter_offer_note && ` — "${detail.counter_offer_note}"`}
-            </p>
+            {/* Original date (strikethrough) → Proposed date (gold) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+              <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', color: 'var(--text-low)', textDecoration: 'line-through' }}>
+                {new Date(`${detail.appointment_date.substring(0, 10)}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
+                {detail.appointment_time ? ` ${fmtTime(detail.appointment_time)}` : ''}
+              </span>
+              <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', color: 'var(--text-low)' }}>→</span>
+              <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.8rem', color: 'var(--gold)', fontWeight: 600 }}>
+                {detail.counter_offer_date
+                  ? new Date(`${detail.counter_offer_date.substring(0, 10)}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+                  : '—'}
+                {detail.counter_offer_time ? ` ${fmtTime(detail.counter_offer_time)}` : ''}
+              </span>
+            </div>
+            {detail.counter_offer_note && (
+              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8rem', color: 'var(--text-mid)', margin: '0 0 0.625rem', lineHeight: 1.6, fontStyle: 'italic' }}>
+                &ldquo;{detail.counter_offer_note}&rdquo;
+              </p>
+            )}
             <Link
               href={`/client/bookings/${detail.id}`}
               style={{ display: 'inline-block', fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--gold)', textDecoration: 'none' }}
@@ -669,6 +682,16 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
             </div>
           </div>
         )}
+
+        {/* Activity history */}
+        <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+          <p style={{ ...lbl, marginBottom: '0.875rem' }}>History</p>
+          <BookingActivityLog
+            bookingId={detail.id}
+            accessToken={accessToken!}
+            endpoint={`${process.env.NEXT_PUBLIC_API_URL}/api/client/bookings/${detail.id}/activity`}
+          />
+        </div>
 
         {/* Rebook CTA for completed */}
         {detail.appointment_status === 'completed' && (

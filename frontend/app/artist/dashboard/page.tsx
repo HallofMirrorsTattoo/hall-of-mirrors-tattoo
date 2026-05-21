@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useAuth } from '@/lib/authContext';
 import AvailabilityCalendar, { AvailabilityData } from '@/app/components/AvailabilityCalendar';
 import TimeSlotPicker from '@/app/components/TimeSlotPicker';
+import BookingActivityLog from '@/app/components/BookingActivityLog';
 
 // ── Availability types ────────────────────────────────────────────────────────
 
@@ -1142,6 +1143,16 @@ export default function ArtistDashboard() {
               <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', color: 'rgba(34,197,94,0.8)' }}>Saved ✓</span>
             )}
           </div>
+        </div>
+
+        {/* Booking history */}
+        <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem', marginBottom: '1.25rem' }}>
+          <span style={{ ...labelStyle, marginBottom: '0.875rem', display: 'block' }}>Booking history</span>
+          <BookingActivityLog
+            bookingId={selectedBooking.id}
+            accessToken={accessToken!}
+            endpoint={`${process.env.NEXT_PUBLIC_API_URL}/api/artist/bookings/${selectedBooking.id}/activity`}
+          />
         </div>
 
         {/* Cancel / reschedule — confirmed bookings */}

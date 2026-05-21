@@ -209,6 +209,30 @@ router.delete('/photos/:id', authMiddleware, async (req: Request, res: Response)
 });
 
 router.get('/bookings', authMiddleware, getArtistBookings);
+router.get('/bookings/:id/activity', authMiddleware, async (req: Request, res: Response) => {
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  try {
+    if (!req.artist) return res.status(401).json({ error: 'Not authenticated' });
+    const { id } = req.params;
+    await client.connect();
+    const check = await client.query(
+      `SELECT id FROM "Booking" WHERE id = $1 AND artist_id = $2`,
+      [id, req.artist.id]
+    );
+    if (check.rows.length === 0) return res.status(404).json({ error: 'Booking not found' });
+    const result = await client.query(
+      `SELECT id, actor_type, action, original_date, original_time, proposed_date, proposed_time, note, created_at
+       FROM "BookingActivity" WHERE booking_id = $1 ORDER BY created_at ASC`,
+      [id]
+    );
+    res.json({ success: true, activity: result.rows });
+  } catch (err) {
+    console.error('Activity fetch error:', err);
+    res.status(500).json({ error: 'Failed to fetch activity' });
+  } finally {
+    await client.end();
+  }
+});
 router.get('/bookings/:id', authMiddleware, getArtistBookingById);
 router.patch('/bookings/:id', authMiddleware, updateBookingStatusByArtist);
 router.post('/bookings/:id/rebook-invite', authMiddleware, sendRebookInviteByArtist);

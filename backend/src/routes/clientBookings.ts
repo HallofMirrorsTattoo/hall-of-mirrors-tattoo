@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import pkg from 'pg';
 import { clientAuthMiddleware } from '../middleware/clientAuth.js';
 import { sendClientCounterOfferToArtist, sendOfferAcceptedToArtist, sendPriceAcceptedToArtist } from '../services/emailService.js';
+import { logBookingActivity } from '../utils/logBookingActivity.js';
 
 const { Client } = pkg;
 const router = Router();
@@ -42,6 +43,34 @@ router.get('/', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Fetch bookings error:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch bookings' });
+  } finally {
+    await client.end();
+  }
+});
+
+// GET /api/client/bookings/:id/activity
+router.get('/:id/activity', async (req: Request, res: Response) => {
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+    const { id } = req.params;
+    await client.connect();
+    const check = await client.query(
+      `SELECT b.id FROM "Booking" b
+       LEFT JOIN "User" u ON b.user_id = u.id
+       WHERE b.id = $1 AND (b.user_id = $2 OR u.email = $3)`,
+      [id, req.user.id, req.user.email]
+    );
+    if (check.rows.length === 0) return res.status(404).json({ error: 'Booking not found' });
+    const result = await client.query(
+      `SELECT id, actor_type, action, original_date, original_time, proposed_date, proposed_time, note, created_at
+       FROM "BookingActivity" WHERE booking_id = $1 ORDER BY created_at ASC`,
+      [id]
+    );
+    res.json({ success: true, activity: result.rows });
+  } catch (err) {
+    console.error('Activity fetch error:', err);
+    res.status(500).json({ error: 'Failed to fetch activity' });
   } finally {
     await client.end();
   }
@@ -165,7 +194,7 @@ router.patch('/:id', async (req: Request, res: Response) => {
 
     // Ownership + current status — email fallback
     const bookingResult = await client.query(
-      `SELECT b.id, b.appointment_date_time, b.appointment_status
+      `SELECT b.id, b.appointment_date_time, b.appointment_time, b.appointment_status
        FROM "Booking" b
        LEFT JOIN "User" u ON b.user_id = u.id
        WHERE b.id = $1 AND (b.user_id = $2 OR u.email = $3)`,
@@ -227,6 +256,29 @@ router.patch('/:id', async (req: Request, res: Response) => {
       );
     }
 
+    // ── Activity logging ──────────────────────────────────────────────────────
+    if (appointment_status === 'rescheduled' && new_appointment_date && new_appointment_time) {
+      const origDate = existing.appointment_date_time
+        ? new Date(existing.appointment_date_time).toISOString().split('T')[0]
+        : null;
+      const origTime = existing.appointment_time ?? null;
+      await logBookingActivity(client, {
+        bookingId: id,
+        actorType: 'client',
+        action: 'reschedule_proposed',
+        originalDate: origDate,
+        originalTime: origTime,
+        proposedDate: new_appointment_date,
+        proposedTime: new_appointment_time,
+      });
+    } else if (appointment_status === 'cancelled') {
+      await logBookingActivity(client, {
+        bookingId: id,
+        actorType: 'client',
+        action: 'booking_cancelled',
+      });
+    }
+
     res.json({ success: true, message: `Booking ${appointment_status}`, booking: updateResult.rows[0] });
   } catch (error) {
     console.error('Update booking error:', error);
@@ -259,6 +311,7 @@ router.post('/:id/counter-offer', async (req: Request, res: Response) => {
 
     const ownerCheck = await client.query(
       `SELECT b.id, b.appointment_status, b.counter_offered_by,
+              b.appointment_date_time, b.appointment_time,
               b.booking_reference, a.email as artist_email, a.full_name as artist_name
        FROM "Booking" b
        LEFT JOIN "User" u ON b.user_id = u.id
@@ -283,6 +336,20 @@ router.post('/:id/counter-offer', async (req: Request, res: Response) => {
        WHERE id = $4`,
       [counter_offer_date, counter_offer_time, counter_offer_note.trim(), id]
     );
+
+    const ccoOrigDate = booking.appointment_date_time
+      ? new Date(booking.appointment_date_time).toISOString().split('T')[0]
+      : null;
+    await logBookingActivity(client, {
+      bookingId: id,
+      actorType: 'client',
+      action: 'counter_offer_proposed',
+      originalDate: ccoOrigDate,
+      originalTime: booking.appointment_time ?? null,
+      proposedDate: counter_offer_date,
+      proposedTime: counter_offer_time,
+      note: counter_offer_note.trim(),
+    });
 
     if (booking.artist_email) {
       const clientName = `${req.user.first_name || ''} ${req.user.last_name || ''}`.trim() || req.user.email;
@@ -316,6 +383,7 @@ router.post('/:id/accept-offer', async (req: Request, res: Response) => {
 
     const ownerCheck = await client.query(
       `SELECT b.id, b.appointment_status, b.counter_offered_by,
+              b.appointment_date_time, b.appointment_time,
               b.counter_offer_date, b.counter_offer_time, b.booking_reference,
               a.email as artist_email, a.full_name as artist_name
        FROM "Booking" b
@@ -345,6 +413,21 @@ router.post('/:id/accept-offer', async (req: Request, res: Response) => {
        WHERE id = $1`,
       [id]
     );
+
+    const caoOrigDate = booking.appointment_date_time
+      ? new Date(booking.appointment_date_time).toISOString().split('T')[0]
+      : null;
+    await logBookingActivity(client, {
+      bookingId: id,
+      actorType: 'client',
+      action: 'counter_offer_accepted',
+      originalDate: caoOrigDate,
+      originalTime: booking.appointment_time ?? null,
+      proposedDate: booking.counter_offer_date
+        ? new Date(booking.counter_offer_date).toISOString().split('T')[0]
+        : null,
+      proposedTime: booking.counter_offer_time ?? null,
+    });
 
     if (booking.artist_email) {
       const clientName = `${req.user.first_name || ''} ${req.user.last_name || ''}`.trim() || req.user.email;

@@ -14,6 +14,7 @@ import {
   sendPriceOfferToClient,
   sendPriceAcceptedToArtist,
 } from '../services/emailService.js';
+import { logBookingActivity } from '../utils/logBookingActivity.js';
 
 const { Client } = pkg;
 
@@ -601,6 +602,35 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
 
     const updated = updateResult.rows[0];
 
+    // ── Activity logging ──────────────────────────────────────────────────────
+    if (new_appointment_date && new_appointment_time) {
+      const origDate = booking.appointment_date_time
+        ? new Date(booking.appointment_date_time).toISOString().split('T')[0]
+        : null;
+      const origTime = booking.appointment_time ?? null;
+      await logBookingActivity(client, {
+        bookingId: id,
+        actorType: 'artist',
+        action: 'reschedule_proposed',
+        originalDate: origDate,
+        originalTime: origTime,
+        proposedDate: new_appointment_date,
+        proposedTime: new_appointment_time,
+      });
+    } else if (status === 'cancelled') {
+      await logBookingActivity(client, {
+        bookingId: id,
+        actorType: 'artist',
+        action: 'booking_cancelled',
+      });
+    } else if (status === 'confirmed') {
+      await logBookingActivity(client, {
+        bookingId: id,
+        actorType: 'artist',
+        action: 'booking_confirmed',
+      });
+    }
+
     // ── Post-update emails ────────────────────────────────────────────────────
 
     // Booking confirmed with duration → send confirmed email to client
@@ -767,6 +797,20 @@ export async function artistCounterOffer(req: Request, res: Response) {
       [id, counter_offer_date, counter_offer_time, counter_offer_note.trim()]
     );
 
+    const coOrigDate = booking.appointment_date_time
+      ? new Date(booking.appointment_date_time).toISOString().split('T')[0]
+      : null;
+    await logBookingActivity(client, {
+      bookingId: id,
+      actorType: 'artist',
+      action: 'counter_offer_proposed',
+      originalDate: coOrigDate,
+      originalTime: booking.appointment_time ?? null,
+      proposedDate: counter_offer_date,
+      proposedTime: counter_offer_time,
+      note: counter_offer_note.trim(),
+    });
+
     sendCounterOfferToClient({
       clientEmail: booking.email,
       clientName: `${booking.first_name} ${booking.last_name}`,
@@ -826,6 +870,21 @@ export async function artistAcceptClientOffer(req: Request, res: Response) {
        WHERE id = $1 RETURNING *`,
       [id]
     );
+
+    const aaoOrigDate = booking.appointment_date_time
+      ? new Date(booking.appointment_date_time).toISOString().split('T')[0]
+      : null;
+    await logBookingActivity(client, {
+      bookingId: id,
+      actorType: 'artist',
+      action: 'counter_offer_accepted',
+      originalDate: aaoOrigDate,
+      originalTime: booking.appointment_time ?? null,
+      proposedDate: booking.counter_offer_date
+        ? new Date(booking.counter_offer_date).toISOString().split('T')[0]
+        : null,
+      proposedTime: booking.counter_offer_time ?? null,
+    });
 
     const confirmedDate = fmtDate(booking.counter_offer_date.toISOString().split('T')[0]);
     const confirmedTime = fmtTime(booking.counter_offer_time);
