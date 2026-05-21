@@ -139,8 +139,9 @@ export default function Aftercare() {
                 maxWidth: '55ch',
               }}
             >
-              Following these steps protects your investment and ensures the best possible
-              heal. If you have any questions at any point, Robyn is always happy to help.
+              This is your new skin story now — look after it and it&apos;ll look after
+              you. Follow these steps for the best possible heal, and if anything worries
+              you at any point, Robyn is always happy to hear from you.
             </p>
           </AnimatedSection>
         </div>

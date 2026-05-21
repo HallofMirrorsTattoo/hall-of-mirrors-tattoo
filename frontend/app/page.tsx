@@ -242,8 +242,8 @@ export default function Home() {
                 Every mark<br />tells a story
               </h2>
               <p style={{ maxWidth: '42ch' }}>
-                Each piece is a collaboration — a permanent reflection of vision,
-                identity, and artistry. No two are alike.
+                Every piece begins as a blank page. Your story, your references,
+                your vision — drawn from scratch, built to last, and made for no one else.
               </p>
             </AnimatedSection>
 
@@ -526,9 +526,9 @@ export default function Home() {
                 Ready to begin?
               </h2>
               <p style={{ margin: '0 auto 3rem', maxWidth: '38ch', textAlign: 'center' }}>
-                Our artists take on a limited number of clients each month — so every tattoo
-                receives the time, care, and skill it deserves.
-                Book a session or request a consultation — all in one place.
+                We take on a limited number of clients each month — because that's the only
+                way to do this work properly. Book a session, or come in for a conversation.
+                Either way, you're welcome here.
               </p>
               <div className="flex justify-center">
                 <Link href="/booking" className="btn-primary">

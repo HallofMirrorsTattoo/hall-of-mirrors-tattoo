@@ -42,18 +42,18 @@ const studioStats = [
 const pillars = [
   {
     n: '01',
-    title: 'Craft first.',
-    body: "Tattooing is a permanent art form. Every line, every shade, every colour choice is deliberate. We take the time to get it right — because you'll wear it for life.",
+    title: 'The work is permanent. So we take our time.',
+    body: "Every line, every shade, every colour choice is deliberate. A tattoo lives on your skin for life — so we don't rush, don't guess, and don't compromise.",
   },
   {
     n: '02',
-    title: 'Nothing off the shelf.',
-    body: 'There are no flash sheets here, no off-the-shelf designs, no compromise. Every piece begins as a blank page — drawn from your story, your references, your vision.',
+    title: 'No templates. No shortcuts. No off-the-shelf anything.',
+    body: 'Every piece at Hall of Mirrors is drawn from scratch. Your story, your references, your vision — that\'s where it starts. That\'s where it always starts.',
   },
   {
     n: '03',
-    title: 'The consultation is everything.',
-    body: 'Before a single line is drawn, we talk. About placement. About style. About what the piece means. The conversation is where the work really begins.',
+    title: 'We talk before we draw.',
+    body: 'Before anything touches your skin, we have a conversation. About placement, style, meaning — what this piece is for and what it should say. The consultation is where the real work begins.',
   },
 ];
 

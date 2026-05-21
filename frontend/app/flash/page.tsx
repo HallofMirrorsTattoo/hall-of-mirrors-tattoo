@@ -380,7 +380,7 @@ export default function FlashPage() {
           color: 'var(--text-mid)', lineHeight: 1.8,
           maxWidth: '48ch', marginBottom: '2.5rem',
         }}>
-          Flash days are special events where Robyn brings a collection of pre-drawn designs — each available at a fixed price, first come first served. Once a design is claimed, it&apos;s gone.
+          A flash day is Robyn turning up with a book full of finished designs — each one a one-of-a-kind piece, priced and ready to go. No waiting on custom work. You see it, you want it, you book it. When it&apos;s gone, it&apos;s gone.
         </p>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <Link href="/booking" className="btn-secondary">Book a custom session instead</Link>
@@ -431,7 +431,7 @@ export default function FlashPage() {
               No upcoming flash days
             </p>
             <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-low)', lineHeight: 1.7, maxWidth: '36ch', margin: '0 auto 2rem' }}>
-              Follow Robyn on Instagram to be the first to hear when the next flash day is announced.
+              Nothing in the diary just yet. Robyn announces flash days on Instagram first — give her a follow and you won&apos;t miss the next one.
             </p>
             <Link href="/booking?mode=consultation" className="btn-secondary">
               Request a custom consultation instead
@@ -529,14 +529,14 @@ export default function FlashPage() {
               background: 'radial-gradient(ellipse 55% 50% at 50% 50%, rgba(201,168,76,0.04) 0%, transparent 65%)',
               pointerEvents: 'none',
             }} />
-            <p className="eyebrow" style={{ marginBottom: '1rem' }}>Want something entirely your own?</p>
+            <p className="eyebrow" style={{ marginBottom: '1rem' }}>Want something drawn just for you?</p>
             <h2 style={{
               fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic',
               fontWeight: 300, fontSize: 'clamp(2rem, 5vw, 3.5rem)',
               color: 'var(--cream)', letterSpacing: '-0.02em', lineHeight: 1.05,
               marginBottom: '1.5rem',
             }}>
-              Book a bespoke session.
+              That&apos;s what we&apos;re really here for.
             </h2>
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
               <Link href="/booking" className="btn-primary">

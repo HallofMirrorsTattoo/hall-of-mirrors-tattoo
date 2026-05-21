@@ -343,11 +343,11 @@ export default function BookingPage() {
             lineHeight: 1.0,
             marginBottom: '1.5rem',
           }}>
-            Begin your<br />appointment
+            Let&apos;s make something<br />together
           </h1>
           <p style={{ maxWidth: '40ch', margin: '0 auto', color: 'var(--text-mid)', fontSize: '0.9375rem', lineHeight: 1.7 }}>
-            Limited availability ensures every client receives full attention.
-            We&apos;ll confirm your booking within 24 hours.
+            We keep bookings limited so every session gets the time it deserves.
+            Robyn will confirm within 24 hours.
           </p>
           {user && (
             <p style={{ marginTop: '1rem', ...mono, fontSize: '0.72rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.5)' }}>

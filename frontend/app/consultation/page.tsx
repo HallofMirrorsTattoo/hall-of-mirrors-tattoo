@@ -88,8 +88,9 @@ export default function ConsultationPage() {
             Let&apos;s talk about<br />your idea
           </h1>
           <p style={{ maxWidth: '38ch', margin: '0 auto', textAlign: 'center' }}>
-            A relaxed conversation with Robyn to explore your vision and understand
-            what your perfect piece looks like.
+            Tell Robyn what you&apos;ve been imagining — where you&apos;re thinking, what
+            you want it to say, what you&apos;ve been carrying around as an idea. She&apos;ll
+            tell you honestly what&apos;s possible and how to make it happen.
           </p>
         </div>
       </section>

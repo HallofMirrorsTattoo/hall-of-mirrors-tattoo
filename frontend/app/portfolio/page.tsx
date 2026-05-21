@@ -68,7 +68,7 @@ const styles = [
   {
     n: '01',
     name: 'Neo-Traditional',
-    desc: 'Bold outlines, rich colour, classic subject matter reinterpreted with a modern edge. The cornerstone of our practice — rooted in art history, driven by personal narrative.',
+    desc: 'Bold outlines, rich colour, classic subjects reinterpreted with a modern edge — and occasionally a sprinkle of camp humour. The foundation of what we do here.',
   },
   {
     n: '02',
@@ -300,12 +300,12 @@ export default async function Portfolio() {
               lineHeight: 1.0,
               marginBottom: '1.5rem',
             }}>
-              The people behind the ink
+              The artists
             </h1>
             <p style={{ maxWidth: '52ch' }}>
-              Hall of Mirrors is home to two resident tattoo artists working from our private
-              studio on Castle Street in Liverpool city centre. Every client is seen by
-              appointment — no walk-ins, no rushing.
+              Hall of Mirrors is home to two resident artists on Castle Street, Liverpool.
+              Every session is one-to-one, every piece drawn from scratch, every appointment
+              made with care.
             </p>
           </AnimatedSection>
         </div>
@@ -437,9 +437,9 @@ export default async function Portfolio() {
                 One day.<br />Original designs.
               </h2>
               <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.8, maxWidth: '44ch', marginBottom: '2rem' }}>
-                Occasionally our artists host flash days — special events where a collection
-                of pre-drawn designs is available at a fixed price. Each design is unique,
-                first come first served. Once claimed, it&apos;s gone.
+                Sometimes Robyn arrives with a book of finished designs ready to tattoo the
+                same day — fixed prices, no waiting, first come first served. Each one a
+                one-of-a-kind.
               </p>
               <Link href="/flash" className="btn-secondary">
                 See upcoming flash days ↗
@@ -523,9 +523,8 @@ export default async function Portfolio() {
               Start with a conversation
             </h2>
             <p style={{ margin: '0 auto 2.5rem', maxWidth: '44ch', textAlign: 'center' }}>
-              Every tattoo at Hall of Mirrors begins with a consultation — a chance to talk
-              through your idea, explore placement, and see if we&apos;re the right fit for
-              your vision.
+              Every tattoo at Hall of Mirrors starts with a conversation — your idea, your
+              story, your vision. Come and talk. We&apos;d love to hear from you.
             </p>
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
               <Link href="/booking" className="btn-primary">

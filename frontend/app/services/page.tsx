@@ -150,10 +150,11 @@ export default function Services() {
               Custom tattoos, cover-ups &amp; consultations
             </h1>
             <p style={{ maxWidth: '52ch' }}>
-              Hall of Mirrors is a private tattoo studio on Castle Street, Liverpool,
-              specialising in bespoke neo-traditional tattooing, full-colour work, and
-              skilled cover-ups. Every service is appointment-only — we don&apos;t do
-              walk-ins, and we don&apos;t do off-the-shelf designs.
+              Hall of Mirrors is Robyn&apos;s private studio on Castle Street, Liverpool.
+              Her style is neo-traditional at its core — but every person who comes in
+              brings their own version of that. Animals, ladies, timeless objects, pop
+              culture, nostalgia. Whatever the idea, it starts with your story and ends
+              on your skin. Appointment-only. Always bespoke.
             </p>
           </AnimatedSection>
         </div>
@@ -228,7 +229,7 @@ export default function Services() {
             <div className="grid grid-cols-1 md:grid-cols-3" style={{ borderTop: '1px solid var(--border)' }}>
               {([
                 { roman: 'I',   label: 'Appointment Only',  body: "We don't take walk-ins. Every session is booked in advance, giving your artist time to prepare your design and you a dedicated slot with no pressure." },
-                { roman: 'II',  label: 'Private Studio',    body: 'Hall of Mirrors is a quiet, private space at Suite 3, 34 Castle Street, Liverpool. One client at a time.' },
+                { roman: 'II',  label: 'Private Studio',    body: 'One client at a time, in a quiet space that\'s yours for the session. Suite 3, 34 Castle Street, Liverpool.' },
                 { roman: 'III', label: 'Fully Licensed',    body: 'Licensed by Liverpool City Council (Ref: A11394900). Autoclave sterilisation. Hepatitis B vaccinated. Your safety is non-negotiable.' },
               ] as const).map((item, i) => (
                 <div

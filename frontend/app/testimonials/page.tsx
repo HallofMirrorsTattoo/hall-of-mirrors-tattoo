@@ -81,7 +81,7 @@ export default function Testimonials() {
       <div style={{ maxWidth: '52rem', margin: '0 auto', padding: '2rem 1.5rem 5rem' }}>
 
         <AnimatedSection className="mb-16">
-          <p className="eyebrow">Client Feedback</p>
+          <p className="eyebrow">Kind Words</p>
           <h1 style={{
             fontFamily: '"Cormorant Garamond", serif',
             fontStyle: 'italic',

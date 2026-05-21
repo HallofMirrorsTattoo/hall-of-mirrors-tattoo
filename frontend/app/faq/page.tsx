@@ -50,7 +50,7 @@ const faqs = [
   },
   {
     q: 'What styles do you specialise in?',
-    a: 'Neo-traditional is the foundation of our practice — bold outlines, rich colour, classic subject matter reinterpreted with a modern edge. We also work in colour realism, fine line, and cover-up work. Everything here is bespoke: animals, portraits, botanical work, pop culture, nostalgia, and more. If you\'re not sure whether your idea fits, get in touch — we\'ll tell you honestly.',
+    a: 'Neo-traditional is the foundation of our practice — bold outlines, rich colour, classic subject matter reinterpreted with a modern edge, and occasionally a sprinkle of camp humour. We also work in colour realism, fine line, and cover-up work. Everything here is bespoke: animals, ladies, timeless objects, pop culture, nostalgia, and more. Honestly, if you\'re not sure whether your idea fits — just ask. We\'ll tell you straight.',
   },
   {
     q: 'Where exactly are you located?',
@@ -105,8 +105,9 @@ export default function FAQ() {
               FAQ
             </h1>
             <p style={{ maxWidth: '52ch' }}>
-              Everything you need to know before booking at Hall of Mirrors. If
-              something isn&apos;t answered here, get in touch — we&apos;re happy to help.
+              Everything you probably want to know before getting in touch. If it&apos;s
+              not here, just ask — there&apos;s no such thing as a silly question when it
+              comes to something permanent.
             </p>
           </AnimatedSection>
         </div>

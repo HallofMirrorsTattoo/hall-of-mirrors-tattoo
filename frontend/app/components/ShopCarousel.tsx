@@ -55,7 +55,8 @@ export default function ShopCarousel() {
             sizes="100vw"
             className="object-cover"
             style={{
-              animation: i === current ? `${animation} 9s cubic-bezier(0,0,0.2,1) forwards` : 'none',
+              animation: (i === current || i === prev) ? `${animation} 9s cubic-bezier(0,0,0.2,1) forwards` : 'none',
+              filter: 'brightness(0.87) contrast(1.06) saturate(0.72) sepia(0.08)',
             }}
             priority={i === 0}
             quality={85}

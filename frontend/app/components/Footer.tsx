@@ -36,8 +36,8 @@ export default async function Footer() {
               color: 'var(--text-low)',
               maxWidth: '28ch',
             }}>
-              Bespoke tattoo artistry in Liverpool.<br />
-              Neo-traditional specialist. Every design custom.
+              Custom tattoos drawn from your story.<br />
+              Neo-traditional artistry at Suite 3, Castle Street, Liverpool.
             </p>
             <div className="flex gap-4 mt-6">
               {studio?.instagram_handle && (
