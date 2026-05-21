@@ -29,17 +29,7 @@ export default async function Footer() {
                 style={{ width: '9rem', height: 'auto', opacity: 0.75 }}
               />
             </div>
-            <p style={{
-              fontFamily: '"DM Sans", sans-serif',
-              fontSize: '0.875rem',
-              lineHeight: 1.8,
-              color: 'var(--text-low)',
-              maxWidth: '28ch',
-            }}>
-              Custom tattoos drawn from your story.<br />
-              Suite 3, 34 Castle Street, Liverpool, L2 0NR.
-            </p>
-            <div className="flex gap-4 mt-6">
+            <div className="flex gap-4 mt-1">
               <a
                 href={studio?.instagram_handle ? `https://instagram.com/${studio.instagram_handle}` : 'https://instagram.com/hallofmirrorstattoo'}
                 target="_blank"
@@ -77,20 +67,10 @@ export default async function Footer() {
               lineHeight: 2,
               color: 'var(--text-mid)',
             }}>
-              {studio?.address ? (
-                <>
-                  {studio.address}<br />
-                  {studio.postcode && <>{studio.postcode}<br /></>}
-                  United Kingdom
-                </>
-              ) : (
-                <>
-                  Hall of Mirrors Tattoo Studio<br />
-                  Suite 3, 34 Castle Street<br />
-                  Liverpool, L2 0NR<br />
-                  United Kingdom
-                </>
-              )}
+              Hall of Mirrors Tattoo Studio<br />
+              Suite 3, 34 Castle Street<br />
+              Liverpool, L2 0NR<br />
+              United Kingdom
             </address>
           </div>
 

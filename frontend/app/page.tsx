@@ -504,23 +504,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Section 9 — Credentials strip */}
-        <section style={{
-          padding: '2rem 1.5rem',
-          borderTop: '1px solid rgba(201,168,76,0.12)',
-          borderBottom: '1px solid rgba(201,168,76,0.12)',
-          textAlign: 'center',
-        }}>
-          <p style={{
-            fontFamily: '"DM Mono", monospace',
-            fontSize: '0.75rem',
-            letterSpacing: '0.25em',
-            textTransform: 'uppercase',
-            color: 'var(--text-low)',
-          }}>
-            Licensed · Liverpool City Council · Suite 3, 34 Castle Street, Liverpool, L2 0NR · Walk-Ins Welcome
-          </p>
-        </section>
 
       </div>
     </div>
