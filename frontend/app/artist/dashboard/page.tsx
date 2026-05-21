@@ -1682,12 +1682,12 @@ export default function ArtistDashboard() {
   const SidebarContent = () => (
     <>
       <div style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '1.25rem' }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '1.25rem', textDecoration: 'none' }}>
           <Image src="/assets/logos/White Logo.png" alt="Hall of Mirrors" width={32} height={32} style={{ width: '2rem', height: 'auto', opacity: 0.85 }} />
           <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.55)' }}>
             Artist Studio
           </span>
-        </div>
+        </Link>
         <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1.1rem', color: 'var(--cream)', lineHeight: 1.2, margin: 0 }}>
           {artist?.full_name ? `Welcome back, ${artist.full_name.split(' ')[0]}` : 'Welcome back'}
         </p>
@@ -1756,12 +1756,12 @@ export default function ArtistDashboard() {
   );
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg)' }}>
+    <div className="-mt-24 md:-mt-32" style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg)' }}>
 
       {/* ── Desktop sidebar ── */}
       <aside
         className="hidden md:flex"
-        style={{ position: 'fixed', top: 0, left: 0, width: '220px', height: '100vh', backgroundColor: 'rgba(14,12,9,0.97)', backdropFilter: 'blur(24px) saturate(1.6)', WebkitBackdropFilter: 'blur(24px) saturate(1.6)', borderRight: '1px solid rgba(201,168,76,0.1)', flexDirection: 'column', padding: '1.75rem 1rem', zIndex: 50, overflowY: 'auto' }}
+        style={{ position: 'fixed', top: '1.5rem', left: '1.5rem', width: '220px', maxHeight: 'calc(100vh - 3rem)', backgroundColor: 'rgba(14,12,9,0.88)', backdropFilter: 'blur(24px) saturate(1.6)', WebkitBackdropFilter: 'blur(24px) saturate(1.6)', border: '1px solid rgba(201,168,76,0.14)', borderRadius: '1.25rem', boxShadow: '0 4px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)', flexDirection: 'column', padding: '1.75rem 1rem', zIndex: 50, overflowY: 'auto' }}
       >
         <SidebarContent />
       </aside>
@@ -1785,8 +1785,8 @@ export default function ArtistDashboard() {
 
       {/* ── Main content ── */}
       <main
-        className="md:ml-[220px]"
-        style={{ flex: 1, minHeight: '100vh', backgroundColor: 'var(--bg)', padding: '2.5rem 1.5rem' }}
+        className="md:ml-[264px]"
+        style={{ flex: 1, backgroundColor: 'var(--bg)', padding: '2.5rem 1.5rem' }}
       >
         {/* Mobile header bar */}
         <div
@@ -3211,6 +3211,16 @@ export default function ArtistDashboard() {
 
         </div>{/* end tab-content */}
       </div>{/* end maxWidth 860px wrapper */}
+
+      {/* Mini-footer */}
+      <div style={{ borderTop: '1px solid rgba(201,168,76,0.08)', paddingTop: '2rem', marginTop: '5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', maxWidth: '860px', margin: '5rem auto 0' }}>
+        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.1em', color: 'var(--text-low)', opacity: 0.5, margin: 0 }}>
+          © {new Date().getFullYear()} Hall of Mirrors Tattoo. All rights reserved.
+        </p>
+        <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.1em', color: 'var(--text-low)', opacity: 0.4, margin: 0 }}>
+          Liverpool City Council Reg. · A11394900
+        </p>
+      </div>
 
       </main>
 

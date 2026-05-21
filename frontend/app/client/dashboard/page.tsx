@@ -92,7 +92,7 @@ export default function ClientDashboardPage() {
     <>
       {/* Logo + identity */}
       <div style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '1.25rem' }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '1.25rem', textDecoration: 'none' }}>
           <Image
             src="/assets/logos/White Logo.png"
             alt="Hall of Mirrors"
@@ -109,7 +109,7 @@ export default function ClientDashboardPage() {
           }}>
             Client Portal
           </span>
-        </div>
+        </Link>
         <p style={{
           fontFamily: '"Cormorant Garamond", serif',
           fontStyle: 'italic',
@@ -238,21 +238,23 @@ export default function ClientDashboardPage() {
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <ClientProtectedRoute>
-      <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg)' }}>
+      <div className="-mt-24 md:-mt-32" style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg)' }}>
 
         {/* ── Desktop sidebar ── */}
         <aside
           className="hidden md:flex"
           style={{
             position: 'fixed',
-            top: 0,
-            left: 0,
+            top: '1.5rem',
+            left: '1.5rem',
             width: '220px',
-            height: '100vh',
-            backgroundColor: 'rgba(14,12,9,0.97)',
+            maxHeight: 'calc(100vh - 3rem)',
+            backgroundColor: 'rgba(14,12,9,0.88)',
             backdropFilter: 'blur(24px) saturate(1.6)',
             WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
-            borderRight: '1px solid rgba(201,168,76,0.1)',
+            border: '1px solid rgba(201,168,76,0.14)',
+            borderRadius: '1.25rem',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)',
             flexDirection: 'column',
             padding: '1.75rem 1rem',
             zIndex: 50,
@@ -296,10 +298,9 @@ export default function ClientDashboardPage() {
 
         {/* ── Main content ── */}
         <main
-          className="md:ml-[220px]"
+          className="md:ml-[264px]"
           style={{
             flex: 1,
-            minHeight: '100vh',
             backgroundColor: 'var(--bg)',
             padding: '2.5rem 1.5rem',
           }}
@@ -343,6 +344,16 @@ export default function ClientDashboardPage() {
             {activeTab === 'design-ideas'  && <DesignIdeasTab />}
             {activeTab === 'consent-forms' && <ConsentFormsTab />}
             {activeTab === 'profile'       && <ProfileTab />}
+          </div>
+
+          {/* Mini-footer */}
+          <div style={{ borderTop: '1px solid rgba(201,168,76,0.08)', paddingTop: '2rem', marginTop: '5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.1em', color: 'var(--text-low)', opacity: 0.5, margin: 0 }}>
+              © {new Date().getFullYear()} Hall of Mirrors Tattoo. All rights reserved.
+            </p>
+            <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.1em', color: 'var(--text-low)', opacity: 0.4, margin: 0 }}>
+              Liverpool City Council Reg. · A11394900
+            </p>
           </div>
         </main>
 

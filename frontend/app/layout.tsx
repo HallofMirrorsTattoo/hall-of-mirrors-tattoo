@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import FooterSlot from '@/components/FooterSlot';
 import CursorGlow from '@/components/CursorGlow';
 import { AuthProvider } from '@/lib/authContext';
 import { ClientAuthProvider } from '@/lib/clientAuthContext';
@@ -47,7 +48,7 @@ export default function RootLayout({
             <main className="min-h-screen pt-24 md:pt-32">
               {children}
             </main>
-            <Footer />
+            <FooterSlot><Footer /></FooterSlot>
           </ClientAuthProvider>
         </AuthProvider>
       </body>
