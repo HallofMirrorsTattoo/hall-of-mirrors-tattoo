@@ -48,6 +48,7 @@ const localBusinessJsonLd = {
   image: 'https://hallofmirrorstattoo.com/opengraph-image.png',
 };
 
+const imgFilter = 'brightness(0.87) contrast(1.06) saturate(0.72) sepia(0.08)';
 
 export default function Home() {
   return (
@@ -165,379 +166,425 @@ export default function Home() {
       {/* ── SCROLLING CONTENT ───────────────────────────────────────────────── */}
       <div className="relative z-10" style={{ backgroundColor: 'var(--bg)' }}>
 
-        {/* ── CREDENTIALS STRIP ─────────────────────────────────────────────── */}
-        <section className="px-0 py-0" style={{ borderTop: '1px solid rgba(201,168,76,0.12)', borderBottom: '1px solid rgba(201,168,76,0.12)' }}>
-          <div className="max-w-5xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3">
-              {([
-                { roman: 'I',   label: 'Licensed',        title: 'Liverpool City Council', detail: 'Ref: A11394900' },
-                { roman: 'II',  label: 'Health & Safety', title: 'Autoclave Certified',    detail: 'Hepatitis B Vaccinated' },
-                { roman: 'III', label: 'Specialist',      title: 'Neo-Traditional',        detail: 'Bespoke Designs' },
-              ] as const).map((item, i) => (
-                <AnimatedSection
-                  key={item.label}
-                  delay={i * 120}
-                  className={`py-12 px-10 relative overflow-hidden${i < 2 ? ' md:border-r' : ''}`}
-                  style={{ borderColor: 'rgba(201,168,76,0.12)' }}
-                >
-                  {/* Ghost Roman numeral — visual anchor */}
-                  <span
-                    className="absolute top-0 right-4 pointer-events-none select-none"
-                    style={{
-                      fontFamily: '"Cormorant Garamond", serif',
-                      fontStyle: 'italic',
-                      fontSize: '7rem',
-                      fontWeight: 300,
-                      color: 'var(--gold)',
-                      opacity: 0.045,
-                      lineHeight: 1,
-                    }}
-                    aria-hidden="true"
-                  >
-                    {item.roman}
-                  </span>
-                  <p className="eyebrow" style={{ marginBottom: '0.75rem' }}>{item.label}</p>
-                  <p style={{
-                    fontFamily: '"Cormorant Garamond", serif',
-                    fontSize: '1.25rem',
-                    fontWeight: 400,
-                    color: 'var(--cream)',
-                    lineHeight: 1.3,
-                    marginBottom: '0.375rem',
-                    maxWidth: 'none',
-                  }}>
-                    {item.title}
-                  </p>
-                  <p style={{
-                    fontFamily: '"DM Mono", monospace',
-                    fontSize: '0.75rem',
-                    letterSpacing: '0.12em',
-                    color: 'var(--text-low)',
-                    maxWidth: 'none',
-                  }}>
-                    {item.detail}
-                  </p>
-                </AnimatedSection>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── PORTFOLIO ─────────────────────────────────────────────────────── */}
-        <section className="px-6 py-28 md:py-40">
-          <div className="max-w-6xl mx-auto">
-
-            <AnimatedSection className="mb-16 md:mb-20">
-              <p className="eyebrow">The Work</p>
+        {/* Section 1 — Hello */}
+        <section style={{ padding: '10rem 1.5rem', textAlign: 'center' }}>
+          <div style={{ maxWidth: '52rem', margin: '0 auto' }}>
+            <AnimatedSection>
+              <p className="eyebrow" style={{ marginBottom: '2rem' }}>Hall of Mirrors · Liverpool</p>
               <h2 style={{
                 fontFamily: '"Cormorant Garamond", serif',
                 fontStyle: 'italic',
-                fontSize: 'clamp(3.5rem, 8vw, 6rem)',
                 fontWeight: 300,
+                fontSize: 'clamp(3.25rem, 9vw, 7.5rem)',
                 color: 'var(--cream)',
-                lineHeight: 1.0,
-                letterSpacing: '-0.025em',
-                marginBottom: '1.25rem',
+                lineHeight: 1.05,
+                letterSpacing: '-0.02em',
               }}>
-                Every mark<br />tells a story
+                Hello, and thank you<br />for being here.
               </h2>
-              <p style={{ maxWidth: '42ch' }}>
-                Every piece begins as a blank page. Your story, your references,
-                your vision — drawn from scratch, built to last, and made for no one else.
-              </p>
             </AnimatedSection>
-
-            <div className="grid grid-cols-1 md:grid-cols-8 gap-3" style={{ gridAutoRows: '280px' }}>
-
-              <AnimatedSection delay={0} className="md:col-span-5 md:row-span-2 card-premium group cursor-pointer" style={{ gridRow: 'span 2' }}>
-                <div className="card-premium-inner h-full flex flex-col justify-end p-8" style={{ background: 'linear-gradient(135deg, rgba(29,26,21,0.8) 0%, rgba(14,12,9,0.6) 100%)' }}>
-                  <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
-                    <span style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '5rem', fontWeight: 300, fontStyle: 'italic', color: 'rgba(201,168,76,0.06)', userSelect: 'none' }}>
-                      Portfolio
-                    </span>
-                  </div>
-                  <div className="relative z-10">
-                    <p className="eyebrow" style={{ marginBottom: '0.5rem' }}>Featured Work</p>
-                    <p style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1.1rem', color: 'rgba(242,237,224,0.5)', maxWidth: 'none' }}>
-                      Full-colour neo-traditional · Sleeve work
-                    </p>
-                  </div>
-                  <div className="absolute inset-0 rounded-[1.25rem] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ boxShadow: 'inset 0 0 0 1px rgba(201,168,76,0.3)' }} aria-hidden="true" />
-                </div>
-              </AnimatedSection>
-
-              <AnimatedSection delay={100} className="md:col-span-3 card-premium group cursor-pointer">
-                <div className="card-premium-inner h-full flex flex-col justify-end p-6" style={{ background: 'linear-gradient(225deg, rgba(201,168,76,0.06) 0%, rgba(14,12,9,0.4) 100%)' }}>
-                  <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
-                    <span style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '3rem', fontWeight: 300, fontStyle: 'italic', color: 'rgba(201,168,76,0.08)' }}>II</span>
-                  </div>
-                  <div className="relative z-10">
-                    <p className="eyebrow" style={{ marginBottom: '0.25rem' }}>Detail Work</p>
-                    <p style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '0.95rem', color: 'rgba(242,237,224,0.45)', maxWidth: 'none' }}>Fine-line botanical</p>
-                  </div>
-                </div>
-              </AnimatedSection>
-
-              <AnimatedSection delay={200} className="md:col-span-3 card-premium group cursor-pointer">
-                <div className="card-premium-inner h-full flex flex-col justify-end p-6" style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.04) 0%, rgba(29,26,21,0.5) 100%)' }}>
-                  <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
-                    <span style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '3rem', fontWeight: 300, fontStyle: 'italic', color: 'rgba(201,168,76,0.08)' }}>III</span>
-                  </div>
-                  <div className="relative z-10">
-                    <p className="eyebrow" style={{ marginBottom: '0.25rem' }}>Colour Work</p>
-                    <p style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '0.95rem', color: 'rgba(242,237,224,0.45)', maxWidth: 'none' }}>Neo-traditional portrait</p>
-                  </div>
-                </div>
-              </AnimatedSection>
-
-              <AnimatedSection delay={150} className="md:col-span-5 card-premium group cursor-pointer">
-                <div className="card-premium-inner h-full flex flex-col justify-end p-6" style={{ background: 'linear-gradient(160deg, rgba(29,26,21,0.6) 0%, rgba(201,168,76,0.04) 100%)' }}>
-                  <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
-                    <span style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '3rem', fontWeight: 300, fontStyle: 'italic', color: 'rgba(201,168,76,0.08)' }}>IV</span>
-                  </div>
-                  <div className="relative z-10">
-                    <p className="eyebrow" style={{ marginBottom: '0.25rem' }}>Black & Grey</p>
-                    <p style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '0.95rem', color: 'rgba(242,237,224,0.45)', maxWidth: 'none' }}>Ornamental · Geometric</p>
-                  </div>
-                </div>
-              </AnimatedSection>
-
-            </div>
-
-            <AnimatedSection delay={200} className="text-center mt-12">
-              <Link href="/portfolio" className="btn-secondary">View Complete Portfolio</Link>
-            </AnimatedSection>
-
           </div>
         </section>
 
-        {/* HOM Divider */}
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="section-divider">
-            <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.35em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.35)' }}>HOM</span>
-          </div>
-        </div>
-
-        {/* ── THE STUDIO ─────────────────────────────────────────────────────── */}
-        <section className="px-6 py-28 md:py-40">
-          <div className="max-w-6xl mx-auto">
+        {/* Section 2 — We believe */}
+        <section style={{ padding: '8rem 1.5rem' }}>
+          <div style={{ maxWidth: '72rem', margin: '0 auto' }}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24 items-center">
-
               <AnimatedSection>
-                <p className="eyebrow">The Studio</p>
+                <p className="eyebrow" style={{ marginBottom: '1.5rem' }}>The Studio</p>
                 <h2 style={{
                   fontFamily: '"Cormorant Garamond", serif',
-                  fontWeight: 300,
                   fontStyle: 'italic',
-                  fontSize: 'clamp(3rem, 7vw, 5.5rem)',
+                  fontWeight: 300,
+                  fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
                   color: 'var(--cream)',
-                  lineHeight: 1.0,
-                  letterSpacing: '-0.025em',
-                  marginBottom: '1.5rem',
+                  lineHeight: 1.1,
+                  letterSpacing: '-0.02em',
+                  marginBottom: '1.75rem',
                 }}>
-                  Liverpool&apos;s home for<br />custom tattooing
+                  &ldquo;We believe in the telling<br />of your story.&rdquo;
                 </h2>
-                <p style={{ marginBottom: '1.25rem' }}>
-                  Hall of Mirrors is a private tattoo studio on Castle Street, Liverpool
-                  city centre — a quiet space dedicated to bespoke tattoo design and the
-                  telling of your story. We specialise in neo-traditional tattooing, colour
-                  realism, and cover-up work, creating pieces that are built to last and
-                  designed to mean something.
+                <p style={{
+                  fontFamily: '"DM Sans", sans-serif',
+                  fontSize: 'clamp(1rem, 2vw, 1.125rem)',
+                  lineHeight: 1.9,
+                  color: 'var(--text-mid)',
+                  maxWidth: '40ch',
+                }}>
+                  To us, tattoos are a way of recording one&apos;s history, celebrating your own identity and letting the world see.
                 </p>
-                <p>
-                  Our artists work one-to-one with every client, taking on a limited number
-                  of bookings to ensure each piece receives the attention it deserves. Every
-                  tattoo begins with a conversation — because that&apos;s where the work
-                  really starts.
-                </p>
-
-                <div className="flex gap-10 mt-10">
-                  {([
-                    { num: '2',    label: 'Resident Artists' },
-                    { num: '10+',  label: 'Combined Years' },
-                    { num: '1:1',  label: 'Every Session' },
-                  ] as const).map((s) => (
-                    <div key={s.label}>
-                      <p style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1.75rem', fontWeight: 400, color: 'var(--gold)', lineHeight: 1, marginBottom: '0.25rem' }}>
-                        {s.num}
-                      </p>
-                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-low)', maxWidth: 'none' }}>
-                        {s.label}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-10">
-                  <Link href="/portfolio" className="btn-secondary">Meet Our Artists</Link>
-                </div>
               </AnimatedSection>
-
               <AnimatedSection delay={200}>
-                <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: '4/5' }}>
+                <div style={{ position: 'relative', aspectRatio: '4/5', borderRadius: '1rem', overflow: 'hidden' }}>
                   <Image
-                    src="/assets/shop-carousel/DSCF4101.jpg"
-                    alt="Hall of Mirrors Tattoo Studio — Castle Street, Liverpool"
+                    src="/assets/shop-carousel/DSCF4202.jpg"
+                    alt="Hall of Mirrors Tattoo Studio, Liverpool"
                     fill
                     sizes="(max-width: 768px) 100vw, 50vw"
                     className="object-cover"
+                    style={{ filter: imgFilter }}
                     quality={90}
                   />
-                  {/* Subtle gold vignette overlay */}
-                  <div
-                    className="absolute inset-0 rounded-2xl pointer-events-none"
-                    style={{ boxShadow: 'inset 0 0 0 1px rgba(201,168,76,0.18)' }}
-                    aria-hidden="true"
-                  />
+                  <div style={{ position: 'absolute', inset: 0, borderRadius: '1rem', boxShadow: 'inset 0 0 0 1px rgba(201,168,76,0.18)', pointerEvents: 'none' }} aria-hidden="true" />
                 </div>
               </AnimatedSection>
-
             </div>
           </div>
         </section>
 
-        {/* HOM Divider */}
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="section-divider">
-            <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.35em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.35)' }}>HOM</span>
-          </div>
-        </div>
-
-        {/* ── SERVICES ───────────────────────────────────────────────────────── */}
-        <section className="px-6 py-28 md:py-40">
-          <div className="max-w-6xl mx-auto">
-
-            <AnimatedSection className="mb-16">
-              <p className="eyebrow">Services</p>
+        {/* Section 3 — The Metaphor */}
+        <section style={{ padding: '9rem 1.5rem 11rem', textAlign: 'center' }}>
+          <div style={{ maxWidth: '52rem', margin: '0 auto' }}>
+            <AnimatedSection delay={0}>
+              <p className="eyebrow" style={{ marginBottom: '2.5rem' }}>The name</p>
               <h2 style={{
                 fontFamily: '"Cormorant Garamond", serif',
                 fontStyle: 'italic',
                 fontWeight: 300,
-                fontSize: 'clamp(3rem, 7vw, 5.5rem)',
+                fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
                 color: 'var(--cream)',
-                letterSpacing: '-0.025em',
-                lineHeight: 1.0,
+                lineHeight: 1.25,
+                letterSpacing: '-0.02em',
+                marginBottom: '1.5rem',
               }}>
-                What we offer
+                &ldquo;When you walk through a hall of mirrors,<br />you can see a hundred versions of yourself —&rdquo;
               </h2>
             </AnimatedSection>
+            <AnimatedSection delay={200}>
+              <h2 style={{
+                fontFamily: '"Cormorant Garamond", serif',
+                fontStyle: 'italic',
+                fontWeight: 300,
+                fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
+                color: 'var(--cream)',
+                lineHeight: 1.2,
+                letterSpacing: '-0.02em',
+                opacity: 0.7,
+                marginBottom: '1.5rem',
+              }}>
+                &ldquo;different shapes and angles.&rdquo;
+              </h2>
+            </AnimatedSection>
+            <AnimatedSection delay={400}>
+              <h2 style={{
+                fontFamily: '"Cormorant Garamond", serif',
+                fontStyle: 'italic',
+                fontWeight: 300,
+                fontSize: 'clamp(2rem, 4vw, 3.5rem)',
+                color: 'var(--cream)',
+                lineHeight: 1.2,
+                letterSpacing: '-0.02em',
+                marginBottom: '2rem',
+              }}>
+                &ldquo;But which is the truest?&rdquo;
+              </h2>
+            </AnimatedSection>
+            <AnimatedSection delay={600}>
+              <h2 style={{
+                fontFamily: '"Cormorant Garamond", serif',
+                fontStyle: 'italic',
+                fontWeight: 300,
+                fontSize: 'clamp(3rem, 8vw, 6.5rem)',
+                color: 'var(--gold)',
+                lineHeight: 1.0,
+                letterSpacing: '-0.025em',
+              }}>
+                Only you can decide.
+              </h2>
+            </AnimatedSection>
+          </div>
+        </section>
 
-            {/* Editorial numbered table */}
-            <div style={{ borderTop: '1px solid var(--border)' }}>
+        {/* Section 4 — Self-determination (full-bleed photo) */}
+        <section style={{ position: 'relative', overflow: 'hidden', minHeight: '80vh', display: 'flex', alignItems: 'center' }}>
+          <Image
+            src="/assets/shop-carousel/E-DSCF3046.jpg"
+            alt="Hall of Mirrors Tattoo Studio"
+            fill
+            sizes="100vw"
+            className="object-cover"
+            style={{ filter: imgFilter }}
+            quality={90}
+          />
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(14,12,9,0.76)' }} aria-hidden="true" />
+          <div style={{ position: 'relative', zIndex: 10, maxWidth: '48rem', margin: '0 auto', padding: '8rem 1.5rem', textAlign: 'center', width: '100%' }}>
+            <AnimatedSection delay={0}>
+              <h2 style={{
+                fontFamily: '"Cormorant Garamond", serif',
+                fontStyle: 'italic',
+                fontWeight: 300,
+                fontSize: 'clamp(2rem, 4.5vw, 4rem)',
+                color: 'var(--cream)',
+                lineHeight: 1.25,
+                letterSpacing: '-0.02em',
+                marginBottom: '1.25rem',
+              }}>
+                &ldquo;It is you who gets to decide<br />which reflection is your reality —&rdquo;
+              </h2>
+            </AnimatedSection>
+            <AnimatedSection delay={200}>
+              <h2 style={{
+                fontFamily: '"Cormorant Garamond", serif',
+                fontStyle: 'italic',
+                fontWeight: 300,
+                fontSize: 'clamp(2rem, 4.5vw, 4rem)',
+                color: 'var(--cream)',
+                lineHeight: 1.25,
+                letterSpacing: '-0.02em',
+                opacity: 0.75,
+                marginBottom: '1.25rem',
+              }}>
+                &ldquo;and it is you who gets to morph<br />and alter your reality as and when you wish,&rdquo;
+              </h2>
+            </AnimatedSection>
+            <AnimatedSection delay={400}>
+              <h2 style={{
+                fontFamily: '"Cormorant Garamond", serif',
+                fontStyle: 'italic',
+                fontWeight: 300,
+                fontSize: 'clamp(2rem, 4.5vw, 4rem)',
+                color: 'var(--gold)',
+                lineHeight: 1.25,
+                letterSpacing: '-0.02em',
+              }}>
+                &ldquo;without anyone&apos;s permission.&rdquo;
+              </h2>
+            </AnimatedSection>
+          </div>
+        </section>
+
+        {/* Section 5 — Tattoos as armour */}
+        <section style={{ padding: '9rem 1.5rem 10rem' }}>
+          <div style={{ maxWidth: '64rem', margin: '0 auto' }}>
+            <AnimatedSection delay={0}>
+              <p className="eyebrow" style={{ marginBottom: '2rem' }}>What they are</p>
+              <h2 style={{
+                fontFamily: '"Cormorant Garamond", serif',
+                fontStyle: 'italic',
+                fontWeight: 300,
+                fontSize: 'clamp(3rem, 7vw, 6rem)',
+                color: 'var(--cream)',
+                lineHeight: 1.0,
+                letterSpacing: '-0.025em',
+                marginBottom: '1.5rem',
+              }}>
+                Tattoos can be armour.
+              </h2>
+            </AnimatedSection>
+            <AnimatedSection delay={200}>
+              <h2 style={{
+                fontFamily: '"Cormorant Garamond", serif',
+                fontStyle: 'italic',
+                fontWeight: 300,
+                fontSize: 'clamp(2rem, 5vw, 4rem)',
+                color: 'var(--cream)',
+                lineHeight: 1.1,
+                letterSpacing: '-0.02em',
+                opacity: 0.75,
+                paddingLeft: 'clamp(1.5rem, 5vw, 4rem)',
+                marginBottom: '1.25rem',
+              }}>
+                A way to feel secure in our own sense of identity.
+              </h2>
+            </AnimatedSection>
+            <AnimatedSection delay={400}>
+              <h2 style={{
+                fontFamily: '"Cormorant Garamond", serif',
+                fontStyle: 'italic',
+                fontWeight: 300,
+                fontSize: 'clamp(2rem, 5vw, 4rem)',
+                color: 'var(--cream)',
+                lineHeight: 1.1,
+                letterSpacing: '-0.02em',
+                opacity: 0.9,
+                paddingLeft: 'clamp(1.5rem, 5vw, 4rem)',
+              }}>
+                A playful and beautifully permanent way<br />to bring who we are to the surface.
+              </h2>
+            </AnimatedSection>
+          </div>
+        </section>
+
+        {/* Section 6 — Photo strip */}
+        <section style={{ padding: '4rem 1.5rem 6rem' }}>
+          <div style={{ maxWidth: '72rem', margin: '0 auto' }}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {([
-                { n: '01', title: 'Bespoke Tattoo',   desc: 'Custom designs drawn from scratch, created in close collaboration with you from initial concept to final line.', link: '/booking' },
-                { n: '02', title: 'Free Consultation', desc: 'A relaxed conversation to discuss your idea, placement, sizing, and what the design process looks like.',        link: '/booking' },
-                { n: '03', title: 'Cover-Up Work',     desc: "Skilled cover-up and rework of existing tattoos. Request a consultation to discuss what's possible.",            link: '/booking' },
-              ] as const).map((s, i) => (
-                <AnimatedSection key={s.n} delay={i * 100} style={{ borderBottom: '1px solid var(--border)' }}>
-                  <Link href={s.link} className="service-row group">
-                    <span className="service-num">{s.n}</span>
-                    <span className="service-divider" aria-hidden="true" />
-                    <div style={{ paddingTop: '0.25rem', paddingBottom: '0.25rem' }}>
-                      <h3 style={{
-                        fontFamily: '"Cormorant Garamond", serif',
-                        fontStyle: 'italic',
-                        fontSize: 'clamp(1.5rem, 3vw, 2.125rem)',
-                        fontWeight: 300,
-                        color: 'var(--cream)',
-                        marginBottom: '0.625rem',
-                        lineHeight: 1.2,
-                        transition: 'color 0.4s ease',
-                      }}>
-                        {s.title}
-                      </h3>
-                      <p style={{ fontSize: '0.9rem', lineHeight: 1.75, maxWidth: '55ch', marginBottom: '1.25rem' }}>
-                        {s.desc}
-                      </p>
-                      <span style={{
-                        fontFamily: '"DM Mono", monospace',
-                        fontSize: '0.6875rem',
-                        letterSpacing: '0.12em',
-                        textTransform: 'uppercase' as const,
-                        color: 'var(--gold)',
-                        opacity: 0.55,
-                        transition: 'opacity 0.4s ease',
-                        display: 'inline-block',
-                      }}
-                        className="group-hover:opacity-100"
-                      >
-                        Find out more ↗
-                      </span>
-                    </div>
-                  </Link>
+                { src: '/assets/shop-carousel/DSCF4137.jpg', delay: 0 },
+                { src: '/assets/shop-carousel/DSCF4160.jpg', delay: 150 },
+                { src: '/assets/shop-carousel/DSCF4185.jpg', delay: 300 },
+              ] as const).map(({ src, delay }) => (
+                <AnimatedSection key={src} delay={delay}>
+                  <div style={{ position: 'relative', aspectRatio: '3/4', borderRadius: '0.75rem', overflow: 'hidden' }}>
+                    <Image
+                      src={src}
+                      alt="Hall of Mirrors Tattoo Studio — Liverpool"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover"
+                      style={{ filter: imgFilter }}
+                      quality={85}
+                    />
+                  </div>
                 </AnimatedSection>
               ))}
             </div>
-
-            <AnimatedSection delay={300} className="mt-12 text-center">
-              <Link href="/about" className="btn-secondary">About the Studio</Link>
-            </AnimatedSection>
-
           </div>
         </section>
 
-        {/* ── FINAL CTA ──────────────────────────────────────────────────────── */}
-        <section className="px-6 py-36 md:py-56 relative overflow-hidden" style={{ backgroundColor: 'var(--bg)' }}>
-          {/* Layered radial atmosphere */}
-          <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 80% 70% at 50% 60%, rgba(201,168,76,0.07) 0%, transparent 65%)' }} />
-            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 50% 55% at 25% 15%, rgba(201,168,76,0.04) 0%, transparent 60%)' }} />
-          </div>
-          {/* Atmospheric watermark */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden="true">
-            <span style={{
-              fontFamily: '"Cormorant Garamond", serif',
-              fontStyle: 'italic',
-              fontSize: 'clamp(6rem, 20vw, 16rem)',
-              fontWeight: 300,
-              color: 'var(--gold)',
-              opacity: 0.03,
-              letterSpacing: '-0.03em',
-              userSelect: 'none',
-              lineHeight: 1,
-              whiteSpace: 'nowrap',
-            }}>
-              Begin.
-            </span>
-          </div>
-          <div className="max-w-3xl mx-auto text-center relative z-10">
-            <AnimatedSection>
-              <p style={{
-                fontFamily: '"DM Mono", monospace',
-                fontSize: '0.75rem',
-                letterSpacing: '0.35em',
-                textTransform: 'uppercase',
-                color: 'var(--gold)',
-                opacity: 0.4,
-                marginBottom: '2.5rem',
-              }}>
-                Suite 3 · Castle Street · Liverpool
-              </p>
+        {/* Section 7 — The Promise */}
+        <section style={{ padding: '9rem 1.5rem 10rem', textAlign: 'center' }}>
+          <div style={{ maxWidth: '48rem', margin: '0 auto' }}>
+            <AnimatedSection delay={0}>
+              <p className="eyebrow" style={{ marginBottom: '2.5rem' }}>The promise</p>
               <h2 style={{
                 fontFamily: '"Cormorant Garamond", serif',
                 fontStyle: 'italic',
                 fontWeight: 300,
-                fontSize: 'clamp(3rem, 7vw, 5.5rem)',
+                fontSize: 'clamp(2rem, 4.5vw, 3.75rem)',
                 color: 'var(--cream)',
-                letterSpacing: '-0.025em',
-                lineHeight: 1.0,
-                marginBottom: '1.5rem',
+                lineHeight: 1.25,
+                letterSpacing: '-0.02em',
+                marginBottom: '1.25rem',
               }}>
-                Ready to begin?
+                &ldquo;When you visit Hall of Mirrors, I hope you embrace every version of yourself you&apos;ve been,&rdquo;
               </h2>
-              <p style={{ margin: '0 auto 3rem', maxWidth: '38ch', textAlign: 'center' }}>
-                We take on a limited number of clients each month — because that's the only
-                way to do this work properly. Book a session, or come in for a conversation.
-                Either way, you're welcome here.
+            </AnimatedSection>
+            <AnimatedSection delay={300}>
+              <h2 style={{
+                fontFamily: '"Cormorant Garamond", serif',
+                fontStyle: 'italic',
+                fontWeight: 300,
+                fontSize: 'clamp(2rem, 4.5vw, 3.75rem)',
+                color: 'var(--cream)',
+                lineHeight: 1.25,
+                letterSpacing: '-0.02em',
+                marginBottom: '2rem',
+              }}>
+                &ldquo;so you can evolve into who you&apos;re next becoming.&rdquo;
+              </h2>
+            </AnimatedSection>
+            <AnimatedSection delay={500}>
+              <p style={{
+                fontFamily: '"DM Sans", sans-serif',
+                fontSize: '1.1rem',
+                lineHeight: 1.9,
+                color: 'var(--text-mid)',
+                maxWidth: '42ch',
+                margin: '0 auto',
+              }}>
+                We will do everything in our power to make your experience beautiful.
               </p>
-              <div className="flex justify-center">
-                <Link href="/booking" className="btn-primary">
-                  <span>Book Appointment</span>
-                  <span className="btn-icon" aria-hidden="true">↗</span>
-                </Link>
-              </div>
             </AnimatedSection>
           </div>
+        </section>
+
+        {/* Section 8 — Meet Robyn */}
+        <section style={{ padding: '9rem 1.5rem 10rem' }}>
+          <div style={{ maxWidth: '72rem', margin: '0 auto' }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24 items-center">
+              <AnimatedSection delay={0}>
+                <div style={{ position: 'relative', aspectRatio: '4/5', borderRadius: '1rem', overflow: 'hidden' }}>
+                  <Image
+                    src="/assets/shop-carousel/E-DSCF3032.jpg"
+                    alt="Robyn Clove — Hall of Mirrors Tattoo Studio, Liverpool"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className="object-cover"
+                    style={{ filter: imgFilter }}
+                    quality={90}
+                  />
+                  <div style={{ position: 'absolute', inset: 0, borderRadius: '1rem', boxShadow: 'inset 0 0 0 1px rgba(201,168,76,0.18)', pointerEvents: 'none' }} aria-hidden="true" />
+                </div>
+              </AnimatedSection>
+              <div>
+                <AnimatedSection delay={150}>
+                  <p className="eyebrow" style={{ marginBottom: '1.5rem' }}>The artist</p>
+                  <h2 style={{
+                    fontFamily: '"Cormorant Garamond", serif',
+                    fontStyle: 'italic',
+                    fontWeight: 300,
+                    fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
+                    color: 'var(--cream)',
+                    lineHeight: 1.1,
+                    letterSpacing: '-0.02em',
+                    marginBottom: '1.5rem',
+                  }}>
+                    My name is Robyn Clove.
+                  </h2>
+                  <p style={{
+                    fontFamily: '"DM Sans", sans-serif',
+                    fontSize: 'clamp(1rem, 2vw, 1.15rem)',
+                    lineHeight: 2,
+                    color: 'var(--text-mid)',
+                    marginBottom: '1rem',
+                  }}>
+                    Neo-traditional at its core — with the occasional sprinkle of camp humour.
+                  </p>
+                  <p style={{
+                    fontFamily: '"DM Sans", sans-serif',
+                    fontSize: 'clamp(1rem, 2vw, 1.15rem)',
+                    lineHeight: 2,
+                    color: 'var(--text-mid)',
+                    marginBottom: '1rem',
+                  }}>
+                    I have always had a huge love for the LGBTQ community — people living dynamically and unapologetically inspires me creatively.
+                  </p>
+                  <p style={{
+                    fontFamily: '"DM Sans", sans-serif',
+                    fontSize: 'clamp(1rem, 2vw, 1.15rem)',
+                    lineHeight: 2,
+                    color: 'var(--text-mid)',
+                    marginBottom: '1.5rem',
+                  }}>
+                    I love to tattoo animals, ladies, timeless objects, pop culture and nostalgia.
+                  </p>
+                  <p style={{
+                    fontFamily: '"Cormorant Garamond", serif',
+                    fontStyle: 'italic',
+                    fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)',
+                    color: 'var(--cream)',
+                    marginBottom: '0.5rem',
+                  }}>
+                    Part time poet. Full time cat mother.
+                  </p>
+                  <p style={{
+                    fontFamily: '"Cormorant Garamond", serif',
+                    fontStyle: 'italic',
+                    fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
+                    color: 'var(--gold)',
+                    marginBottom: '2.5rem',
+                  }}>
+                    I would love to tattoo you.
+                  </p>
+                </AnimatedSection>
+                <AnimatedSection delay={400}>
+                  <Link href="/booking" className="btn-primary">
+                    <span>Book Appointment</span>
+                    <span className="btn-icon" aria-hidden="true">↗</span>
+                  </Link>
+                </AnimatedSection>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 9 — Credentials strip */}
+        <section style={{
+          padding: '2rem 1.5rem',
+          borderTop: '1px solid rgba(201,168,76,0.12)',
+          borderBottom: '1px solid rgba(201,168,76,0.12)',
+          textAlign: 'center',
+        }}>
+          <p style={{
+            fontFamily: '"DM Mono", monospace',
+            fontSize: '0.75rem',
+            letterSpacing: '0.25em',
+            textTransform: 'uppercase',
+            color: 'var(--text-low)',
+          }}>
+            Licensed · Liverpool City Council · Suite 3, 34 Castle Street · Appointment Only
+          </p>
         </section>
 
       </div>
