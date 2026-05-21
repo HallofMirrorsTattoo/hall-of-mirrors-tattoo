@@ -518,7 +518,7 @@ export default function Home() {
             textTransform: 'uppercase',
             color: 'var(--text-low)',
           }}>
-            Licensed · Liverpool City Council · Suite 3, 34 Castle Street · Appointment Only
+            Licensed · Liverpool City Council · Suite 3, 34 Castle Street, Liverpool, L2 0NR · Appointment Only
           </p>
         </section>
 

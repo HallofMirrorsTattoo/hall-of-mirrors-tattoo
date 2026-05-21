@@ -229,7 +229,7 @@ export default function Services() {
             <div className="grid grid-cols-1 md:grid-cols-3" style={{ borderTop: '1px solid var(--border)' }}>
               {([
                 { roman: 'I',   label: 'Appointment Only',  body: "We don't take walk-ins. Every session is booked in advance, giving your artist time to prepare your design and you a dedicated slot with no pressure." },
-                { roman: 'II',  label: 'Private Studio',    body: 'One client at a time, in a quiet space that\'s yours for the session. Suite 3, 34 Castle Street, Liverpool.' },
+                { roman: 'II',  label: 'Private Studio',    body: 'One client at a time, in a quiet space that\'s yours for the session. Suite 3, 34 Castle Street, Liverpool, L2 0NR.' },
                 { roman: 'III', label: 'Fully Licensed',    body: 'Licensed by Liverpool City Council (Ref: A11394900). Autoclave sterilisation. Hepatitis B vaccinated. Your safety is non-negotiable.' },
               ] as const).map((item, i) => (
                 <div

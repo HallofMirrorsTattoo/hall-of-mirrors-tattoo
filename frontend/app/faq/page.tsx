@@ -54,7 +54,7 @@ const faqs = [
   },
   {
     q: 'Where exactly are you located?',
-    a: 'Suite 3, 34 Castle Street, Liverpool, L2 0NR — in the heart of Liverpool city centre, in the business district. We\'re a few minutes\' walk from Liverpool Central, Moorfields, and Lime Street stations. There is paid parking nearby on Castle Street and Water Street.',
+    a: 'Hall of Mirrors Tattoo Studio, Suite 3, 34 Castle Street, Liverpool, L2 0NR — in the heart of the city centre, in the business district. A few minutes\' walk from Liverpool Central, Moorfields, and Lime Street stations. Paid parking on Castle Street and Water Street.',
   },
   {
     q: 'What do I need to bring on the day?',

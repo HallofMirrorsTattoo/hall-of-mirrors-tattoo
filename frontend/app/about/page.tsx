@@ -46,9 +46,9 @@ export default async function About() {
     telephone: studio?.phone ?? undefined,
     email: studio?.email ?? undefined,
     priceRange: '££',
-    hasMap: 'https://maps.google.com/?q=34+Castle+Street+Liverpool',
+    hasMap: 'https://share.google/VD7dtKwuFYH5QnWvh',
     sameAs: [
-      studio?.instagram_handle ? `https://instagram.com/${studio.instagram_handle}` : null,
+      studio?.instagram_handle ? `https://instagram.com/${studio.instagram_handle}` : 'https://instagram.com/hallofmirrorstattoo',
       studio?.tiktok_handle ? `https://tiktok.com/@${studio.tiktok_handle}` : null,
       studio?.facebook_url ?? null,
     ].filter(Boolean),
@@ -85,7 +85,7 @@ export default async function About() {
           marginBottom: '1.25rem',
         }}>
           Hall of Mirrors is a female-owned, private tattoo studio at Suite 3, 34 Castle Street,
-          Liverpool L2 0NR. We are a fully inclusive space — a safe and welcoming home for everyone,
+          Liverpool, L2 0NR. We are a fully inclusive space — a safe and welcoming home for everyone,
           including the LGBTQ+ community. Fully licensed by Liverpool City Council.
           Appointment-only.
         </p>
@@ -121,7 +121,7 @@ export default async function About() {
             lineHeight: 1.8,
             marginBottom: '1.25rem',
           }}>
-            We are at <strong style={{ color: 'var(--cream)', fontWeight: 500 }}>Suite 3, 34 Castle Street, Liverpool L2 0NR</strong> — in the heart of the city centre, in the business district.
+            We are at <strong style={{ color: 'var(--cream)', fontWeight: 500 }}>Hall of Mirrors Tattoo Studio, Suite 3, 34 Castle Street, Liverpool, L2 0NR</strong> — in the heart of the city centre, in the business district.
           </p>
           <p style={{
             fontFamily: '"DM Mono", monospace',
@@ -149,7 +149,7 @@ export default async function About() {
             There is paid parking on Castle Street and Water Street if you are driving.
           </p>
           <a
-            href="https://maps.google.com/?q=Suite+3,+34+Castle+Street,+Liverpool+L2+0NR"
+            href="https://share.google/VD7dtKwuFYH5QnWvh"
             target="_blank"
             rel="noopener noreferrer"
             style={{
@@ -161,7 +161,7 @@ export default async function About() {
               textDecoration: 'none',
             }}
           >
-            Open in Google Maps ↗
+            Find us on Google ↗
           </a>
         </AccordionItem>
 

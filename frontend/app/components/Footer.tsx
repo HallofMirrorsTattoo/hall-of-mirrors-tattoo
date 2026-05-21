@@ -37,23 +37,22 @@ export default async function Footer() {
               maxWidth: '28ch',
             }}>
               Custom tattoos drawn from your story.<br />
-              Neo-traditional artistry at Suite 3, Castle Street, Liverpool.
+              Suite 3, 34 Castle Street, Liverpool, L2 0NR.
             </p>
             <div className="flex gap-4 mt-6">
-              {studio?.instagram_handle && (
-                <a href={`https://instagram.com/${studio.instagram_handle}`} target="_blank" rel="noopener noreferrer" className="footer-social">Instagram</a>
-              )}
+              <a
+                href={studio?.instagram_handle ? `https://instagram.com/${studio.instagram_handle}` : 'https://instagram.com/hallofmirrorstattoo'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="footer-social"
+              >
+                Instagram
+              </a>
               {studio?.tiktok_handle && (
                 <a href={`https://tiktok.com/@${studio.tiktok_handle}`} target="_blank" rel="noopener noreferrer" className="footer-social">TikTok</a>
               )}
               {studio?.facebook_url && (
                 <a href={studio.facebook_url} target="_blank" rel="noopener noreferrer" className="footer-social">Facebook</a>
-              )}
-              {!studio?.instagram_handle && !studio?.tiktok_handle && !studio?.facebook_url && (
-                <>
-                  <a href="#" className="footer-social">Instagram</a>
-                  <a href="#" className="footer-social">TikTok</a>
-                </>
               )}
             </div>
           </div>
@@ -86,9 +85,9 @@ export default async function Footer() {
                 </>
               ) : (
                 <>
-                  Suite 3<br />
-                  34 Castle Street<br />
-                  Liverpool L2 0NR<br />
+                  Hall of Mirrors Tattoo Studio<br />
+                  Suite 3, 34 Castle Street<br />
+                  Liverpool, L2 0NR<br />
                   United Kingdom
                 </>
               )}

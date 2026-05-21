@@ -431,7 +431,9 @@ export default function FlashPage() {
               No upcoming flash days
             </p>
             <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-low)', lineHeight: 1.7, maxWidth: '36ch', margin: '0 auto 2rem' }}>
-              Nothing in the diary just yet. Robyn announces flash days on Instagram first — give her a follow and you won&apos;t miss the next one.
+              Nothing in the diary just yet. Robyn announces flash days on Instagram first —{' '}
+              <a href="https://instagram.com/hallofmirrorstattoo" target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(201,168,76,0.5)', textDecoration: 'none' }}>follow @hallofmirrorstattoo</a>
+              {' '}and you won&apos;t miss the next one.
             </p>
             <Link href="/booking?mode=consultation" className="btn-secondary">
               Request a custom consultation instead
