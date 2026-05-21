@@ -20,11 +20,6 @@ export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Hide header on dashboard pages — dashboards have their own sidebar navigation
-  if (pathname.startsWith('/client/dashboard') || pathname.startsWith('/artist/dashboard')) {
-    return null;
-  }
-
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -36,6 +31,12 @@ export default function Header() {
     router.push('/');
     setIsOpen(false);
   };
+
+  // Hide header on dashboard pages — dashboards have their own sidebar navigation
+  // This conditional return is AFTER all hooks — Rules of Hooks compliant
+  if (pathname.startsWith('/client/dashboard') || pathname.startsWith('/artist/dashboard')) {
+    return null;
+  }
 
   return (
     <header className="fixed top-0 w-full z-40 pt-5 px-4">
