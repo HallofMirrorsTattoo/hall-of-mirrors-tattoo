@@ -188,7 +188,7 @@ export default function ArtistDashboard() {
   const [showArchivedConsults, setShowArchivedConsults] = useState(false);
 
   // Consultation chat state
-  interface ConsultMsg { id: string; consultation_id: string; sender_type: 'client' | 'artist'; body: string; created_at: string; }
+  interface ConsultMsg { id: string; consultation_id: string; sender_type: 'client' | 'artist'; body: string | null; image_url: string | null; created_at: string; }
   const [openConsultChatId, setOpenConsultChatId] = useState<string | null>(null);
   const [consultMsgs, setConsultMsgs] = useState<ConsultMsg[]>([]);
   const [consultMsgDraft, setConsultMsgDraft] = useState('');
@@ -201,7 +201,7 @@ export default function ArtistDashboard() {
   const consultMsgAreaRef = useRef<HTMLDivElement>(null);
 
   // Booking chat state (in Consultations tab — for confirmed booking threads)
-  interface BookingMsg { id: string; booking_id: string; sender_type: 'client' | 'artist'; body: string; created_at: string; }
+  interface BookingMsg { id: string; booking_id: string; sender_type: 'client' | 'artist'; body: string | null; image_url: string | null; created_at: string; }
   const [openBookingChatId, setOpenBookingChatId] = useState<string | null>(null);
   const [bookingChatMsgs, setBookingChatMsgs] = useState<BookingMsg[]>([]);
   const [bookingChatDraft, setBookingChatDraft] = useState('');
@@ -211,7 +211,7 @@ export default function ArtistDashboard() {
   const bookingChatAreaRef = useRef<HTMLDivElement>(null);
 
   // Inline booking detail thread (separate from messages-tab chat above)
-  interface DetailMsg { id: string; sender_type: 'artist' | 'client'; body: string; created_at: string; }
+  interface DetailMsg { id: string; sender_type: 'artist' | 'client'; body: string | null; image_url: string | null; created_at: string; }
   const [detailMsgs, setDetailMsgs] = useState<DetailMsg[]>([]);
   const [detailDraft, setDetailDraft] = useState('');
   const [detailSending, setDetailSending] = useState(false);
@@ -1632,8 +1632,14 @@ export default function ArtistDashboard() {
                 const isArtist = msg.sender_type === 'artist';
                 return (
                   <div key={msg.id} style={{ display: 'flex', justifyContent: isArtist ? 'flex-end' : 'flex-start' }}>
-                    <div style={{ maxWidth: '78%', padding: '0.5rem 0.75rem', borderRadius: isArtist ? '0.875rem 0.875rem 0.2rem 0.875rem' : '0.875rem 0.875rem 0.875rem 0.2rem', background: isArtist ? 'rgba(201,168,76,0.13)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isArtist ? 'rgba(201,168,76,0.3)' : 'var(--border)'}` }}>
-                      <p style={{ margin: 0, fontSize: '0.8125rem', color: isArtist ? 'var(--cream)' : 'var(--text)', lineHeight: 1.6, wordBreak: 'break-word' }}>{msg.body}</p>
+                    <div style={{ maxWidth: '78%', padding: msg.image_url && !msg.body ? '0.375rem' : '0.5rem 0.75rem', borderRadius: isArtist ? '0.875rem 0.875rem 0.2rem 0.875rem' : '0.875rem 0.875rem 0.875rem 0.2rem', background: isArtist ? 'rgba(201,168,76,0.13)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isArtist ? 'rgba(201,168,76,0.3)' : 'var(--border)'}` }}>
+                      {msg.body && <p style={{ margin: 0, fontSize: '0.8125rem', color: isArtist ? 'var(--cream)' : 'var(--text)', lineHeight: 1.6, wordBreak: 'break-word' }}>{msg.body}</p>}
+                      {msg.image_url && (
+                        <div style={{ marginTop: msg.body ? '0.375rem' : 0 }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={msg.image_url} alt="Reference image" style={{ maxWidth: '100%', maxHeight: '220px', objectFit: 'contain', borderRadius: '0.375rem', display: 'block', cursor: 'pointer' }} onClick={() => window.open(msg.image_url!, '_blank')} />
+                        </div>
+                      )}
                       <p style={{ margin: '0.2rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.06em', color: isArtist ? 'rgba(201,168,76,0.4)' : 'var(--text-low)', textAlign: isArtist ? 'right' : 'left' }}>
                         {new Date(msg.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                       </p>
@@ -2186,8 +2192,14 @@ export default function ArtistDashboard() {
                                         </p>
                                       )}
                                       <div style={{ display: 'flex', justifyContent: isArtist ? 'flex-end' : 'flex-start' }}>
-                                        <div style={{ maxWidth: '72%', padding: '0.625rem 0.875rem', borderRadius: isArtist ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem', background: isArtist ? 'rgba(201,168,76,0.14)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isArtist ? 'rgba(201,168,76,0.3)' : 'var(--border)'}` }}>
-                                          <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.6, wordBreak: 'break-word' }}>{msg.body}</p>
+                                        <div style={{ maxWidth: '72%', padding: msg.image_url && !msg.body ? '0.375rem' : '0.625rem 0.875rem', borderRadius: isArtist ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem', background: isArtist ? 'rgba(201,168,76,0.14)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isArtist ? 'rgba(201,168,76,0.3)' : 'var(--border)'}` }}>
+                                          {msg.body && <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.6, wordBreak: 'break-word' }}>{msg.body}</p>}
+                                          {msg.image_url && (
+                                            <div style={{ marginTop: msg.body ? '0.5rem' : 0 }}>
+                                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                                              <img src={msg.image_url} alt="Reference image" style={{ maxWidth: '100%', maxHeight: '240px', objectFit: 'contain', borderRadius: '0.5rem', display: 'block', cursor: 'pointer' }} onClick={() => window.open(msg.image_url!, '_blank')} />
+                                            </div>
+                                          )}
                                           <p style={{ margin: '0.25rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.06em', color: isArtist ? 'rgba(201,168,76,0.5)' : 'var(--text-low)', textAlign: isArtist ? 'right' : 'left' }}>
                                             {new Date(msg.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                                           </p>
@@ -2395,8 +2407,14 @@ export default function ArtistDashboard() {
                                         </p>
                                       )}
                                       <div style={{ display: 'flex', justifyContent: isArtist ? 'flex-end' : 'flex-start' }}>
-                                        <div style={{ maxWidth: '72%', padding: '0.625rem 0.875rem', borderRadius: isArtist ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem', background: isArtist ? 'rgba(201,168,76,0.14)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isArtist ? 'rgba(201,168,76,0.3)' : 'var(--border)'}` }}>
-                                          <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.6, wordBreak: 'break-word' }}>{msg.body}</p>
+                                        <div style={{ maxWidth: '72%', padding: msg.image_url && !msg.body ? '0.375rem' : '0.625rem 0.875rem', borderRadius: isArtist ? '1rem 1rem 0.25rem 1rem' : '1rem 1rem 1rem 0.25rem', background: isArtist ? 'rgba(201,168,76,0.14)' : 'rgba(255,255,255,0.05)', border: `1px solid ${isArtist ? 'rgba(201,168,76,0.3)' : 'var(--border)'}` }}>
+                                          {msg.body && <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.6, wordBreak: 'break-word' }}>{msg.body}</p>}
+                                          {msg.image_url && (
+                                            <div style={{ marginTop: msg.body ? '0.5rem' : 0 }}>
+                                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                                              <img src={msg.image_url} alt="Reference image" style={{ maxWidth: '100%', maxHeight: '240px', objectFit: 'contain', borderRadius: '0.5rem', display: 'block', cursor: 'pointer' }} onClick={() => window.open(msg.image_url!, '_blank')} />
+                                            </div>
+                                          )}
                                           <p style={{ margin: '0.25rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.06em', color: isArtist ? 'rgba(201,168,76,0.5)' : 'var(--text-low)', textAlign: isArtist ? 'right' : 'left' }}>
                                             {new Date(msg.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                                           </p>

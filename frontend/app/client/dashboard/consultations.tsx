@@ -114,11 +114,12 @@ function ChatPanel({
   draft, setDraft, imageFile, imagePreview, onImageSelect, clearImage,
   sending, sendError, sendMessage,
 }: ChatPanelProps) {
+  // useRef must be called unconditionally — before any early return
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const isOpen = openChat && chatKey &&
     openChat.type === chatKey.type && openChat.id === chatKey.id;
   if (!isOpen) return null;
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div style={{ borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', height: '22rem' }}>
@@ -271,6 +272,7 @@ export default function ConsultationsTab() {
   const [newMessage, setNewMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   // Chat state
   const [openChat, setOpenChat] = useState<OpenChat>(null);
@@ -374,19 +376,21 @@ export default function ConsultationsTab() {
     e.preventDefault();
     if (!newMessage.trim()) return;
     setSubmitting(true);
+    setSubmitError('');
     try {
       const res = await fetch(`${API}/api/client/consultations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify({ artist_id: 'artist-robyn-001', message: newMessage }),
       });
-      if (!res.ok) throw new Error('Failed to submit');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send — please try again.');
       await fetchConsultations();
       setNewMessage('');
       setSubmitSuccess(true);
       setTimeout(() => setSubmitSuccess(false), 6000);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Submission failed');
+      setSubmitError(err instanceof Error ? err.message : 'Something went wrong — please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -598,11 +602,16 @@ export default function ConsultationsTab() {
                 <form onSubmit={handleNewConsultation} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <textarea
                     value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
+                    onChange={(e) => { setNewMessage(e.target.value); if (submitError) setSubmitError(''); }}
                     placeholder="Describe the design, style, size, and placement you have in mind…"
                     rows={4}
                     style={{ width: '100%', padding: '0.75rem 1rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.75rem', color: 'var(--cream)', fontSize: '0.9375rem', lineHeight: 1.6, resize: 'vertical', fontFamily: '"DM Sans", sans-serif', boxSizing: 'border-box' }}
                   />
+                  {submitError && (
+                    <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', lineHeight: 1.5 }}>
+                      {submitError}
+                    </p>
+                  )}
                   <button type="submit" disabled={submitting || !newMessage.trim()} className="btn-primary" style={{ alignSelf: 'flex-start', opacity: (submitting || !newMessage.trim()) ? 0.5 : 1 }}>
                     {submitting ? 'Sending…' : 'Send consultation request'}
                   </button>
