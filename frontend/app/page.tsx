@@ -215,7 +215,7 @@ export default function Home() {
                 </p>
               </AnimatedSection>
               <AnimatedSection delay={200}>
-                <div style={{ position: 'relative', aspectRatio: '4/5', borderRadius: '1rem', overflow: 'hidden' }}>
+                <div className="photo-hover" style={{ position: 'relative', aspectRatio: '4/5', borderRadius: '1rem', overflow: 'hidden' }}>
                   <Image
                     src="/assets/shop-carousel/DSCF4202.jpg"
                     alt="Hall of Mirrors Tattoo Studio, Liverpool"
@@ -415,7 +415,7 @@ export default function Home() {
                 { src: '/assets/shop-carousel/DSCF4185.jpg', delay: 300 },
               ] as const).map(({ src, delay }) => (
                 <AnimatedSection key={src} delay={delay}>
-                  <div style={{ position: 'relative', aspectRatio: '3/4', borderRadius: '0.75rem', overflow: 'hidden' }}>
+                  <div className="photo-hover" style={{ position: 'relative', aspectRatio: '3/4', borderRadius: '0.75rem', overflow: 'hidden' }}>
                     <Image
                       src={src}
                       alt="Hall of Mirrors Tattoo Studio — Liverpool"

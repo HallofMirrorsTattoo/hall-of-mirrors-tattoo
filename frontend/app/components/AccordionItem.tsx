@@ -55,13 +55,17 @@ export default function AccordionItem({ title, children }: Props) {
           +
         </span>
       </button>
-      <div style={{
-        overflow: 'hidden',
-        maxHeight: open ? '2000px' : '0',
-        transition: open ? 'max-height 0.45s ease' : 'max-height 0.3s ease',
-      }}>
-        <div style={{ paddingBottom: '2rem' }}>
-          {children}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateRows: open ? '1fr' : '0fr',
+          transition: 'grid-template-rows 0.38s cubic-bezier(0.32, 0.72, 0, 1)',
+        }}
+      >
+        <div style={{ overflow: 'hidden' }}>
+          <div style={{ paddingBottom: '2rem' }}>
+            {children}
+          </div>
         </div>
       </div>
     </div>

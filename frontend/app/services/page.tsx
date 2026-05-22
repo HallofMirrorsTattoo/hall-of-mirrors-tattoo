@@ -270,15 +270,13 @@ export default function Services() {
               border: '1px solid var(--border)',
               borderRadius: '0.75rem',
               overflow: 'hidden',
+              gap: '1px',
+              background: 'var(--border)',
             }}>
-              {pricing.map((p, i) => (
+              {pricing.map((p) => (
                 <div
                   key={p.label}
-                  style={{
-                    padding: '1.75rem',
-                    backgroundColor: 'var(--surface)',
-                    borderRight: i < pricing.length - 1 ? '1px solid var(--border)' : 'none',
-                  }}
+                  className="pricing-cell"
                 >
                   <p style={{
                     fontFamily: '"DM Mono", monospace',

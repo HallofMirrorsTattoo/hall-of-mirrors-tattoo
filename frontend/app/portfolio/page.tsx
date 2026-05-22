@@ -132,7 +132,7 @@ export default async function Portfolio() {
                         alt={`${artist.full_name} — Hall of Mirrors Tattoo Studio`}
                         fill
                         sizes="(max-width: 768px) 100vw, 50vw"
-                        className="object-cover"
+                        className="object-cover artist-cover"
                         style={{ filter: imgFilter }}
                         quality={90}
                       />
@@ -200,7 +200,7 @@ export default async function Portfolio() {
 
                   {/* View profile link — only for real artists */}
                   {!isPlaceholder && (
-                    <p style={{
+                    <p className="artist-view-profile" style={{
                       fontFamily: '"DM Mono", monospace',
                       fontSize: '0.7rem',
                       letterSpacing: '0.18em',
@@ -217,7 +217,7 @@ export default async function Portfolio() {
               return isPlaceholder ? (
                 <div key={artist.id}>{cardContent}</div>
               ) : (
-                <Link key={artist.id} href={`/artists/${slug}`} style={{ display: 'block', textDecoration: 'none' }}>
+                <Link key={artist.id} href={`/artists/${slug}`} className="artist-card" style={{ display: 'block', textDecoration: 'none' }}>
                   {cardContent}
                 </Link>
               );

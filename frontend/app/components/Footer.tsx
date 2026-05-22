@@ -12,7 +12,7 @@ export default async function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-8 mb-16">
 
           {/* Brand */}
-          <div className="md:col-span-4">
+          <div className="md:col-span-5">
             <div className="flex items-center gap-3 mb-5">
               <Image
                 src="/assets/logos/White Logo.png"
@@ -48,7 +48,7 @@ export default async function Footer() {
           </div>
 
           {/* Studio address */}
-          <div className="md:col-span-3 md:col-start-6">
+          <div className="md:col-span-3">
             <h4 style={{
               fontFamily: '"DM Mono", monospace',
               fontSize: '0.75rem',
@@ -150,6 +150,7 @@ export default async function Footer() {
             letterSpacing: '0.1em',
             color: 'var(--text-low)',
             opacity: 0.7,
+            maxWidth: 'none',
           }}>
             © {new Date().getFullYear()} Hall of Mirrors Tattoo. All rights reserved.
           </p>
@@ -159,6 +160,7 @@ export default async function Footer() {
             letterSpacing: '0.1em',
             color: 'var(--text-low)',
             opacity: 0.4,
+            maxWidth: 'none',
           }}>
             Liverpool City Council Reg. · A11394900
           </p>

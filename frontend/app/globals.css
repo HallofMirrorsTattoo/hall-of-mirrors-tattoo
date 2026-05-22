@@ -591,3 +591,121 @@ a {
 .scroll-no-bar::-webkit-scrollbar {
   display: none;
 }
+
+/* ─── Artist card hover ─────────────────────────────────────────────────────── */
+.artist-card {
+  display: block;
+  text-decoration: none;
+  transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.artist-card:hover {
+  transform: translateY(-6px);
+}
+.artist-cover {
+  transition: transform 0.7s cubic-bezier(0.32, 0.72, 0, 1) !important;
+  transform-origin: center;
+}
+.artist-card:hover .artist-cover {
+  transform: scale(1.05);
+}
+.artist-view-profile {
+  transition: opacity 0.3s ease, color 0.3s ease;
+}
+.artist-card:hover .artist-view-profile {
+  opacity: 1 !important;
+  color: var(--gold-bright) !important;
+}
+
+/* ─── Gallery image hover ────────────────────────────────────────────────────── */
+.gallery-cell {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+}
+.gallery-cell img {
+  transition: transform 0.55s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.gallery-cell:hover img {
+  transform: scale(1.05);
+}
+.gallery-cell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(201, 168, 76, 0.07);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+.gallery-cell:hover::after {
+  opacity: 1;
+}
+
+/* ─── Home photo hover ───────────────────────────────────────────────────────── */
+.photo-hover {
+  overflow: hidden;
+}
+.photo-hover img {
+  transition: transform 0.65s cubic-bezier(0.32, 0.72, 0, 1) !important;
+  transform-origin: center;
+}
+.photo-hover:hover img {
+  transform: scale(1.04) !important;
+}
+
+/* ─── Pricing cell ───────────────────────────────────────────────────────────── */
+.pricing-cell {
+  padding: 1.75rem;
+  background: var(--surface);
+  transition: background-color 0.3s ease;
+}
+.pricing-cell:hover {
+  background: var(--surface-2);
+}
+
+/* ─── Section divider label ──────────────────────────────────────────────────── */
+.section-divider {
+  padding: 0 1.5rem;
+}
+.section-divider span {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(201, 168, 76, 0.3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ─── Nav link underline slide ───────────────────────────────────────────────── */
+.nav-underline {
+  position: relative;
+}
+.nav-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--gold);
+  opacity: 0.6;
+  transition: width 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.nav-underline:hover::after,
+.nav-underline.nav-active::after {
+  width: 100%;
+}
+
+/* ─── Reduced motion ────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal-left {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .artist-card, .artist-cover, .gallery-cell img, .photo-hover img {
+    transition: none !important;
+  }
+}

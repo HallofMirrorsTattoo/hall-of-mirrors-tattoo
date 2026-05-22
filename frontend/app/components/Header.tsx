@@ -79,6 +79,7 @@ export default function Header() {
                 <li key={href}>
                   <Link
                     href={href}
+                    className={`nav-underline${active ? ' nav-active' : ''}`}
                     style={{
                       fontFamily: '"DM Sans", system-ui, sans-serif',
                       fontSize: '0.875rem',

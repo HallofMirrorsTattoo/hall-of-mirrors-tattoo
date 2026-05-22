@@ -85,7 +85,7 @@ function GalleryGrid({ photos }: { photos: { id: string; public_url: string }[] 
     return (
       <div style={gridStyle}>
         {photos.map(photo => (
-          <div key={photo.id} style={{ aspectRatio: '1', overflow: 'hidden', background: 'var(--surface)', position: 'relative' }}>
+          <div key={photo.id} className="gallery-cell" style={{ aspectRatio: '1', position: 'relative' }}>
             <Image
               src={photo.public_url}
               alt="Portfolio piece"
@@ -102,9 +102,8 @@ function GalleryGrid({ photos }: { photos: { id: string; public_url: string }[] 
   return (
     <div style={gridStyle}>
       {GALLERY_PLACEHOLDERS.map((item) => (
-        <div key={item.roman} style={{
+        <div key={item.roman} className="gallery-cell" style={{
           aspectRatio: '1',
-          background: 'var(--surface)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
