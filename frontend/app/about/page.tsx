@@ -187,8 +187,9 @@ export default async function About() {
           <p style={subheadStyle as React.CSSProperties}>Nearest stations</p>
           <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {[
-              ['Liverpool Central', '~8 min walk'],
+              ['James Street', '~3 min walk'],
               ['Moorfields', '~6 min walk'],
+              ['Liverpool Central', '~8 min walk'],
               ['Liverpool Lime Street', '~12 min walk'],
             ].map(([station, time]) => (
               <li key={station} style={{ display: 'flex', gap: '0.75rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.6 }}>
@@ -200,6 +201,10 @@ export default async function About() {
               </li>
             ))}
           </ul>
+
+          <p style={{ ...paraStyle, fontSize: '0.9375rem', marginBottom: '1.25rem' }}>
+            We are directly facing Castle St Townhouse — the tall brown door between El Gato Negro Tapas and Photo. Buzz suite 3 on the intercom and take the lift to the second floor, then just 5 steps up and you will be at our front door.
+          </p>
 
           <p style={{ ...paraStyle, fontSize: '0.9375rem', marginBottom: '1.25rem' }}>
             Paid parking is available on Castle Street and Water Street if you are driving.
@@ -230,7 +235,7 @@ export default async function About() {
               'Please avoid drugs and alcohol the night before the appointment. Alcohol thins the blood and can cause issues during the process.',
               'Make sure you eat before your appointment, so your body can have the energy it needs to get you through. Bring some chocolate or fruits with you on the day to keep your energy levels up.',
               'Bring water. Make sure you are well hydrated.',
-              "Avoid sunbeds for a few weeks prior to your appointment and regularly moisturise your skin. It's easier to tattoo a well hydrated skin and the result will be better.",
+              "Avoid sunbeds for a few weeks prior to your appointment and regularly moisturise your skin. It's easier to tattoo well hydrated skin and the result will be better.",
             ].map((item, i) => (
               <div key={i} style={numberedItemStyle}>
                 <span style={numStyle}>{i + 1}</span>
@@ -271,7 +276,7 @@ export default async function About() {
         {/* AFTERCARE ADVICE */}
         <AccordionItem title="Aftercare Advice">
 
-          <p style={{ ...paraStyle, fontSize: '0.9375rem', marginBottom: '1.25rem' }}>
+          <p style={{ ...subheadStyle, marginTop: 0 } as React.CSSProperties}>
             If your tattoo artist has used Secondskin adhesive:
           </p>
 
@@ -349,6 +354,7 @@ export default async function About() {
               'Avoid sunbathing and tanning beds for at least three weeks and after that use sunscreen to keep your tattoo in good condition.',
               'Avoid going to the gym or doing activities that are going to make you sweat whilst the tattoo is still healing.',
               'Do not allow your pet to have direct contact with your tattoo — tattoos are open wounds and pet hairs can contaminate the tattoo and risk infection.',
+              'Avoid submerging your tattoo in a bath for at least 2 weeks as this can affect the healing by soaking out some of the tattoo; bathwater is full of bacteria also.',
             ].map((item, i) => (
               <div key={i} style={numberedItemStyle}>
                 <span style={numStyle}>{i + 1}</span>
@@ -370,14 +376,18 @@ export default async function About() {
         {/* FAQ */}
         <AccordionItem title="FAQ">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-            {[
+            {([
               {
                 q: 'Do you take walk-ins?',
-                a: 'Yes — we will happily take walk-ins if we have time on the day. To guarantee your slot and give your artist time to prepare your bespoke design, we recommend booking in advance.',
+                a: 'Yes — we will happily take walk-ins if we have time on the day. To guarantee your slot and give your artist time to prepare your design, we recommend booking in advance.',
               },
               {
                 q: 'How much does a tattoo cost?',
-                a: 'Pricing depends on size and complexity. Small tattoos (1–3") start from £150–£250. Medium work (3–6") typically runs £300–£500. Larger or complex pieces are quoted individually after your consultation. All prices include your bespoke design.',
+                a: [
+                  'Pricing depends on size and complexity. Prices start at £50 and can go up to £450 (day session price).',
+                  'The price of pre-drawn flash varies, sometimes artists run flash days where all pieces are a set price.',
+                  'Artists also advertise flash sheets of pre-drawn designs with the set prices attached.',
+                ],
               },
               {
                 q: 'What is a consultation and is it really free?',
@@ -385,17 +395,24 @@ export default async function About() {
               },
               {
                 q: 'Can you cover up an old tattoo?',
-                a: 'Yes — cover-up and rework is one of our specialities. Cover-ups always require a consultation first so we can assess the existing ink and recommend the best approach.',
+                a: 'Yes — cover-up and rework is one of our specialities. Cover-ups always require a consultation first so we can assess the existing tattoo and recommend the best approach.',
               },
               {
                 q: 'Do I need to pay a deposit?',
                 a: 'Yes. A non-refundable deposit is required to secure your booking, which is deducted from your final session price on the day. Cancellations within 48 hours forfeit the deposit.',
               },
               {
-                q: 'What styles do you specialise in?',
-                a: 'Neo-traditional is the foundation — bold outlines, rich colour, classic subject matter with a modern edge, and occasionally a sprinkle of camp humour. We also work in colour realism, fine line, and cover-up work. Not sure if your idea fits? Just ask.',
+                q: 'How do I pay on the day?',
+                a: 'Cash is the preferred way to pay. If you cannot pay in cash, your artist may let you pay by bank transfer, but please clear this up with your artist prior to your appointment.',
               },
-            ].map(({ q, a }) => (
+              {
+                q: 'What styles do you specialise in?',
+                a: [
+                  "We tattoo in various styles. Colour Neo-Traditional is our shop's favourite style. The artists who practice Neo-trad each add their own flavour to the style, but the fundamentals of Neo-trad are bold lines, rich colour and timeless subject matter.",
+                  'We also do blackwork, dot work and illustrative tattoos. If you have a question about any of this, please send us a message.',
+                ],
+              },
+            ] as { q: string; a: string | string[] }[]).map(({ q, a }) => (
               <div key={q}>
                 <p style={{
                   fontFamily: '"Cormorant Garamond", serif',
@@ -408,9 +425,14 @@ export default async function About() {
                 }}>
                   {q}
                 </p>
-                <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.75 }}>
-                  {a}
-                </p>
+                {Array.isArray(a)
+                  ? a.map((para, i) => (
+                    <p key={i} style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.75, marginBottom: i < a.length - 1 ? '0.625rem' : 0 }}>
+                      {para}
+                    </p>
+                  ))
+                  : <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.75 }}>{a}</p>
+                }
               </div>
             ))}
           </div>
