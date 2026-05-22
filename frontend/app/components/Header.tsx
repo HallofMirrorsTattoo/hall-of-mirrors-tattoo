@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 
 const navLinks = [
   { href: '/',            label: 'Home' },
-  { href: '/portfolio',   label: 'Artists' },
+  { href: '/artists',     label: 'Artists' },
   { href: '/about',       label: 'Studio' },
 ];
 

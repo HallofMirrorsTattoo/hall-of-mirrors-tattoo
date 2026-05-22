@@ -496,7 +496,7 @@ export default function Home() {
               }}>
                 Meet the artists.
               </h2>
-              <Link href="/portfolio" className="btn-primary">
+              <Link href="/artists" className="btn-primary">
                 <span>Meet the Artists</span>
                 <span className="btn-icon" aria-hidden="true">↗</span>
               </Link>

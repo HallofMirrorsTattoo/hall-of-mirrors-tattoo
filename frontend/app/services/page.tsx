@@ -337,7 +337,7 @@ export default function Services() {
               <span>Book Appointment</span>
               <span className="btn-icon" aria-hidden="true">↗</span>
             </Link>
-            <Link href="/portfolio" className="btn-secondary">
+            <Link href="/artists" className="btn-secondary">
               View Our Artists
             </Link>
           </AnimatedSection>

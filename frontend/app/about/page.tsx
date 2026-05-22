@@ -462,7 +462,7 @@ export default async function About() {
           <span>Book Appointment</span>
           <span className="btn-icon" aria-hidden="true">↗</span>
         </Link>
-        <Link href="/portfolio" className="btn-secondary">Meet Our Artists</Link>
+        <Link href="/artists" className="btn-secondary">Meet Our Artists</Link>
       </section>
 
     </div>

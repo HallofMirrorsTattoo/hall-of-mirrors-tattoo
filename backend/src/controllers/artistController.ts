@@ -125,8 +125,7 @@ export async function getAllActiveArtists(req: Request, res: Response) {
     await client.connect();
 
     const result = await client.query(
-      `SELECT a.id, a.full_name, a.specialties, a.years_experience, a.bio, a.instagram_handle,
-              (SELECT p.public_url FROM "PortfolioPhoto" p WHERE p.artist_id = a.id ORDER BY p.display_order ASC, p.created_at ASC LIMIT 1) AS cover_photo
+      `SELECT a.id, a.full_name, a.specialties, a.years_experience, a.bio, a.instagram_handle, a.portrait_url
        FROM "Artist" a
        WHERE a.is_active = true
        ORDER BY a.full_name ASC`

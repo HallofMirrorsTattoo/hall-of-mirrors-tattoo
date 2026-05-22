@@ -96,7 +96,7 @@ export default async function Footer() {
             </h4>
             <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
               {[
-                { href: '/portfolio', label: 'Artists' },
+                { href: '/artists',   label: 'Artists' },
                 { href: '/about',     label: 'Studio' },
               ].map(({ href, label }) => (
                 <li key={href}>

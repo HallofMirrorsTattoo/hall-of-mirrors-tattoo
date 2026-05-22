@@ -5,7 +5,7 @@ const BASE_URL = 'https://hallofmirrorstattoo.com';
 const STATIC_ROUTES: { url: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'] }[] = [
   { url: '',              priority: 1.0,  changeFrequency: 'weekly' },
   { url: '/booking',      priority: 0.9,  changeFrequency: 'monthly' },
-  { url: '/portfolio',    priority: 0.85, changeFrequency: 'weekly' },
+  { url: '/artists',      priority: 0.85, changeFrequency: 'weekly' },
   { url: '/about',        priority: 0.75, changeFrequency: 'monthly' },
 ];
 
