@@ -449,7 +449,7 @@ export async function updateClientProfile(req: Request, res: Response) {
       return res.status(401).json({ success: false, error: 'Not authenticated' });
     }
 
-    const { first_name, last_name, phone, address, city, postcode, emergency_contact_name, emergency_contact_phone } = req.body;
+    const { first_name, last_name, phone, address, city, postcode, emergency_contact_name, emergency_contact_phone, health } = req.body;
 
     await client.connect();
     const result = await client.query(
@@ -467,6 +467,64 @@ export async function updateClientProfile(req: Request, res: Response) {
        RETURNING id, email, first_name, last_name, phone, address, city, postcode, emergency_contact_name, emergency_contact_phone`,
       [first_name, last_name, phone, address, city, postcode, emergency_contact_name, emergency_contact_phone, req.user.id]
     );
+
+    if (health) {
+      await client.query(
+        `INSERT INTO "MedicalHistory" (
+          id, user_id,
+          pregnant_or_breastfeeding, blood_borne_conditions, diabetes, heart_condition,
+          haemophilia_or_bleeding_disorder, epilepsy_or_seizure, skin_conditions,
+          autoimmune_conditions, blood_thinners, steroids_or_immunosuppressants,
+          alcohol_or_drugs_last_24h,
+          known_allergies, allergies_latex, allergies_ink, allergies_topical_anaesthetics,
+          previous_tattoo_reaction, previous_reaction_details,
+          chemotherapy_or_radiotherapy, current_medications,
+          created_at, updated_at
+        ) VALUES (
+          gen_random_uuid(), $1,
+          $2,$3,$4,$5,$6,$7,$8,$9,$10,$11,
+          false,
+          $12,$13,$14,$15,$16,$17,$18,$19,
+          NOW(), NOW()
+        )
+        ON CONFLICT (user_id) DO UPDATE SET
+          pregnant_or_breastfeeding          = EXCLUDED.pregnant_or_breastfeeding,
+          blood_borne_conditions             = EXCLUDED.blood_borne_conditions,
+          diabetes                           = EXCLUDED.diabetes,
+          heart_condition                    = EXCLUDED.heart_condition,
+          haemophilia_or_bleeding_disorder   = EXCLUDED.haemophilia_or_bleeding_disorder,
+          epilepsy_or_seizure                = EXCLUDED.epilepsy_or_seizure,
+          skin_conditions                    = EXCLUDED.skin_conditions,
+          autoimmune_conditions              = EXCLUDED.autoimmune_conditions,
+          blood_thinners                     = EXCLUDED.blood_thinners,
+          steroids_or_immunosuppressants     = EXCLUDED.steroids_or_immunosuppressants,
+          known_allergies                    = EXCLUDED.known_allergies,
+          allergies_latex                    = EXCLUDED.allergies_latex,
+          allergies_ink                      = EXCLUDED.allergies_ink,
+          allergies_topical_anaesthetics     = EXCLUDED.allergies_topical_anaesthetics,
+          previous_tattoo_reaction           = EXCLUDED.previous_tattoo_reaction,
+          previous_reaction_details          = EXCLUDED.previous_reaction_details,
+          chemotherapy_or_radiotherapy       = EXCLUDED.chemotherapy_or_radiotherapy,
+          current_medications                = EXCLUDED.current_medications,
+          updated_at                         = NOW()`,
+        [
+          req.user.id,
+          !!health.pregnant_or_breastfeeding, !!health.blood_borne_conditions,
+          !!health.diabetes, !!health.heart_condition,
+          !!health.haemophilia_or_bleeding_disorder, !!health.epilepsy_or_seizure,
+          health.skin_conditions || null,
+          !!health.autoimmune_conditions, !!health.blood_thinners,
+          !!health.steroids_or_immunosuppressants,
+          health.known_allergies || null,
+          !!health.allergies_latex, !!health.allergies_ink,
+          !!health.allergies_topical_anaesthetics,
+          !!health.previous_tattoo_reaction,
+          health.previous_reaction_details || null,
+          !!health.chemotherapy_or_radiotherapy,
+          health.current_medications || null,
+        ]
+      );
+    }
 
     res.json({ success: true, user: result.rows[0] });
   } catch (error) {
@@ -542,9 +600,21 @@ export async function getClientProfile(req: Request, res: Response) {
       });
     }
 
+    const healthResult = await client.query(
+      `SELECT pregnant_or_breastfeeding, blood_borne_conditions, diabetes, heart_condition,
+              haemophilia_or_bleeding_disorder, epilepsy_or_seizure, skin_conditions,
+              autoimmune_conditions, blood_thinners, steroids_or_immunosuppressants,
+              known_allergies, allergies_latex, allergies_ink, allergies_topical_anaesthetics,
+              previous_tattoo_reaction, previous_reaction_details, chemotherapy_or_radiotherapy,
+              current_medications
+       FROM "MedicalHistory" WHERE user_id = $1`,
+      [req.user.id]
+    );
+
     res.json({
       success: true,
       user: result.rows[0],
+      health: healthResult.rows[0] ?? null,
     });
   } catch (error) {
     console.error('Profile fetch error:', error);
