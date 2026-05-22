@@ -529,7 +529,8 @@ export async function getClientProfile(req: Request, res: Response) {
     await client.connect();
 
     const result = await client.query(
-      `SELECT id, email, first_name, last_name, phone, date_of_birth, address, city, postcode, account_status
+      `SELECT id, email, first_name, last_name, phone, date_of_birth, address, city, postcode, account_status,
+              emergency_contact_name, emergency_contact_phone
        FROM "User" WHERE id = $1`,
       [req.user.id]
     );
