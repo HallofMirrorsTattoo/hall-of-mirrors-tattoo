@@ -50,11 +50,16 @@ router.get('/callback', async (req: Request, res: Response) => {
 
     if (!tokens.access_token) throw new Error('No access_token in response');
 
-    // Get the Google account email for display
-    oauth2Client.setCredentials(tokens);
-    const { google } = await import('googleapis');
-    const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
-    const { data } = await oauth2.userinfo.get();
+    // Decode email from the id_token — no extra API call needed
+    let googleEmail: string | undefined;
+    if (tokens.id_token) {
+      try {
+        const payload = JSON.parse(
+          Buffer.from(tokens.id_token.split('.')[1], 'base64url').toString('utf8'),
+        );
+        googleEmail = payload.email;
+      } catch { /* non-critical — save without email */ }
+    }
 
     await saveGoogleTokens(
       artistId,
@@ -63,7 +68,7 @@ router.get('/callback', async (req: Request, res: Response) => {
         refresh_token: tokens.refresh_token ?? null,
         expiry_date:   tokens.expiry_date   ?? null,
       },
-      data.email ?? undefined,
+      googleEmail,
     );
 
     return res.redirect(`${FRONTEND_URL}/artist/dashboard?tab=profile&calendar=connected`);

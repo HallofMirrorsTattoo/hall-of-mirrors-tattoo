@@ -18,7 +18,11 @@ export function getAuthUrl(state: string): string {
   const client = createOAuth2Client();
   return client.generateAuthUrl({
     access_type: 'offline',
-    scope: ['https://www.googleapis.com/auth/calendar.events'],
+    scope: [
+      'https://www.googleapis.com/auth/calendar.events',
+      'openid',
+      'email',
+    ],
     state,
     prompt: 'consent', // always request refresh_token
   });
