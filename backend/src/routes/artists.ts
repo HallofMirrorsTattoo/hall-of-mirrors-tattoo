@@ -20,6 +20,7 @@ const router = express.Router();
 // ── Portfolio photo upload helper (reuses design-ideas bucket) ─────────────
 
 const PORTFOLIO_BUCKET = 'design-ideas';
+const ARTIST_BUCKET = 'artist-assets';
 
 const photoUpload = multer({
   storage: multer.memoryStorage(),
@@ -113,7 +114,7 @@ router.post('/portrait', authMiddleware, portraitUpload.single('portrait'), asyn
     const fileName = `${req.artist!.id}.${ext}`;
     const storagePath = `portraits/${fileName}`;
 
-    const storageRes = await fetch(`${supabaseUrl}/storage/v1/object/${PORTFOLIO_BUCKET}/${storagePath}`, {
+    const storageRes = await fetch(`${supabaseUrl}/storage/v1/object/${ARTIST_BUCKET}/${storagePath}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${serviceKey}`, 'Content-Type': req.file.mimetype, 'x-upsert': 'true' },
       body: req.file.buffer,
@@ -123,7 +124,7 @@ router.post('/portrait', authMiddleware, portraitUpload.single('portrait'), asyn
       console.error('[portrait] Supabase upload failed:', storageRes.status, err);
       return res.status(500).json({ error: `Storage upload failed (${storageRes.status}): ${err}` });
     }
-    const publicUrl = `${supabaseUrl}/storage/v1/object/public/${PORTFOLIO_BUCKET}/${storagePath}`;
+    const publicUrl = `${supabaseUrl}/storage/v1/object/public/${ARTIST_BUCKET}/${storagePath}`;
 
     const db = new Client({ connectionString: process.env.DATABASE_URL });
     await db.connect();
