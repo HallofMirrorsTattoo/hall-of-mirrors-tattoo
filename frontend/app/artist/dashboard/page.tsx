@@ -246,6 +246,7 @@ export default function ArtistDashboard() {
   const [profile, setProfile] = useState<ArtistProfile>(emptyProfile);
   const [profileSaving, setProfileSaving] = useState(false);
   const [portraitUploading, setPortraitUploading] = useState(false);
+  const [portraitError, setPortraitError] = useState('');
   const [profileError, setProfileError] = useState('');
   const [editingSection, setEditingSection] = useState<string | null>(null);
 
@@ -465,7 +466,7 @@ export default function ArtistDashboard() {
   const uploadPortrait = async (file: File) => {
     if (!accessToken) return;
     setPortraitUploading(true);
-    setProfileError('');
+    setPortraitError('');
     try {
       const form = new FormData();
       form.append('portrait', file);
@@ -478,7 +479,7 @@ export default function ArtistDashboard() {
       if (!res.ok) throw new Error(responseData.error ?? 'Upload failed');
       setProfile(prev => ({ ...prev, portrait_url: responseData.portrait_url }));
     } catch (err: any) {
-      setProfileError(err.message ?? 'Portrait upload failed.');
+      setPortraitError(err.message ?? 'Portrait upload failed.');
     } finally {
       setPortraitUploading(false);
     }
@@ -3241,6 +3242,9 @@ export default function ArtistDashboard() {
                         </span>
                       </label>
                     </div>
+                    {portraitError && (
+                      <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.06em', color: '#e57373' }}>{portraitError}</span>
+                    )}
                     <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.06em', color: 'var(--text-low)' }}>Shown as hero image on your artist page · max 5 MB</span>
                   </div>
                 </div>,
