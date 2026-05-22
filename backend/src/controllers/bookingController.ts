@@ -15,6 +15,7 @@ import {
   sendPriceAcceptedToArtist,
 } from '../services/emailService.js';
 import { logBookingActivity } from '../utils/logBookingActivity.js';
+import { pushCalendarEvent } from '../services/googleCalendarService.js';
 
 const { Client } = pkg;
 
@@ -650,6 +651,19 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
         notifyEndTime: notifyEnd,
         artistName: booking.artist_name ?? undefined,
       }).catch((e) => console.error('[email] booking confirmed failed:', e));
+    }
+
+    // Push event to artist's Google Calendar (non-fatal)
+    if (status === 'confirmed' && booking.artist_id && booking.appointment_time && duration_hours !== undefined) {
+      pushCalendarEvent(booking.artist_id, {
+        client_name: `${booking.first_name} ${booking.last_name}`,
+        appointment_date: new Date(booking.appointment_date_time).toISOString().slice(0, 10),
+        appointment_time: booking.appointment_time,
+        duration_minutes: Number(duration_hours) * 60,
+        design_description: booking.design_description ?? null,
+        placement: booking.placement ?? null,
+        booking_reference: booking.booking_reference,
+      }).catch((err) => console.error('[GoogleCalendar] event push failed:', err));
     }
 
     // Artist cancelled a previously confirmed booking → notify client

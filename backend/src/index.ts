@@ -15,6 +15,7 @@ import availabilityRouter from './routes/availability.js';
 import { clientMessagesRouter, artistMessagesRouter, clientConsultationMessagesRouter, artistConsultationMessagesRouter } from './routes/messages.js';
 import { publicFlashRouter, artistFlashRouter } from './routes/flash.js';
 import { studioSettingsRouter, publicStudioSettingsRouter } from './routes/studioSettings.js';
+import googleCalendarRouter from './routes/googleCalendar.js';
 import { setupDatabase } from './setupDb.js';
 import { startReminderJob } from './jobs/reminderJob.js';
 
@@ -87,6 +88,7 @@ app.use('/api/flash', publicFlashRouter);
 app.use('/api/artist/flash', artistFlashRouter);
 app.use('/api/artist/studio-settings', studioSettingsRouter);
 app.use('/api/studio-settings', publicStudioSettingsRouter);
+app.use('/api/artist/google-calendar', googleCalendarRouter);
 
 // Error handler middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {

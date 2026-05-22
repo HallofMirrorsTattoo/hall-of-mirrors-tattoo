@@ -308,6 +308,17 @@ CREATE TABLE IF NOT EXISTS "PortfolioPhoto" (
 );
 CREATE INDEX IF NOT EXISTS "PortfolioPhoto_artist_id_idx" ON "PortfolioPhoto"(artist_id, display_order);
 
+CREATE TABLE IF NOT EXISTS "ArtistGoogleToken" (
+    artist_id TEXT PRIMARY KEY,
+    access_token TEXT NOT NULL,
+    refresh_token TEXT NOT NULL,
+    expiry_date BIGINT,
+    google_email TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (artist_id) REFERENCES "Artist"(id) ON DELETE CASCADE
+);
+
 INSERT INTO "Studio" (id, studio_name, address, postcode, cancellation_policy_hours, created_at, updated_at)
 VALUES ('hom-studio', 'Hall of Mirrors Tattoo', '', '', 24, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;

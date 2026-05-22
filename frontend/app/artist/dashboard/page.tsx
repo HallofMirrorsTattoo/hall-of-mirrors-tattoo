@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/lib/authContext';
@@ -256,6 +256,13 @@ export default function ArtistDashboard() {
   const [portfolioUploading, setPortfolioUploading] = useState(false);
   const [portfolioError, setPortfolioError] = useState('');
 
+  // ── Google Calendar state ──────────────────────────────────────────────────
+  const searchParams = useSearchParams();
+  const [calendarStatus, setCalendarStatus] = useState<{ connected: boolean; google_email: string | null } | null>(null);
+  const [calendarLoading, setCalendarLoading] = useState(false);
+  const [calendarActing, setCalendarActing] = useState(false);
+  const [calendarBanner, setCalendarBanner] = useState<'connected' | 'error' | null>(null);
+
   const avMonthKey = `${avYear}-${String(avMonth + 1).padStart(2, '0')}`;
 
   const fetchAvailability = useCallback(async () => {
@@ -339,9 +346,74 @@ export default function ArtistDashboard() {
     if (tab === 'profile' && accessToken) {
       fetchProfile();
       fetchPortfolioPhotos();
+      fetchCalendarStatus();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, accessToken]);
+
+  // Handle calendar OAuth redirect params
+  useEffect(() => {
+    const calParam = searchParams.get('calendar');
+    if (calParam === 'connected' || calParam === 'error') {
+      setCalendarBanner(calParam);
+      setTab('profile');
+      // Clean the URL without a full navigation
+      const url = new URL(window.location.href);
+      url.searchParams.delete('calendar');
+      window.history.replaceState({}, '', url.toString());
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const fetchCalendarStatus = async () => {
+    if (!accessToken) return;
+    setCalendarLoading(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/google-calendar/status`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setCalendarStatus(data);
+    } catch { /* non-critical */ } finally {
+      setCalendarLoading(false);
+    }
+  };
+
+  const connectGoogleCalendar = async () => {
+    if (!accessToken) return;
+    setCalendarActing(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/google-calendar/connect`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) throw new Error('Failed to get auth URL');
+      const { url } = await res.json();
+      window.location.href = url;
+    } catch {
+      setCalendarBanner('error');
+      setCalendarActing(false);
+    }
+  };
+
+  const disconnectGoogleCalendar = async () => {
+    if (!accessToken) return;
+    setCalendarActing(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/google-calendar/disconnect`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) throw new Error('Failed to disconnect');
+      setCalendarStatus({ connected: false, google_email: null });
+      setCalendarBanner(null);
+    } catch {
+      setCalendarBanner('error');
+    } finally {
+      setCalendarActing(false);
+    }
+  };
 
   const fetchProfile = async () => {
     if (!accessToken) return;
@@ -3177,6 +3249,63 @@ export default function ArtistDashboard() {
                 saveProfile,
                 () => { fetchProfile(); },
               )}
+
+              {/* ── Google Calendar Integration ── */}
+              <h2 style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1.75rem', fontWeight: 300, letterSpacing: '-0.02em', color: 'var(--cream)', margin: '2.5rem 0 1.25rem' }}>Integrations</h2>
+
+              {calendarBanner === 'connected' && (
+                <div className="alert-success" style={{ marginBottom: '1.25rem' }}>
+                  Google Calendar connected successfully. Confirmed bookings will now appear in your calendar.
+                </div>
+              )}
+              {calendarBanner === 'error' && (
+                <div className="alert-error" style={{ marginBottom: '1.25rem' }}>
+                  Something went wrong connecting Google Calendar. Please try again.
+                </div>
+              )}
+
+              <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.875rem', padding: '1.75rem 2rem 1.5rem', marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+                  <div>
+                    <h3 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.25rem', fontWeight: 300, color: 'var(--gold)', margin: '0 0 0.375rem', letterSpacing: '-0.01em' }}>Google Calendar</h3>
+                    <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-low)', margin: 0, lineHeight: 1.6 }}>
+                      Automatically add confirmed bookings to your Google Calendar.
+                    </p>
+                  </div>
+                  {!calendarLoading && calendarStatus?.connected && (
+                    <span style={{ padding: '0.2rem 0.6rem', borderRadius: '2rem', background: 'rgba(34,197,94,0.12)', color: '#16A34A', fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                      Connected
+                    </span>
+                  )}
+                </div>
+
+                {calendarLoading ? (
+                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: 'var(--text-low)', letterSpacing: '0.06em' }}>Loading…</p>
+                ) : calendarStatus?.connected ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                    <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: 'var(--text-mid)', letterSpacing: '0.06em', margin: 0 }}>
+                      {calendarStatus.google_email ?? 'Google account connected'}
+                    </p>
+                    <button
+                      onClick={disconnectGoogleCalendar}
+                      disabled={calendarActing}
+                      style={{ background: 'none', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '0.3rem', padding: '0.25rem 0.75rem', cursor: calendarActing ? 'default' : 'pointer', fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(239,68,68,0.7)', opacity: calendarActing ? 0.6 : 1 }}
+                    >
+                      {calendarActing ? 'Disconnecting…' : 'Disconnect'}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={connectGoogleCalendar}
+                    disabled={calendarActing}
+                    className="btn-secondary"
+                    style={{ fontSize: '0.8125rem', padding: '0.5625rem 1.25rem', opacity: calendarActing ? 0.6 : 1, cursor: calendarActing ? 'default' : 'pointer' }}
+                  >
+                    {calendarActing ? 'Redirecting…' : 'Connect Google Calendar'}
+                  </button>
+                )}
+              </div>
+
             </div>
           );
         })()}
