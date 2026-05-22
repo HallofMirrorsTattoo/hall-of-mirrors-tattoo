@@ -32,21 +32,30 @@ function ParagraphDivider() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: '0.75rem',
-      margin: '1.75rem 0',
+      margin: '2rem 0',
     }}>
-      <div style={{ width: '2.5rem', height: '1px', background: 'rgba(201,168,76,0.2)' }} />
+      <div style={{
+        width: '5rem',
+        height: '1px',
+        background: 'linear-gradient(to right, transparent, rgba(201,168,76,0.45))',
+      }} />
       <span style={{
-        fontFamily: '"Cormorant Garamond", serif',
-        fontStyle: 'italic',
-        fontSize: '0.75rem',
-        color: 'rgba(201,168,76,0.35)',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.375rem',
+        padding: '0 0.875rem',
+        color: 'rgba(201,168,76,0.6)',
         lineHeight: 1,
-        letterSpacing: '0.1em',
       }}>
-        ✦
+        <span style={{ fontSize: '0.45rem' }}>◆</span>
+        <span style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1rem' }}>✦</span>
+        <span style={{ fontSize: '0.45rem' }}>◆</span>
       </span>
-      <div style={{ width: '2.5rem', height: '1px', background: 'rgba(201,168,76,0.2)' }} />
+      <div style={{
+        width: '5rem',
+        height: '1px',
+        background: 'linear-gradient(to left, transparent, rgba(201,168,76,0.45))',
+      }} />
     </div>
   );
 }
@@ -419,7 +428,7 @@ export default async function About() {
                   fontStyle: 'italic',
                   fontWeight: 400,
                   fontSize: '1.125rem',
-                  color: 'var(--cream)',
+                  color: 'var(--gold)',
                   lineHeight: 1.3,
                   marginBottom: '0.5rem',
                 }}>
