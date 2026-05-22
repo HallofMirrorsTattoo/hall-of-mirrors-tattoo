@@ -50,11 +50,11 @@ function toSlug(name: string): string {
   return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 }
 
-// Static placeholder — rendered when the API doesn't yet return Christina.
+// Static placeholder — rendered when the API doesn't yet return Cristina.
 // Remove once her Artist row is live in the DB.
-const CHRISTINA_PLACEHOLDER: Artist = {
-  id: 'placeholder-christina',
-  full_name: 'Christina',
+const CRISTINA_PLACEHOLDER: Artist = {
+  id: 'placeholder-cristina',
+  full_name: 'Cristina',
   specialties: null,
   years_experience: null,
   bio: null,
@@ -66,8 +66,8 @@ const imgFilter = 'brightness(0.87) contrast(1.06) saturate(0.72) sepia(0.08)';
 
 export default async function ArtistsPage() {
   const artists = await fetchArtists();
-  const hasChristina = artists.some(a => a.full_name.toLowerCase().includes('christina'));
-  const displayArtists = hasChristina ? artists : [...artists, CHRISTINA_PLACEHOLDER];
+  const hasCristina = artists.some(a => a.full_name.toLowerCase().includes('cristina'));
+  const displayArtists = hasCristina ? artists : [...artists, CRISTINA_PLACEHOLDER];
 
   return (
     <div style={{ backgroundColor: 'var(--bg)', minHeight: '100vh' }}>
