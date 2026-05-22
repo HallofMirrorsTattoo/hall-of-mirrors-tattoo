@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/lib/authContext';
@@ -257,7 +257,6 @@ export default function ArtistDashboard() {
   const [portfolioError, setPortfolioError] = useState('');
 
   // ── Google Calendar state ──────────────────────────────────────────────────
-  const searchParams = useSearchParams();
   const [calendarStatus, setCalendarStatus] = useState<{ connected: boolean; google_email: string | null } | null>(null);
   const [calendarLoading, setCalendarLoading] = useState(false);
   const [calendarActing, setCalendarActing] = useState(false);
@@ -351,19 +350,18 @@ export default function ArtistDashboard() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, accessToken]);
 
-  // Handle calendar OAuth redirect params
+  // Handle calendar OAuth redirect params — runs once on mount, no Suspense needed
   useEffect(() => {
-    const calParam = searchParams.get('calendar');
+    const params = new URLSearchParams(window.location.search);
+    const calParam = params.get('calendar');
     if (calParam === 'connected' || calParam === 'error') {
-      setCalendarBanner(calParam);
+      setCalendarBanner(calParam as 'connected' | 'error');
       setTab('profile');
-      // Clean the URL without a full navigation
       const url = new URL(window.location.href);
       url.searchParams.delete('calendar');
       window.history.replaceState({}, '', url.toString());
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, []);
 
   const fetchCalendarStatus = async () => {
     if (!accessToken) return;
