@@ -30,7 +30,7 @@ interface Artist {
   years_experience: number | null;
   bio: string | null;
   instagram_handle: string | null;
-  cover_photo: string | null;
+  portrait_url: string | null;
 }
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'https://hall-of-mirrors-tattoo-production.up.railway.app';
@@ -59,7 +59,7 @@ const CHRISTINA_PLACEHOLDER: Artist = {
   years_experience: null,
   bio: null,
   instagram_handle: null,
-  cover_photo: null,
+  portrait_url: null,
 };
 
 const imgFilter = 'brightness(0.87) contrast(1.06) saturate(0.72) sepia(0.08)';
@@ -126,9 +126,9 @@ export default async function Portfolio() {
                     marginBottom: '1.5rem',
                     background: 'var(--surface)',
                   }}>
-                    {artist.cover_photo ? (
+                    {artist.portrait_url ? (
                       <Image
-                        src={artist.cover_photo}
+                        src={artist.portrait_url}
                         alt={`${artist.full_name} — Hall of Mirrors Tattoo Studio`}
                         fill
                         sizes="(max-width: 768px) 100vw, 50vw"
