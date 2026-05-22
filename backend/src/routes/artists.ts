@@ -95,7 +95,7 @@ router.patch('/profile', authMiddleware, async (req: Request, res: Response) => 
 // POST /api/artist/portrait — upload/replace artist profile portrait
 const portraitUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype.startsWith('image/')) cb(null, true);
     else cb(new Error('Only image files are allowed'));

@@ -3245,7 +3245,7 @@ export default function ArtistDashboard() {
                     {portraitError && (
                       <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.06em', color: '#e57373' }}>{portraitError}</span>
                     )}
-                    <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.06em', color: 'var(--text-low)' }}>Shown as hero image on your artist page · max 5 MB</span>
+                    <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.06em', color: 'var(--text-low)' }}>Shown as hero image on your artist page · max 10 MB</span>
                   </div>
                 </div>,
                 saveProfile,
