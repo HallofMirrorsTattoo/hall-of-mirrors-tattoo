@@ -400,13 +400,14 @@ export default function BookingPage() {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <Link href="/client/dashboard" style={{ display: 'block', padding: '0.875rem', background: 'var(--gold)', color: 'var(--bg)', ...mono, fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', textDecoration: 'none', borderRadius: '0.375rem', textAlign: 'center', fontWeight: 600 }}>
-                    View your dashboard
+                  <Link href="/client/dashboard" className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                    <span>View your dashboard</span>
                   </Link>
                   <button
                     type="button"
                     onClick={() => setSubmitStatus('idle')}
-                    style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-low)', ...mono, fontSize: '0.72rem', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0.875rem', borderRadius: '0.375rem', cursor: 'pointer', width: '100%' }}
+                    className="btn-secondary"
+                    style={{ width: '100%', justifyContent: 'center' }}
                   >
                     Book another session
                   </button>
@@ -433,9 +434,7 @@ export default function BookingPage() {
               </p>
 
               {activationError && (
-                <div style={{ padding: '0.75rem 1rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '0.5rem', marginBottom: '1rem' }}>
-                  <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--error-text)' }}>{activationError}</p>
-                </div>
+                <div className="alert-error" style={{ marginBottom: '1rem' }}>{activationError}</div>
               )}
 
               <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
@@ -543,11 +542,7 @@ export default function BookingPage() {
                 <StepIndicator step={step} total={TOTAL_STEPS} labels={STEP_LABELS} />
 
                 {submitStatus === 'error' && (
-                  <div style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '0.5rem' }}>
-                    <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: 'var(--error-text)', fontWeight: 500, margin: 0 }}>
-                      {errorMessage}
-                    </p>
-                  </div>
+                  <div className="alert-error" style={{ marginBottom: '1.5rem' }}>{errorMessage}</div>
                 )}
 
                 <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>

@@ -60,16 +60,8 @@ export default function ArtistLogin() {
           <div className="card-premium-inner">
 
             {error && (
-              <div style={{
-                marginBottom: '1.5rem',
-                padding: '1rem 1.25rem',
-                background: 'rgba(239,68,68,0.08)',
-                border: '1px solid rgba(239,68,68,0.25)',
-                borderRadius: '0.5rem',
-              }}>
-                <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--error-text)' }}>
-                  {error}
-                </p>
+              <div className="alert-error" style={{ marginBottom: '1.5rem' }}>
+                {error}
               </div>
             )}
 

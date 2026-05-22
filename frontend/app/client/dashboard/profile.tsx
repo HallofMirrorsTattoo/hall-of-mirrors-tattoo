@@ -197,9 +197,7 @@ export default function ProfileTab() {
 
       <form onSubmit={handleSubmit}>
         {error && (
-          <div style={{ padding: '0.875rem 1rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '0.5rem', marginBottom: '1.5rem' }}>
-            <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--error-text)', fontFamily: '"DM Sans", sans-serif' }}>{error}</p>
-          </div>
+          <div className="alert-error" style={{ marginBottom: '1.5rem' }}>{error}</div>
         )}
         {success && (
           <div style={{ padding: '0.875rem 1rem', background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '0.5rem', marginBottom: '1.5rem' }}>

@@ -27,8 +27,8 @@ export default function ClientLoginPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg)', paddingBottom: '5rem' }}>
-      <div style={{ maxWidth: '26rem', margin: '0 auto', padding: '2rem 1.5rem 0' }}>
+    <div style={{ minHeight: '100dvh', backgroundColor: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem 1.5rem' }}>
+      <div style={{ width: '100%', maxWidth: '26rem' }}>
 
         <div style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
           <p className="eyebrow" style={{ marginBottom: '0.75rem' }}>Client Portal</p>

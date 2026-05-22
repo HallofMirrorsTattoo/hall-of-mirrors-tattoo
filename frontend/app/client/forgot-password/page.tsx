@@ -70,35 +70,17 @@ export default function ForgotPasswordPage() {
         ) : (
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             {error && (
-              <div style={{ padding: '0.875rem 1rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '0.5rem' }}>
-                <p style={{ margin: 0, fontSize: '0.875rem', color: '#f87171' }}>{error}</p>
-              </div>
+              <div className="alert-error">{error}</div>
             )}
 
             <div>
-              <label style={{ display: 'block', fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--gold)', opacity: 0.55, marginBottom: '0.5rem' }}>
-                Email address
-              </label>
+              <label>Email address</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="your@email.com"
-                style={{
-                  width: '100%',
-                  padding: '0.875rem 1rem',
-                  background: 'var(--surface)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '0.5rem',
-                  color: 'var(--cream)',
-                  fontSize: '0.9375rem',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                  transition: 'border-color 0.3s ease',
-                }}
-                onFocus={(e) => (e.target.style.borderColor = 'var(--gold)')}
-                onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
               />
             </div>
 

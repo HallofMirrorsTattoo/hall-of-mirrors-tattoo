@@ -318,7 +318,6 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
           borderRadius: '0.625rem',
           background: isSelected ? 'rgba(201,168,76,0.08)' : 'var(--surface)',
           border: `1px solid ${isSelected ? 'rgba(201,168,76,0.4)' : 'var(--border)'}`,
-          borderLeft: `3px solid ${isSelected ? 'var(--gold)' : 'transparent'}`,
           cursor: 'pointer',
           transition: 'border-color 0.15s, background 0.15s',
           display: 'flex',
