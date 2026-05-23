@@ -10,8 +10,6 @@ const API = process.env.NEXT_PUBLIC_API_URL || 'https://hall-of-mirrors-tattoo-p
 interface ArtistData {
   id: string;
   full_name: string;
-  specialties: string | null;
-  years_experience: number | null;
   bio: string | null;
   instagram_handle: string | null;
   booking_count: number;
@@ -19,14 +17,26 @@ interface ArtistData {
   portrait_url: string | null;
 }
 
+// Static record shown while Cristina's DB row doesn't exist yet.
+// Remove once her Artist row is live and the API returns her data.
+const CRISTINA_STATIC: ArtistData = {
+  id: 'static-cristina',
+  full_name: 'Cristina',
+  bio: "My name is Cristina. My tattoo name is Superstea. And my personal philosophy is simple: drink Coke, wear Adidas Hyper Sleek and make beautiful tattoos. I spend my work hours between neo-trad with a twist and blackwork illustrative.\n\nWhen I'm not drawing or tattooing, I'm usually obsessing about time travel, the simulation theory, alternate realities, post-apocalyptic fashion and whether Jedi mind tricks should be taught in schools. I used to be a journalist and write news for a national news television in Romania, but the love for tattooing won and now I'm helping people customise their avatar, while using a vegan set-up (because no one has to suffer for the pictures we put under the skin).\n\nThe things I like tattooing the most are somewhere between a Victorian botanist's notebook and a fever dream. Wild flowers, poisonous plants, animal skulls or forgotten relics, but I won't say 'no' to pop culture either. If any of this sounds good to you, maybe we're running on similar software. Whether you're looking to mark a milestone, reclaim a piece of yourself or simply give your character a very cool upgrade, I'd love to help. Get in touch and let's start designing your next tattoo.",
+  instagram_handle: 'supersteatattoo',
+  booking_count: 0,
+  photos: [],
+  portrait_url: '/assets/artists/cristina.jpg',
+};
+
 async function fetchArtist(slug: string): Promise<ArtistData | null> {
   try {
     const res = await fetch(`${API}/api/artist/${slug}`, { cache: 'no-store' });
-    if (!res.ok) return null;
+    if (!res.ok) return slug === 'cristina' ? CRISTINA_STATIC : null;
     const data = await res.json();
-    return data.artist ?? null;
+    return data.artist ?? (slug === 'cristina' ? CRISTINA_STATIC : null);
   } catch {
-    return null;
+    return slug === 'cristina' ? CRISTINA_STATIC : null;
   }
 }
 
@@ -36,7 +46,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
   const description = artist.bio
     ? artist.bio.substring(0, 155)
-    : `${artist.full_name} is a tattoo artist at Hall of Mirrors Studio, Liverpool. ${artist.specialties ? `Specialising in ${artist.specialties}.` : ''} Book online.`;
+    : `${artist.full_name} is a tattoo artist at Hall of Mirrors Studio, Liverpool. Book online.`;
 
   return {
     title: `${artist.full_name} | Tattoo Artist Liverpool | Hall of Mirrors`,
@@ -209,18 +219,8 @@ export default async function ArtistPage({ params }: { params: { slug: string } 
             )}
           </div>
           {/* Stat strip below portrait */}
-          <div style={{ display: 'flex', gap: '1.5rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
-            {artist.years_experience && (
-              <div>
-                <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.75rem', fontWeight: 300, color: 'var(--gold)', margin: 0, lineHeight: 1 }}>
-                  {artist.years_experience}+
-                </p>
-                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', margin: '0.25rem 0 0' }}>
-                  Years experience
-                </p>
-              </div>
-            )}
-            {artist.booking_count > 0 && (
+          {artist.booking_count > 0 && (
+            <div style={{ display: 'flex', gap: '1.5rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
               <div>
                 <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.75rem', fontWeight: 300, color: 'var(--gold)', margin: 0, lineHeight: 1 }}>
                   {artist.booking_count}
@@ -229,8 +229,8 @@ export default async function ArtistPage({ params }: { params: { slug: string } 
                   Sessions booked
                 </p>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Info column */}
@@ -248,12 +248,6 @@ export default async function ArtistPage({ params }: { params: { slug: string } 
           }}>
             {artist.full_name}
           </h1>
-
-          {artist.specialties && (
-            <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)', marginBottom: '1.5rem', lineHeight: 1.6 }}>
-              {artist.specialties}
-            </p>
-          )}
 
           {artist.bio && (
             <div style={{ marginBottom: '2rem' }}>

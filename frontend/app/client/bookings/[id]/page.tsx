@@ -11,7 +11,6 @@ import TimeSlotPicker, { TIME_SLOTS } from '@/app/components/TimeSlotPicker';
 interface Artist {
   id: string;
   name: string;
-  specialties: string;
   bio: string;
   instagram_handle: string;
 }
@@ -1089,11 +1088,6 @@ export default function BookingDetailPage() {
                     }}>
                       {booking.artist.name}
                     </h3>
-                    {booking.artist.specialties && (
-                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-mid)', marginBottom: '0.75rem' }}>
-                        {booking.artist.specialties}
-                      </p>
-                    )}
                     {booking.artist.bio && (
                       <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text)', lineHeight: 1.65, marginBottom: '1rem' }}>
                         {booking.artist.bio}

@@ -26,8 +26,6 @@ export const metadata = {
 interface Artist {
   id: string;
   full_name: string;
-  specialties: string | null;
-  years_experience: number | null;
   bio: string | null;
   instagram_handle: string | null;
   portrait_url: string | null;
@@ -50,16 +48,14 @@ function toSlug(name: string): string {
   return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 }
 
-// Static placeholder — rendered when the API doesn't yet return Cristina.
+// Static record — rendered when the API doesn't yet return Cristina.
 // Remove once her Artist row is live in the DB.
 const CRISTINA_PLACEHOLDER: Artist = {
-  id: 'placeholder-cristina',
+  id: 'static-cristina',
   full_name: 'Cristina',
-  specialties: null,
-  years_experience: null,
-  bio: null,
-  instagram_handle: null,
-  portrait_url: null,
+  bio: "My name is Cristina. My tattoo name is Superstea. And my personal philosophy is simple: drink Coke, wear Adidas Hyper Sleek and make beautiful tattoos. I spend my work hours between neo-trad with a twist and blackwork illustrative.\n\nWhen I'm not drawing or tattooing, I'm usually obsessing about time travel, the simulation theory, alternate realities, post-apocalyptic fashion and whether Jedi mind tricks should be taught in schools. I used to be a journalist and write news for a national news television in Romania, but the love for tattooing won and now I'm helping people customise their avatar, while using a vegan set-up (because no one has to suffer for the pictures we put under the skin).\n\nThe things I like tattooing the most are somewhere between a Victorian botanist's notebook and a fever dream. Wild flowers, poisonous plants, animal skulls or forgotten relics, but I won't say 'no' to pop culture either. If any of this sounds good to you, maybe we're running on similar software. Whether you're looking to mark a milestone, reclaim a piece of yourself or simply give your character a very cool upgrade, I'd love to help. Get in touch and let's start designing your next tattoo.",
+  instagram_handle: 'supersteatattoo',
+  portrait_url: '/assets/artists/cristina.jpg',
 };
 
 const imgFilter = 'brightness(0.87) contrast(1.06) saturate(0.72) sepia(0.08)';
@@ -109,11 +105,7 @@ export default async function ArtistsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {displayArtists.map((artist, i) => {
               const slug = toSlug(artist.full_name);
-              const hasProfile = Boolean(artist.bio);
               const isPlaceholder = artist.id.startsWith('placeholder-');
-              const specialty = artist.specialties
-                ? artist.specialties.split(',')[0].trim()
-                : 'Neo-Traditional';
 
               const cardContent = (
                 <AnimatedSection delay={i * 150}>
@@ -186,19 +178,7 @@ export default async function ArtistsPage() {
                     {artist.full_name}
                   </h2>
 
-                  {/* Specialty / coming soon tag */}
-                  <p style={{
-                    fontFamily: '"DM Mono", monospace',
-                    fontSize: '0.7rem',
-                    letterSpacing: '0.2em',
-                    textTransform: 'uppercase',
-                    color: isPlaceholder ? 'var(--text-low)' : 'rgba(201,168,76,0.55)',
-                    marginBottom: hasProfile ? '0.875rem' : 0,
-                  }}>
-                    {isPlaceholder ? 'Profile coming soon' : specialty}
-                  </p>
-
-                  {/* View profile link — only for real artists */}
+                  {/* View profile link — only for artists with a profile */}
                   {!isPlaceholder && (
                     <p className="artist-view-profile" style={{
                       fontFamily: '"DM Mono", monospace',

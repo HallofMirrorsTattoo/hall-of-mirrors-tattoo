@@ -246,12 +246,10 @@ export default function ArtistDashboard() {
   interface ArtistProfile {
     full_name: string;
     bio: string;
-    specialties: string;
-    years_experience: string;
     instagram_handle: string;
     portrait_url: string;
   }
-  const emptyProfile: ArtistProfile = { full_name: '', bio: '', specialties: '', years_experience: '', instagram_handle: '', portrait_url: '' };
+  const emptyProfile: ArtistProfile = { full_name: '', bio: '', instagram_handle: '', portrait_url: '' };
   const [profile, setProfile] = useState<ArtistProfile>(emptyProfile);
   const [profileSaving, setProfileSaving] = useState(false);
   const [portraitUploading, setPortraitUploading] = useState(false);
@@ -435,8 +433,6 @@ export default function ArtistDashboard() {
       setProfile({
         full_name: a.full_name ?? '',
         bio: a.bio ?? '',
-        specialties: a.specialties ?? '',
-        years_experience: a.years_experience != null ? String(a.years_experience) : '',
         instagram_handle: a.instagram_handle ?? '',
         portrait_url: a.portrait_url ?? '',
       });
@@ -454,8 +450,6 @@ export default function ArtistDashboard() {
         body: JSON.stringify({
           full_name: profile.full_name,
           bio: profile.bio,
-          specialties: profile.specialties,
-          years_experience: profile.years_experience !== '' ? Number(profile.years_experience) : null,
           instagram_handle: profile.instagram_handle,
         }),
       });
@@ -3315,8 +3309,6 @@ export default function ArtistDashboard() {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                       {viewRow('Full Name', profile.full_name)}
                       {viewRow('Instagram', profile.instagram_handle ? `@${profile.instagram_handle.replace('@','')}` : null)}
-                      {viewRow('Specialties', profile.specialties)}
-                      {viewRow('Years Experience', profile.years_experience ? `${profile.years_experience} years` : null)}
                     </div>
                     {viewRow('Bio', profile.bio)}
                     <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.08em', color: 'var(--text-low)', margin: 0 }}>Appears on your public artist page</p>
@@ -3327,8 +3319,6 @@ export default function ArtistDashboard() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     {profileField('Full Name', 'full_name', 'text', 'Your name')}
                     {profileField('Instagram Handle', 'instagram_handle', 'text', 'yourhandle')}
-                    {profileField('Specialties', 'specialties', 'text', 'Neo-traditional, colour realism…')}
-                    {profileField('Years Experience', 'years_experience', 'number', '8')}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                     <label style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-mid)', textTransform: 'uppercase' }}>Bio</label>

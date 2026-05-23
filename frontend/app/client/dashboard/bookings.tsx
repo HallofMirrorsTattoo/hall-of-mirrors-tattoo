@@ -35,7 +35,7 @@ interface BookingDetail {
   tattoo_placement: string;
   estimated_size: string | null;
   estimated_duration: number | null;
-  artist: { id: string; name: string; specialties: string; bio: string; instagram_handle: string } | null;
+  artist: { id: string; name: string; bio: string; instagram_handle: string } | null;
   design_ideas: { design_idea_id: string; image_url: string; description: string }[];
   counter_offer_date: string | null;
   counter_offer_time: string | null;

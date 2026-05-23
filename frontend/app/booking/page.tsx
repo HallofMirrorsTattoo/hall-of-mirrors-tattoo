@@ -13,7 +13,6 @@ import type { StudioSettings } from '@/lib/studioSettings';
 interface Artist {
   id: string;
   full_name: string;
-  specialties?: string;
 }
 
 const BookingSchema = z.object({
@@ -590,7 +589,7 @@ export default function BookingPage() {
                               <option value="">No preference — studio assigns</option>
                               {artists.map((a) => (
                                 <option key={a.id} value={a.id}>
-                                  {a.full_name}{a.specialties ? ` — ${a.specialties}` : ''}
+                                  {a.full_name}
                                 </option>
                               ))}
                             </select>
@@ -717,7 +716,7 @@ export default function BookingPage() {
                               <select {...register('artistId')} id="artistId" disabled={loadingArtists}>
                                 <option value="">No preference — studio assigns</option>
                                 {artists.map((a) => (
-                                  <option key={a.id} value={a.id}>{a.full_name}{a.specialties ? ` — ${a.specialties}` : ''}</option>
+                                  <option key={a.id} value={a.id}>{a.full_name}</option>
                                 ))}
                               </select>
                             </div>
