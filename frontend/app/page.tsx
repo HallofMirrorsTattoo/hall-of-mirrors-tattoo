@@ -1,7 +1,28 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { readdirSync } from 'fs';
+import { join } from 'path';
 import ShopCarousel from './components/ShopCarousel';
 import AnimatedSection from './components/AnimatedSection';
+
+/**
+ * Picks the first image dropped into a homepage photo-slot folder.
+ * Drop any photo (any filename) into the folder and it will be used.
+ * Falls back to `fallback` if the folder is empty or missing.
+ *
+ * Folders live at:  public/assets/homepage/<slot>/
+ * Supported formats: jpg, jpeg, png, webp, avif
+ */
+function homepagePhoto(slot: string, fallback: string): string {
+  try {
+    const dir = join(process.cwd(), 'public', 'assets', 'homepage', slot);
+    const files = readdirSync(dir).filter(f =>
+      /\.(jpe?g|png|webp|avif)$/i.test(f)
+    );
+    if (files.length > 0) return `/assets/homepage/${slot}/${files[0]}`;
+  } catch { /* folder missing or unreadable — use fallback */ }
+  return fallback;
+}
 
 export const metadata = {
   title: 'Hall of Mirrors Tattoo Studio | Liverpool City Centre',
@@ -51,6 +72,31 @@ const localBusinessJsonLd = {
 const imgFilter = 'brightness(0.87) contrast(1.06) saturate(0.72) sepia(0.08)';
 
 export default function Home() {
+  // ── Homepage photo slots ────────────────────────────────────────────────────
+  // Drop any photo into the matching folder inside public/assets/homepage/
+  // to replace the image. Any filename works. Leave the folder empty to keep
+  // the current default photo.
+  const photoStudioPortrait = homepagePhoto(
+    '1-studio-portrait',
+    '/assets/shop-carousel/DSCF4202.jpg',
+  );
+  const photoFullbleed = homepagePhoto(
+    '2-fullbleed',
+    '/assets/shop-carousel/E-DSCF3046.jpg',
+  );
+  const photoStripLeft = homepagePhoto(
+    '3-strip-left',
+    '/assets/shop-carousel/DSCF4137.jpg',
+  );
+  const photoStripCentre = homepagePhoto(
+    '4-strip-centre',
+    '/assets/shop-carousel/DSCF4160.jpg',
+  );
+  const photoStripRight = homepagePhoto(
+    '5-strip-right',
+    '/assets/shop-carousel/DSCF4185.jpg',
+  );
+
   return (
     <div className="w-full">
       <script
@@ -217,7 +263,7 @@ export default function Home() {
               <AnimatedSection delay={200}>
                 <div className="photo-hover" style={{ position: 'relative', aspectRatio: '4/5', borderRadius: '1rem', overflow: 'hidden' }}>
                   <Image
-                    src="/assets/shop-carousel/DSCF4202.jpg"
+                    src={photoStudioPortrait}
                     alt="Hall of Mirrors Tattoo Studio, Liverpool"
                     fill
                     sizes="(max-width: 768px) 100vw, 50vw"
@@ -298,7 +344,7 @@ export default function Home() {
         {/* Section 4 — Self-determination (full-bleed photo) */}
         <section style={{ position: 'relative', overflow: 'hidden', minHeight: '80vh', display: 'flex', alignItems: 'center' }}>
           <Image
-            src="/assets/shop-carousel/E-DSCF3046.jpg"
+            src={photoFullbleed}
             alt="Hall of Mirrors Tattoo Studio"
             fill
             sizes="100vw"
@@ -409,11 +455,11 @@ export default function Home() {
         <section style={{ padding: '4rem 1.5rem 6rem' }}>
           <div style={{ maxWidth: '72rem', margin: '0 auto' }}>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {([
-                { src: '/assets/shop-carousel/DSCF4137.jpg', delay: 0 },
-                { src: '/assets/shop-carousel/DSCF4160.jpg', delay: 150 },
-                { src: '/assets/shop-carousel/DSCF4185.jpg', delay: 300 },
-              ] as const).map(({ src, delay }) => (
+              {[
+                { src: photoStripLeft,   delay: 0 },
+                { src: photoStripCentre, delay: 150 },
+                { src: photoStripRight,  delay: 300 },
+              ].map(({ src, delay }) => (
                 <AnimatedSection key={src} delay={delay}>
                   <div className="photo-hover" style={{ position: 'relative', aspectRatio: '3/4', borderRadius: '0.75rem', overflow: 'hidden' }}>
                     <Image
