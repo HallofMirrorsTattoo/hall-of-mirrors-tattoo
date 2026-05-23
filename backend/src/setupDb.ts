@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS "Booking" (
     booking_reference TEXT NOT NULL UNIQUE,
     appointment_date_time TIMESTAMP NOT NULL,
     estimated_duration_minutes INTEGER NOT NULL DEFAULT 120,
-    appointment_status TEXT NOT NULL DEFAULT 'pending_consent',
+    appointment_status TEXT NOT NULL DEFAULT 'pending_review',
     tattoo_type TEXT NOT NULL DEFAULT 'new_tattoo',
     tattoo_description TEXT,
     placement TEXT,
@@ -188,6 +188,9 @@ ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS intake_sent_at TIMESTAMP;
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS artist_notes TEXT;
 ALTER TABLE "Artist" ADD COLUMN IF NOT EXISTS weekly_summary_last_sent DATE;
 ALTER TABLE "Artist" ADD COLUMN IF NOT EXISTS portrait_url TEXT;
+ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS price_estimate_from DECIMAL(10,2);
+ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS price_estimate_to DECIMAL(10,2);
+ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS calendar_event_id TEXT;
 
 CREATE TABLE IF NOT EXISTS "MedicalHistory" (
     id TEXT PRIMARY KEY,

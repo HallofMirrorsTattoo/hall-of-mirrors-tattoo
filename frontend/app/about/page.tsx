@@ -212,7 +212,7 @@ export default async function About() {
           </ul>
 
           <p style={{ ...paraStyle, fontSize: '0.9375rem', marginBottom: '1.25rem' }}>
-            We are directly facing Castle St Townhouse — the tall brown door between El Gato Negro Tapas and Photo. Buzz suite 3 on the intercom and take the lift to the second floor, then just 5 steps up and you will be at our front door.
+            We are directly facing Castle St Townhouse — the tall brown door between El Gato Negro Tapas and Pho. Buzz suite 3 on the intercom and take the lift to the second floor, then just 5 steps up and you will be at our front door.
           </p>
 
           <p style={{ ...paraStyle, fontSize: '0.9375rem', marginBottom: '1.25rem' }}>
@@ -324,7 +324,7 @@ export default async function About() {
             {[
               'If the Secondskin comes off prematurely, wash the area and pat dry with a paper towel.',
               'Apply the second piece your artist provided to the dry area within 5–10 minutes (leave a generous border).',
-              'Do not apply the Secondskin if your tattoo has had contact with the open air for longer than 20 minutes as this changes the practice of wet healing.',
+              'Do not apply the Secondskin if your tattoo has had contact with the open air for longer than 20 minutes.',
               "If you aren't able to apply your Secondskin within 20 minutes, discard it and allow the tattoo to completely dry out. Clean and moisturise as many times as your artist suggested.",
             ].map((item, i) => (
               <div key={i} style={numberedItemStyle}>

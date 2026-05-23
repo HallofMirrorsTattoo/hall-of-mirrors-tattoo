@@ -84,6 +84,8 @@ interface Booking {
   counter_offer_note?: string | null;
   counter_offered_by?: string | null;
   final_price_estimate?: number | null;
+  price_estimate_from?: number | null;
+  price_estimate_to?: number | null;
   client_budget?: number | null;
   price_offer_status?: string;
   price_offer_note?: string | null;
@@ -117,11 +119,12 @@ const labelStyle: React.CSSProperties = {
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { bg: string; color: string; label: string }> = {
-    pending_consent: { bg: 'rgba(234,179,8,0.12)', color: '#CA8A04', label: 'Pending consent' },
-    confirmed:       { bg: 'rgba(34,197,94,0.12)',  color: '#16A34A', label: 'Confirmed' },
+    pending_review:  { bg: 'rgba(148,163,184,0.12)', color: '#94A3B8', label: 'Pending review' },
+    pending_consent: { bg: 'rgba(234,179,8,0.12)',  color: '#CA8A04', label: 'Pending consent' },
+    confirmed:       { bg: 'rgba(34,197,94,0.12)',   color: '#16A34A', label: 'Confirmed' },
     completed:       { bg: 'rgba(201,168,76,0.12)', color: 'var(--gold)', label: 'Completed' },
     cancelled:       { bg: 'rgba(239,68,68,0.12)',  color: '#DC2626', label: 'Cancelled' },
-    rescheduled:     { bg: 'rgba(99,102,241,0.12)', color: '#818CF8', label: 'Rescheduled' },
+    rescheduled:     { bg: 'rgba(99,102,241,0.12)', color: '#818CF8', label: 'Reschedule Request' },
     pending:         { bg: 'rgba(234,179,8,0.12)',  color: '#CA8A04', label: 'Pending' },
     responded:       { bg: 'rgba(34,197,94,0.12)',  color: '#16A34A', label: 'Responded' },
     counter_offered: { bg: 'rgba(201,168,76,0.15)', color: 'var(--gold)', label: 'Counter offer' },
@@ -213,11 +216,15 @@ export default function ArtistDashboard() {
   const [detailDraft, setDetailDraft] = useState('');
   const [detailSending, setDetailSending] = useState(false);
   const [detailMsgError, setDetailMsgError] = useState('');
+  const [detailImage, setDetailImage] = useState<File | null>(null);
+  const [detailImagePreview, setDetailImagePreview] = useState<string | null>(null);
+  const detailFileInputRef = useRef<HTMLInputElement>(null);
   const detailAreaRef = useRef<HTMLDivElement>(null);
   const detailPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Price offer state
-  const [priceOfferAmount, setPriceOfferAmount] = useState('');
+  const [priceOfferFrom, setPriceOfferFrom] = useState('');
+  const [priceOfferTo, setPriceOfferTo] = useState('');
   const [priceOfferNote, setPriceOfferNote] = useState('');
   const [priceOfferActing, setPriceOfferActing] = useState(false);
   const [priceOfferError, setPriceOfferError] = useState('');
@@ -832,7 +839,12 @@ export default function ArtistDashboard() {
   };
 
   const handleArtistPriceOffer = async () => {
-    if (!selectedBooking || !priceOfferAmount.trim()) return;
+    if (!selectedBooking || !priceOfferFrom.trim() || !priceOfferTo.trim()) return;
+    const from = parseFloat(priceOfferFrom);
+    const to = parseFloat(priceOfferTo);
+    if (isNaN(from) || from <= 0) { setPriceOfferError('Enter a valid "from" amount'); return; }
+    if (isNaN(to) || to <= 0) { setPriceOfferError('Enter a valid "to" amount'); return; }
+    if (to < from) { setPriceOfferError('"To" must be greater than or equal to "From"'); return; }
     setPriceOfferActing(true);
     setPriceOfferError('');
     try {
@@ -841,16 +853,16 @@ export default function ArtistDashboard() {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-          body: JSON.stringify({ final_price_estimate: parseFloat(priceOfferAmount), price_offer_note: priceOfferNote.trim() || undefined }),
+          body: JSON.stringify({ price_from: from, price_to: to, price_offer_note: priceOfferNote.trim() || undefined }),
         }
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to send price offer');
-      const price = parseFloat(priceOfferAmount);
       const note = priceOfferNote.trim() || null;
-      setBookings(prev => prev.map(b => b.id === selectedBooking.id ? { ...b, final_price_estimate: price, price_offer_status: 'offered', price_offer_note: note } : b));
-      setSelectedBooking(prev => prev ? { ...prev, final_price_estimate: price, price_offer_status: 'offered', price_offer_note: note } : prev);
-      setPriceOfferAmount('');
+      setBookings(prev => prev.map(b => b.id === selectedBooking.id ? { ...b, price_estimate_from: from, price_estimate_to: to, final_price_estimate: Math.round((from + to) / 2 * 100) / 100, price_offer_status: 'offered', price_offer_note: note } : b));
+      setSelectedBooking(prev => prev ? { ...prev, price_estimate_from: from, price_estimate_to: to, final_price_estimate: Math.round((from + to) / 2 * 100) / 100, price_offer_status: 'offered', price_offer_note: note } : prev);
+      setPriceOfferFrom('');
+      setPriceOfferTo('');
       setPriceOfferNote('');
     } catch (e) {
       setPriceOfferError(e instanceof Error ? e.message : 'Failed to send price offer');
@@ -883,19 +895,33 @@ export default function ArtistDashboard() {
   }, [detailMsgs]);
 
   const sendDetailMsg = async () => {
-    if (!detailDraft.trim() || detailSending || !selectedBooking?.id) return;
+    if ((!detailDraft.trim() && !detailImage) || detailSending || !selectedBooking?.id) return;
     setDetailSending(true);
     setDetailMsgError('');
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/messages/${selectedBooking.id}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ body: detailDraft.trim() }),
-      });
+      let res: Response;
+      if (detailImage) {
+        const fd = new FormData();
+        if (detailDraft.trim()) fd.append('body', detailDraft.trim());
+        fd.append('image', detailImage);
+        res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/messages/${selectedBooking.id}`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}` },
+          body: fd,
+        });
+      } else {
+        res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/messages/${selectedBooking.id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+          body: JSON.stringify({ body: detailDraft.trim() }),
+        });
+      }
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to send');
       setDetailMsgs(prev => [...prev, data.message]);
       setDetailDraft('');
+      setDetailImage(null);
+      setDetailImagePreview(null);
     } catch (e) {
       setDetailMsgError(e instanceof Error ? e.message : 'Failed to send message');
     } finally {
@@ -956,7 +982,7 @@ export default function ArtistDashboard() {
     }
   };
 
-  const activeStatuses = ['pending_consent', 'confirmed', 'rescheduled', 'counter_offered'];
+  const activeStatuses = ['pending_review', 'pending_consent', 'confirmed', 'rescheduled', 'counter_offered'];
   const filteredBookings = bookings.filter((b) => statusFilter === 'all' || b.appointment_status === statusFilter);
   const pastBookingsAll = bookings.filter((b) => !activeStatuses.includes(b.appointment_status));
 
@@ -972,7 +998,7 @@ export default function ArtistDashboard() {
       <button
         key={booking.id}
         type="button"
-        onClick={() => { setSelectedBooking(isSelected ? null : booking); setArtistActionMode('none'); setCounterOfferDate(null); setCounterOfferSlot(null); setCounterOfferNote(''); setPriceOfferAmount(''); setPriceOfferNote(''); setPriceOfferError(''); }}
+        onClick={() => { setSelectedBooking(isSelected ? null : booking); setArtistActionMode('none'); setCounterOfferDate(null); setCounterOfferSlot(null); setCounterOfferNote(''); setPriceOfferFrom(''); setPriceOfferTo(''); setPriceOfferNote(''); setPriceOfferError(''); }}
         style={{
           display: 'grid', gridTemplateColumns: '1fr auto', alignItems: 'center',
           gap: '1rem', width: '100%', padding: '1.25rem 1.5rem',
@@ -1010,7 +1036,7 @@ export default function ArtistDashboard() {
           <h3 style={{ margin: 0, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.375rem', fontWeight: 300, color: 'var(--cream)' }}>
             Booking details
           </h3>
-          <button onClick={() => { setSelectedBooking(null); setArtistActionMode('none'); setCounterOfferDate(null); setCounterOfferSlot(null); setCounterOfferNote(''); setPriceOfferAmount(''); setPriceOfferNote(''); setPriceOfferError(''); }} style={{ background: 'none', border: 'none', color: 'var(--text-low)', cursor: 'pointer', fontSize: '1.25rem', lineHeight: 1 }}>×</button>
+          <button onClick={() => { setSelectedBooking(null); setArtistActionMode('none'); setCounterOfferDate(null); setCounterOfferSlot(null); setCounterOfferNote(''); setPriceOfferFrom(''); setPriceOfferTo(''); setPriceOfferNote(''); setPriceOfferError(''); }} style={{ background: 'none', border: 'none', color: 'var(--text-low)', cursor: 'pointer', fontSize: '1.25rem', lineHeight: 1 }}>×</button>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '1.75rem' }}>
@@ -1140,13 +1166,21 @@ export default function ArtistDashboard() {
             {selectedBooking.price_offer_status === 'accepted' && (
               <div style={{ padding: '0.75rem 1rem', background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '0.5rem', marginBottom: '0.875rem' }}>
                 <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(34,197,94,0.8)', margin: '0 0 0.25rem' }}>Price accepted</p>
-                <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '1rem', color: 'var(--cream)', margin: 0, fontWeight: 500 }}>£{selectedBooking.final_price_estimate}</p>
+                <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '1rem', color: 'var(--cream)', margin: 0, fontWeight: 500 }}>
+                  {selectedBooking.price_estimate_from && selectedBooking.price_estimate_to && selectedBooking.price_estimate_from !== selectedBooking.price_estimate_to
+                    ? `£${selectedBooking.price_estimate_from} – £${selectedBooking.price_estimate_to}`
+                    : `£${selectedBooking.final_price_estimate}`}
+                </p>
               </div>
             )}
             {selectedBooking.price_offer_status === 'offered' && (
               <div style={{ padding: '0.75rem 1rem', background: 'rgba(201,168,76,0.07)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: '0.5rem', marginBottom: '0.875rem' }}>
                 <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)', margin: '0 0 0.25rem' }}>Awaiting client acceptance</p>
-                <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '1rem', color: 'var(--cream)', margin: 0, fontWeight: 500 }}>£{selectedBooking.final_price_estimate}</p>
+                <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '1rem', color: 'var(--cream)', margin: 0, fontWeight: 500 }}>
+                  {selectedBooking.price_estimate_from && selectedBooking.price_estimate_to && selectedBooking.price_estimate_from !== selectedBooking.price_estimate_to
+                    ? `£${selectedBooking.price_estimate_from} – £${selectedBooking.price_estimate_to}`
+                    : `£${selectedBooking.final_price_estimate}`}
+                </p>
                 {selectedBooking.price_offer_note && (
                   <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text)', margin: '0.5rem 0 0', fontStyle: 'italic', lineHeight: 1.65 }}>&ldquo;{selectedBooking.price_offer_note}&rdquo;</p>
                 )}
@@ -1154,17 +1188,31 @@ export default function ArtistDashboard() {
             )}
             {selectedBooking.price_offer_status !== 'accepted' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontFamily: '"DM Mono", monospace', fontSize: '0.875rem', color: 'var(--text-low)', pointerEvents: 'none' }}>£</span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    placeholder={selectedBooking.final_price_estimate ? String(selectedBooking.final_price_estimate) : 'Enter amount'}
-                    value={priceOfferAmount}
-                    onChange={e => setPriceOfferAmount(e.target.value)}
-                    style={{ width: '100%', paddingLeft: '1.75rem' }}
-                  />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                  <div style={{ position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', color: 'var(--text-low)', pointerEvents: 'none' }}>From £</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      placeholder="150"
+                      value={priceOfferFrom}
+                      onChange={e => setPriceOfferFrom(e.target.value)}
+                      style={{ width: '100%', paddingLeft: '3.5rem' }}
+                    />
+                  </div>
+                  <div style={{ position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', color: 'var(--text-low)', pointerEvents: 'none' }}>To £</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      placeholder="250"
+                      value={priceOfferTo}
+                      onChange={e => setPriceOfferTo(e.target.value)}
+                      style={{ width: '100%', paddingLeft: '3rem' }}
+                    />
+                  </div>
                 </div>
                 <textarea
                   value={priceOfferNote}
@@ -1177,9 +1225,9 @@ export default function ArtistDashboard() {
                 <button
                   type="button"
                   onClick={handleArtistPriceOffer}
-                  disabled={!priceOfferAmount.trim() || priceOfferActing}
+                  disabled={!priceOfferFrom.trim() || !priceOfferTo.trim() || priceOfferActing}
                   className="btn-primary"
-                  style={{ width: '100%', padding: '0.7rem', opacity: (!priceOfferAmount.trim() || priceOfferActing) ? 0.5 : 1, cursor: (!priceOfferAmount.trim() || priceOfferActing) ? 'default' : 'pointer' }}
+                  style={{ width: '100%', padding: '0.7rem', opacity: (!priceOfferFrom.trim() || !priceOfferTo.trim() || priceOfferActing) ? 0.5 : 1, cursor: (!priceOfferFrom.trim() || !priceOfferTo.trim() || priceOfferActing) ? 'default' : 'pointer' }}
                 >
                   {priceOfferActing ? 'Sending…' : selectedBooking.price_offer_status === 'offered' ? 'Re-send price offer' : 'Send price offer to client'}
                 </button>
@@ -1188,12 +1236,9 @@ export default function ArtistDashboard() {
           </div>
         )}
 
-        {/* Notes — private to artist only */}
+        {/* Notes — visible to client */}
         <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem', marginBottom: '1.25rem' }}>
           <span style={{ ...labelStyle, marginBottom: '0.25rem' }}>Notes</span>
-          <p style={{ margin: '0 0 0.625rem', fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--text-low)' }}>
-            Private — visible to you only
-          </p>
           <textarea
             value={notesText}
             onChange={(e) => { setNotesText(e.target.value); setNotesSaving('idle'); }}
@@ -1503,8 +1548,8 @@ export default function ArtistDashboard() {
           </div>
         )}
 
-        {/* Pending consent — confirm/decline + optional propose time */}
-        {(selectedBooking.appointment_status === 'pending_consent' || selectedBooking.appointment_status === 'rescheduled') && (
+        {/* Pending review — confirm/decline + optional propose time */}
+        {(selectedBooking.appointment_status === 'pending_review' || selectedBooking.appointment_status === 'rescheduled') && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
             {artistActionMode === 'none' && (
               <>
@@ -1676,7 +1721,42 @@ export default function ArtistDashboard() {
             )}
           </div>
           {detailMsgError && <p style={{ margin: '0 0 0.375rem', fontSize: '0.75rem', color: '#f87171' }}>{detailMsgError}</p>}
+
+          {/* Image preview */}
+          {detailImagePreview && (
+            <div style={{ position: 'relative', display: 'inline-block', marginBottom: '0.5rem' }}>
+              <img src={detailImagePreview} alt="Preview" style={{ height: '4rem', borderRadius: '0.375rem', border: '1px solid rgba(201,168,76,0.3)' }} />
+              <button
+                type="button"
+                onClick={() => { setDetailImage(null); setDetailImagePreview(null); }}
+                style={{ position: 'absolute', top: '-0.375rem', right: '-0.375rem', width: '1.25rem', height: '1.25rem', borderRadius: '50%', background: 'rgba(14,12,9,0.9)', border: '1px solid rgba(201,168,76,0.4)', color: 'var(--gold)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.625rem', lineHeight: 1, padding: 0 }}
+                aria-label="Remove image"
+              >✕</button>
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+            <input
+              type="file"
+              ref={detailFileInputRef}
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setDetailImage(file);
+                const reader = new FileReader();
+                reader.onload = (ev) => setDetailImagePreview(ev.target?.result as string);
+                reader.readAsDataURL(file);
+                e.target.value = '';
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => detailFileInputRef.current?.click()}
+              title="Attach image"
+              style={{ flexShrink: 0, width: '2.25rem', height: '2.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: detailImage ? 'rgba(201,168,76,0.15)' : 'var(--surface)', border: `1px solid ${detailImage ? 'rgba(201,168,76,0.5)' : 'var(--border)'}`, borderRadius: '0.5rem', cursor: 'pointer', color: detailImage ? 'var(--gold)' : 'var(--text-mid)', fontSize: '0.9rem', lineHeight: 1 }}
+            >📎</button>
             <textarea
               value={detailDraft}
               onChange={(e) => setDetailDraft(e.target.value)}
@@ -1688,9 +1768,9 @@ export default function ArtistDashboard() {
             <button
               type="button"
               onClick={sendDetailMsg}
-              disabled={!detailDraft.trim() || detailSending}
+              disabled={(!detailDraft.trim() && !detailImage) || detailSending}
               className="btn-primary"
-              style={{ padding: '0.5rem 0.875rem', flexShrink: 0, opacity: (!detailDraft.trim() || detailSending) ? 0.5 : 1, cursor: (!detailDraft.trim() || detailSending) ? 'default' : 'pointer' }}
+              style={{ padding: '0.5rem 0.875rem', flexShrink: 0, opacity: ((!detailDraft.trim() && !detailImage) || detailSending) ? 0.5 : 1, cursor: ((!detailDraft.trim() && !detailImage) || detailSending) ? 'default' : 'pointer' }}
             >
               {detailSending ? '…' : '→'}
             </button>
@@ -1962,7 +2042,7 @@ export default function ArtistDashboard() {
             <div>
               {/* Status filter */}
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-                {['all', 'pending_consent', 'confirmed', 'rescheduled', 'completed', 'cancelled'].map((s) => (
+                {['all', 'pending_review', 'pending_consent', 'confirmed', 'rescheduled', 'completed', 'cancelled'].map((s) => (
                   <button
                     key={s}
                     onClick={() => setStatusFilter(s)}
@@ -2892,7 +2972,7 @@ export default function ArtistDashboard() {
 
           const completed  = bookings.filter(b => b.appointment_status === 'completed');
           const confirmed  = bookings.filter(b => b.appointment_status === 'confirmed');
-          const pending    = bookings.filter(b => ['pending', 'pending_consent', 'rescheduled'].includes(b.appointment_status));
+          const pending    = bookings.filter(b => ['pending', 'pending_review', 'pending_consent', 'rescheduled'].includes(b.appointment_status));
           const cancelled  = bookings.filter(b => b.appointment_status === 'cancelled');
 
           const thisMonthAll       = bookings.filter(b => getMonthKey(b) === thisMonthKey);

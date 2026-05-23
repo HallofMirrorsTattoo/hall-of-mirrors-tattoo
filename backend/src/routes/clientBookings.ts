@@ -110,7 +110,8 @@ router.get('/:id', async (req: Request, res: Response) => {
               b.counter_offer_date, b.counter_offer_time,
               b.counter_offer_note, b.counter_offered_by,
               b.client_budget, b.price_offer_status, b.price_offer_note,
-              b.payment_method,
+              b.payment_method, b.artist_notes,
+              b.price_estimate_from, b.price_estimate_to,
               b.created_at, b.updated_at,
               a.id as artist_id, a.full_name as artist_name, a.specialties, a.bio, a.instagram_handle,
               CASE WHEN cf.id IS NOT NULL THEN true ELSE false END as consent_form_signed

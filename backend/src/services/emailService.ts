@@ -747,8 +747,10 @@ export async function sendPriceOfferToClient(data: {
   clientName: string;
   bookingReference: string;
   price: number;
+  priceRange?: string;
   note?: string;
 }): Promise<void> {
+  const displayPrice = data.priceRange ?? `£${data.price}`;
   const noteBlock = data.note
     ? `<div style="margin:16px 0;padding:16px 20px;border-left:2px solid #C9A84C;background:rgba(201,168,76,0.05);"><p style="margin:0;font-size:15px;line-height:1.75;color:#EDE8D8;font-style:italic;">"${data.note}"</p><p style="margin:8px 0 0;font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(201,168,76,0.5);">— ${data.artistName}</p></div>`
     : '';
@@ -758,7 +760,7 @@ export async function sendPriceOfferToClient(data: {
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
       ${detail('Reference', data.bookingReference)}
       ${detail('Artist', data.artistName)}
-      ${detail('Price estimate', `£${data.price}`)}
+      ${detail('Price estimate', displayPrice)}
     </table>
     ${noteBlock}
     ${ctaButton(`${FRONTEND_URL}/client/bookings/${data.bookingReference}`, 'View and accept →')}

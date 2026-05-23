@@ -15,7 +15,7 @@ import {
   sendPriceAcceptedToArtist,
 } from '../services/emailService.js';
 import { logBookingActivity } from '../utils/logBookingActivity.js';
-import { pushCalendarEvent } from '../services/googleCalendarService.js';
+import { pushCalendarEvent, deleteCalendarEvent } from '../services/googleCalendarService.js';
 
 const { Client } = pkg;
 
@@ -162,7 +162,7 @@ export async function createBooking(req: Request, res: Response) {
         validatedData.artistId || null,
         appointmentDateTime,
         appointmentTime,
-        'pending_consent',
+        'pending_review',
         validatedData.tattooDesignDescription,
         validatedData.estimatedPlacement,
         validatedData.estimatedSize,
@@ -527,7 +527,7 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
     const { status, notes, duration_hours, notify_end_time, new_appointment_date, new_appointment_time, payment_method } = req.body;
 
     // Validate status
-    const validStatuses = ['pending_consent', 'confirmed', 'completed', 'cancelled'];
+    const validStatuses = ['pending_review', 'pending_consent', 'confirmed', 'completed', 'cancelled'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
@@ -567,9 +567,17 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
       return res.status(403).json({ success: false, error: 'You do not have access to this booking' });
     }
 
+    // When artist "confirms" a pending_review booking (initial acceptance + duration set),
+    // move to pending_consent so the client gets prompted to sign the consent form.
+    // The booking only becomes fully "confirmed" after the consent form is submitted.
+    const resolvedStatus =
+      status === 'confirmed' && duration_hours !== undefined && booking.appointment_status === 'pending_review'
+        ? 'pending_consent'
+        : status;
+
     // Build update fields
     const setClauses: string[] = ['appointment_status = $1', 'artist_notes = $2', 'updated_at = NOW()'];
-    const params: unknown[] = [status, notes ?? booking.artist_notes, id];
+    const params: unknown[] = [resolvedStatus, notes ?? booking.artist_notes, id];
 
     if (status === 'confirmed' && duration_hours !== undefined) {
       setClauses.push(`estimated_duration_minutes = $${params.length}`);
@@ -624,7 +632,8 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
         actorType: 'artist',
         action: 'booking_cancelled',
       });
-    } else if (status === 'confirmed') {
+    } else if (resolvedStatus === 'pending_consent' && duration_hours !== undefined) {
+      // Artist accepted the booking — time is set, client now needs to sign consent form
       await logBookingActivity(client, {
         bookingId: id,
         actorType: 'artist',
@@ -634,8 +643,8 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
 
     // ── Post-update emails ────────────────────────────────────────────────────
 
-    // Booking confirmed with duration → send confirmed email to client
-    if (status === 'confirmed' && duration_hours !== undefined && booking.email && booking.appointment_time) {
+    // Artist accepted booking with duration → notify client to sign consent form
+    if (resolvedStatus === 'pending_consent' && duration_hours !== undefined && booking.email && booking.appointment_time) {
       const startHour = parseInt(booking.appointment_time.substring(0, 2), 10);
       const endHour = startHour + Number(duration_hours);
       const appointmentDate = new Date(booking.appointment_date_time);
@@ -653,8 +662,8 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
       }).catch((e) => console.error('[email] booking confirmed failed:', e));
     }
 
-    // Push event to artist's Google Calendar (non-fatal)
-    if (status === 'confirmed' && booking.artist_id && booking.appointment_time && duration_hours !== undefined) {
+    // Push event to artist's Google Calendar once artist accepts (non-fatal)
+    if (resolvedStatus === 'pending_consent' && booking.artist_id && booking.appointment_time && duration_hours !== undefined) {
       pushCalendarEvent(booking.artist_id, {
         client_name: `${booking.first_name} ${booking.last_name}`,
         appointment_date: new Date(booking.appointment_date_time).toISOString().slice(0, 10),
@@ -663,11 +672,50 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
         design_description: booking.design_description ?? null,
         placement: booking.placement ?? null,
         booking_reference: booking.booking_reference,
+      }).then(async (eventId) => {
+        if (eventId) {
+          const db2 = new Client({ connectionString: process.env.DATABASE_URL });
+          await db2.connect();
+          try {
+            await db2.query('UPDATE "Booking" SET calendar_event_id = $1 WHERE id = $2', [eventId, id]);
+          } finally {
+            await db2.end();
+          }
+        }
       }).catch((err) => console.error('[GoogleCalendar] event push failed:', err));
     }
 
-    // Artist cancelled a previously confirmed booking → notify client
-    if (status === 'cancelled' && previousStatus === 'confirmed' && booking.email) {
+    // Artist rescheduled → delete old calendar event and create a new one
+    if (new_appointment_date && new_appointment_time && booking.artist_id) {
+      const oldEventId: string | null = booking.calendar_event_id ?? null;
+      const durationMins: number = booking.estimated_duration_minutes ?? 120;
+      if (oldEventId) {
+        deleteCalendarEvent(booking.artist_id, oldEventId)
+          .catch((err) => console.error('[GoogleCalendar] delete old event failed:', err));
+      }
+      pushCalendarEvent(booking.artist_id, {
+        client_name: `${booking.first_name} ${booking.last_name}`,
+        appointment_date: new_appointment_date,
+        appointment_time: new_appointment_time,
+        duration_minutes: durationMins,
+        design_description: booking.design_description ?? null,
+        placement: booking.placement ?? null,
+        booking_reference: booking.booking_reference,
+      }).then(async (eventId) => {
+        if (eventId) {
+          const db3 = new Client({ connectionString: process.env.DATABASE_URL });
+          await db3.connect();
+          try {
+            await db3.query('UPDATE "Booking" SET calendar_event_id = $1 WHERE id = $2', [eventId, id]);
+          } finally {
+            await db3.end();
+          }
+        }
+      }).catch((err) => console.error('[GoogleCalendar] reschedule event push failed:', err));
+    }
+
+    // Artist cancelled a previously accepted/confirmed booking → notify client
+    if (status === 'cancelled' && ['pending_consent', 'confirmed'].includes(previousStatus) && booking.email) {
       sendArtistCancellationToClient({
         clientEmail: booking.email,
         clientName: `${booking.first_name} ${booking.last_name}`,
@@ -927,11 +975,18 @@ export async function artistPriceOffer(req: Request, res: Response) {
     if (!req.artist) return res.status(401).json({ success: false, error: 'Not authenticated' });
 
     const { id } = req.params;
-    const { final_price_estimate, price_offer_note } = req.body;
+    const { price_from, price_to, price_offer_note } = req.body;
 
-    const price = parseFloat(final_price_estimate);
-    if (!price || price <= 0) {
-      return res.status(400).json({ success: false, error: 'final_price_estimate must be a positive number' });
+    const priceFrom = parseFloat(price_from);
+    const priceTo = parseFloat(price_to);
+    if (!priceFrom || priceFrom <= 0) {
+      return res.status(400).json({ success: false, error: 'price_from must be a positive number' });
+    }
+    if (!priceTo || priceTo <= 0) {
+      return res.status(400).json({ success: false, error: 'price_to must be a positive number' });
+    }
+    if (priceTo < priceFrom) {
+      return res.status(400).json({ success: false, error: 'price_to must be greater than or equal to price_from' });
     }
 
     await client.connect();
@@ -952,12 +1007,14 @@ export async function artistPriceOffer(req: Request, res: Response) {
 
     const updated = await client.query(
       `UPDATE "Booking"
-       SET final_price_estimate = $2,
+       SET price_estimate_from = $2,
+           price_estimate_to = $3,
+           final_price_estimate = $4,
            price_offer_status = 'offered',
-           price_offer_note = $3,
+           price_offer_note = $5,
            updated_at = NOW()
        WHERE id = $1 RETURNING *`,
-      [id, price, price_offer_note?.trim() || null]
+      [id, priceFrom, priceTo, Math.round((priceFrom + priceTo) / 2 * 100) / 100, price_offer_note?.trim() || null]
     );
 
     sendPriceOfferToClient({
@@ -965,7 +1022,8 @@ export async function artistPriceOffer(req: Request, res: Response) {
       clientEmail: booking.email,
       clientName: `${booking.first_name} ${booking.last_name}`,
       bookingReference: booking.booking_reference,
-      price,
+      price: priceFrom,
+      priceRange: priceFrom === priceTo ? undefined : `£${priceFrom} – £${priceTo}`,
       note: price_offer_note?.trim() || undefined,
     }).catch((e) => console.error('[email] price offer to client failed:', e));
 

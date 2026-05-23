@@ -123,7 +123,7 @@ export async function pushCalendarEvent(artistId: string, booking: {
     booking.design_description ? `Design: ${booking.design_description}` : null,
   ].filter(Boolean).join('\n');
 
-  await calendar.events.insert({
+  const event = await calendar.events.insert({
     calendarId: 'primary',
     requestBody: {
       summary:     `Tattoo — ${booking.client_name}`,
@@ -134,4 +134,38 @@ export async function pushCalendarEvent(artistId: string, booking: {
       colorId: '5', // banana/yellow — closest to gold
     },
   });
+
+  // Return the event ID so the caller can store it for future rescheduling
+  return event.data.id ?? undefined;
+}
+
+export async function deleteCalendarEvent(artistId: string, eventId: string): Promise<void> {
+  const stored = await getGoogleTokens(artistId);
+  if (!stored) return;
+
+  const oauth2Client = createOAuth2Client();
+  oauth2Client.setCredentials({
+    access_token:  stored.access_token,
+    refresh_token: stored.refresh_token,
+    expiry_date:   stored.expiry_date,
+  });
+
+  oauth2Client.on('tokens', async (newTokens) => {
+    if (newTokens.access_token) {
+      await saveGoogleTokens(artistId, {
+        access_token:  newTokens.access_token,
+        refresh_token: newTokens.refresh_token ?? null,
+        expiry_date:   newTokens.expiry_date   ?? null,
+      });
+    }
+  });
+
+  const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+
+  try {
+    await calendar.events.delete({ calendarId: 'primary', eventId });
+  } catch (err: any) {
+    // 404 means event was already deleted — swallow silently
+    if (err?.code !== 404 && err?.response?.status !== 404) throw err;
+  }
 }

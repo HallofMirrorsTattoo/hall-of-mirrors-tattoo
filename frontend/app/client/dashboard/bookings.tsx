@@ -46,6 +46,9 @@ interface BookingDetail {
   price_offer_status?: string;
   price_offer_note?: string | null;
   client_budget?: number | null;
+  artist_notes?: string | null;
+  price_estimate_from?: number | null;
+  price_estimate_to?: number | null;
 }
 
 interface Msg {
@@ -79,6 +82,7 @@ function fmtDuration(minutes: number): string {
 }
 
 function statusLabel(status: string) {
+  if (status === 'pending_review') return 'Under review';
   if (status === 'pending_consent') return 'Awaiting consent';
   if (status === 'counter_offered') return 'Counter offered';
   return status.replace(/_/g, ' ');
@@ -88,6 +92,8 @@ function getStatusStyle(status: string): React.CSSProperties {
   switch (status) {
     case 'confirmed':
       return { background: 'rgba(201,168,76,0.12)', color: 'var(--gold)', border: '1px solid rgba(201,168,76,0.25)' };
+    case 'pending_review':
+      return { background: 'rgba(148,163,184,0.12)', color: '#94A3B8', border: '1px solid rgba(148,163,184,0.25)' };
     case 'pending_consent':
       return { background: 'rgba(201,168,76,0.08)', color: 'rgba(201,168,76,0.7)', border: '1px solid rgba(201,168,76,0.18)' };
     case 'counter_offered':
@@ -126,6 +132,7 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showPast, setShowPast] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Expanded detail state
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -142,6 +149,14 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const msgAreaRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Mobile detection
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   // Fetch booking list
   useEffect(() => {
@@ -280,7 +295,7 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
 
   if (error) return <p style={{ color: 'var(--error-text)', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem' }}>{error}</p>;
 
-  const activeStatuses = ['pending_consent', 'confirmed', 'rescheduled', 'counter_offered', 'pending'];
+  const activeStatuses = ['pending_review', 'pending_consent', 'confirmed', 'rescheduled', 'counter_offered', 'pending'];
   const activeBookings = bookings.filter(b => activeStatuses.includes(b.appointment_status));
   const pastBookings = bookings.filter(b => !activeStatuses.includes(b.appointment_status));
 
@@ -474,7 +489,7 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
         )}
 
         {/* Key details grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.625rem' }}>
           <div style={{ padding: '0.75rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.5rem' }}>
             <p style={lbl}>Date</p>
             <p style={val}>
@@ -493,10 +508,16 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
               <p style={val}>{detail.deposit_price ? `£${detail.deposit_price}` : '—'}</p>
             </div>
           ) : null}
-          {detail.final_price ? (
+          {(detail.final_price || detail.price_estimate_from) ? (
             <div style={{ padding: '0.75rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.5rem' }}>
-              <p style={lbl}>Final payment</p>
-              <p style={{ ...val, color: 'var(--gold)' }}>£{detail.final_price}</p>
+              <p style={lbl}>Estimated price</p>
+              <p style={{ ...val, color: 'var(--gold)' }}>
+                {detail.price_estimate_from && detail.price_estimate_to && detail.price_estimate_from !== detail.price_estimate_to
+                  ? `£${detail.price_estimate_from} – £${detail.price_estimate_to}`
+                  : detail.price_estimate_from
+                    ? `£${detail.price_estimate_from}`
+                    : `£${detail.final_price}`}
+              </p>
             </div>
           ) : null}
           {detail.estimated_duration != null && detail.estimated_duration > 0 && (
@@ -506,6 +527,16 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
             </div>
           )}
         </div>
+
+        {/* Artist notes */}
+        {detail.artist_notes && (
+          <div style={{ padding: '0.875rem 1rem', background: 'var(--surface)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '0.5rem' }}>
+            <p style={{ ...lbl, marginBottom: '0.375rem' }}>Notes from your artist</p>
+            <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.75 }}>
+              {detail.artist_notes}
+            </p>
+          </div>
+        )}
 
         {/* Design info */}
         {(detail.tattoo_placement || detail.design_notes) && (
@@ -726,86 +757,103 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
 
   return (
     <div>
-      {/* Two-panel layout when something is selected; list-only otherwise */}
-      <div style={{ display: 'grid', gridTemplateColumns: hasSelected ? 'minmax(0,260px) minmax(0,1fr)' : '1fr', gap: '1rem', alignItems: 'start' }}>
-
-        {/* Booking list */}
+      {/* Mobile: full-screen detail view */}
+      {isMobile && hasSelected ? (
         <div>
-          {/* Active bookings */}
-          {activeBookings.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: pastBookings.length > 0 ? '1rem' : 0 }}>
-              {activeBookings.map(b => <BookingRow key={b.id} booking={b} />)}
-            </div>
-          )}
+          {/* Back button */}
+          <button
+            type="button"
+            onClick={() => { setSelectedId(null); setDetail(null); }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-low)', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '0 0 1rem', marginBottom: '0.25rem' }}
+          >
+            ← Back to bookings
+          </button>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '1.25rem', overflowY: 'auto' }}>
+            <DetailPanel />
+          </div>
+        </div>
+      ) : (
+        /* Desktop: two-panel grid; mobile: list only */
+        <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: hasSelected ? 'minmax(0,260px) minmax(0,1fr)' : '1fr', gap: '1rem', alignItems: 'start' }}>
 
-          {activeBookings.length === 0 && !hasSelected && (
-            <div style={{ textAlign: 'center', padding: '2rem 0', marginBottom: '1rem' }}>
-              <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-low)', marginBottom: '1rem' }}>
-                No upcoming bookings
-              </p>
-              <Link href="/booking" className="btn-primary" style={{ display: 'inline-flex' }}>
-                <span>Book a session</span>
-                <span className="btn-icon" aria-hidden="true">↗</span>
-              </Link>
-            </div>
-          )}
+          {/* Booking list */}
+          <div>
+            {/* Active bookings */}
+            {activeBookings.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: pastBookings.length > 0 ? '1rem' : 0 }}>
+                {activeBookings.map(b => <BookingRow key={b.id} booking={b} />)}
+              </div>
+            )}
 
-          {/* Past bookings — collapsed by default */}
-          {pastBookings.length > 0 && (
-            <div>
-              <button
-                type="button"
-                onClick={() => setShowPast(p => !p)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '0.5rem',
-                  background: 'none', border: 'none', padding: '0.625rem 0',
-                  cursor: 'pointer', borderTop: '1px solid var(--border)',
-                  width: '100%', textAlign: 'left',
-                  marginBottom: showPast ? '0.5rem' : 0,
-                }}
-              >
-                <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
-                  Past ({pastBookings.length})
-                </span>
-                <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', color: 'var(--text-low)', marginLeft: 'auto' }}>
-                  {showPast ? '↑' : '↓'}
-                </span>
-              </button>
-              {showPast && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', opacity: 0.7 }}>
-                  {pastBookings.map(b => <BookingRow key={b.id} booking={b} />)}
-                </div>
-              )}
+            {activeBookings.length === 0 && !hasSelected && (
+              <div style={{ textAlign: 'center', padding: '2rem 0', marginBottom: '1rem' }}>
+                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-low)', marginBottom: '1rem' }}>
+                  No upcoming bookings
+                </p>
+                <Link href="/booking" className="btn-primary" style={{ display: 'inline-flex' }}>
+                  <span>Book a session</span>
+                  <span className="btn-icon" aria-hidden="true">↗</span>
+                </Link>
+              </div>
+            )}
+
+            {/* Past bookings — collapsed by default */}
+            {pastBookings.length > 0 && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowPast(p => !p)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '0.5rem',
+                    background: 'none', border: 'none', padding: '0.625rem 0',
+                    cursor: 'pointer', borderTop: '1px solid var(--border)',
+                    width: '100%', textAlign: 'left',
+                    marginBottom: showPast ? '0.5rem' : 0,
+                  }}
+                >
+                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-low)' }}>
+                    Past ({pastBookings.length})
+                  </span>
+                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.65rem', color: 'var(--text-low)', marginLeft: 'auto' }}>
+                    {showPast ? '↑' : '↓'}
+                  </span>
+                </button>
+                {showPast && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', opacity: 0.7 }}>
+                    {pastBookings.map(b => <BookingRow key={b.id} booking={b} />)}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Detail panel — desktop only (mobile handled above) */}
+          {!isMobile && hasSelected && (
+            <div style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: '0.75rem',
+              padding: '1.25rem',
+              position: 'sticky',
+              top: '1.5rem',
+              maxHeight: 'calc(100vh - 8rem)',
+              overflowY: 'auto',
+            }}>
+              {/* Close button */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
+                <button
+                  type="button"
+                  onClick={() => { setSelectedId(null); setDetail(null); }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-low)', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.25rem 0' }}
+                >
+                  Close ✕
+                </button>
+              </div>
+              <DetailPanel />
             </div>
           )}
         </div>
-
-        {/* Detail panel */}
-        {hasSelected && (
-          <div style={{
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: '0.75rem',
-            padding: '1.25rem',
-            position: 'sticky',
-            top: '1.5rem',
-            maxHeight: 'calc(100vh - 8rem)',
-            overflowY: 'auto',
-          }}>
-            {/* Close button */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
-              <button
-                type="button"
-                onClick={() => { setSelectedId(null); setDetail(null); }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-low)', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.25rem 0' }}
-              >
-                Close ✕
-              </button>
-            </div>
-            <DetailPanel />
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }
