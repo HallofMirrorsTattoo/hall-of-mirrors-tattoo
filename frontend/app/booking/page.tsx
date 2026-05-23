@@ -109,16 +109,12 @@ export default function BookingPage() {
   const [confirmedSlot, setConfirmedSlot]         = useState<string | null>(null);
   const [confirmedArtist, setConfirmedArtist]     = useState('');
 
-  // Post-booking account activation
-  const [capturedEmail, setCapturedEmail]           = useState('');
-  const [, setCapturedFirstName] = useState('');
-  const [, setCapturedLastName]  = useState('');
-  const [, setCapturedPhone]     = useState('');
+  // Post-booking account activation (only available when email is captured in-flow)
+  const [capturedEmail]                             = useState('');
   const [activationPw, setActivationPw]             = useState('');
   const [activationState, setActivationState]       = useState<'idle' | 'submitting' | 'done' | 'dismissed'>('idle');
   const [activationError, setActivationError]       = useState('');
 
-  const [paymentMethod, setPaymentMethod]          = useState<'cash' | 'card'>('cash');
   const [policyAccepted, setPolicyAccepted]        = useState(false);
   const [studioSettings, setStudioSettings]        = useState<StudioSettings | null>(null);
 
@@ -183,6 +179,50 @@ export default function BookingPage() {
       .then((r) => r.ok ? r.json() : null)
       .then((d) => d && setStudioSettings(d))
       .catch(() => {});
+  }, []);
+
+  // Detect return from Stripe Checkout
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session_id');
+    const bookingRef = params.get('booking_reference');
+    const cancelled = params.get('cancelled');
+
+    if (cancelled === 'true') {
+      // Clean URL
+      window.history.replaceState({}, '', '/booking');
+      setSubmitStatus('error');
+      setErrorMessage('Payment was cancelled. Your booking request has been saved — please contact us to complete your deposit, or try again.');
+      return;
+    }
+
+    if (sessionId && bookingRef) {
+      setIsSubmitting(true);
+      // Clean URL immediately so a refresh doesn't re-trigger
+      window.history.replaceState({}, '', '/booking');
+
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/payments/verify-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, booking_reference: bookingRef }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.success) {
+            setConfirmedRef(bookingRef);
+            setSubmitStatus('success');
+          } else {
+            setSubmitStatus('error');
+            setErrorMessage(data.error || 'Payment verification failed. Please contact us.');
+          }
+        })
+        .catch(() => {
+          setSubmitStatus('error');
+          setErrorMessage('Payment verification failed. Please contact us.');
+        })
+        .finally(() => setIsSubmitting(false));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleDateSelect = (date: string) => {
@@ -257,17 +297,25 @@ export default function BookingPage() {
         setConfirmedDate(null);
         setConfirmedSlot(null);
         setConfirmedArtist(artists.find((a) => a.id === artistId)?.full_name ?? '');
+        setSubmitStatus('success');
+        reset();
+        setSelectedDate(null);
+        setSelectedSlot(null);
+        setSelectedArtistId('');
+        setStep(1);
       } else {
         const payload: Record<string, unknown> = {
           ...data,
           artistId: data.artistId || undefined,
           clientBudget: data.clientBudget || undefined,
-          payment_method: paymentMethod,
+          payment_method: 'card',
         };
         if (selectedDate) {
           payload.appointmentDate = selectedDate;
           if (selectedSlot) payload.appointmentTime = selectedSlot;
         }
+
+        // Step 1: Create the booking
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/bookings`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -278,27 +326,26 @@ export default function BookingPage() {
           throw new Error(err.message || err.error || 'Failed to submit booking');
         }
         const json = await res.json();
-        setConfirmedRef(json.booking?.booking_reference ?? '');
-        setConfirmedDate(selectedDate);
-        setConfirmedSlot(selectedSlot);
-        setConfirmedArtist(artists.find((a) => a.id === data.artistId)?.full_name ?? '');
+        const bookingReference = json.booking?.booking_reference;
 
-        setCapturedEmail(data.clientEmail);
-        const [fn, ...ln] = data.clientName.split(' ');
-        setCapturedFirstName(fn || '');
-        setCapturedLastName(ln.join(' ') || 'Guest');
-        setCapturedPhone(data.clientPhone || '');
-        setActivationPw('');
-        setActivationState('idle');
-        setActivationError('');
+        if (!bookingReference) throw new Error('No booking reference returned. Please contact us.');
+
+        // Step 2: Create a Stripe Checkout Session
+        const checkoutRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/payments/create-checkout-session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ booking_reference: bookingReference }),
+        });
+        if (!checkoutRes.ok) {
+          const err = await checkoutRes.json();
+          throw new Error(err.error || 'Failed to start payment. Your booking was saved — please contact us to pay your deposit.');
+        }
+        const { url } = await checkoutRes.json();
+
+        // Step 3: Redirect to Stripe — page unloads here
+        window.location.href = url;
+        return; // prevent finally block from clearing isSubmitting before redirect
       }
-      setSubmitStatus('success');
-      reset();
-      setSelectedDate(null);
-      setSelectedSlot(null);
-      setSelectedArtistId('');
-      setStep(1);
-      setPolicyAccepted(false);
     } catch (error) {
       setSubmitStatus('error');
       setErrorMessage(error instanceof Error ? error.message : 'Something went wrong. Please try again.');
@@ -372,7 +419,7 @@ export default function BookingPage() {
                 <p style={{ color: 'var(--text-mid)', fontSize: '0.9375rem', lineHeight: 1.7, maxWidth: '30ch', margin: '0 auto 2rem' }}>
                   {formMode === 'consultation'
                     ? 'Robyn will be in touch. You can message her directly from your dashboard once she responds.'
-                    : 'We\'ll review and confirm within 24 hours. Check your email for a copy of this request.'}
+                    : 'Deposit received. We\'ll review and confirm your appointment within 24 hours.'}
                 </p>
 
                 <div style={{ textAlign: 'left', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', padding: '1.25rem 0', margin: '0 0 2rem', display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
@@ -418,8 +465,8 @@ export default function BookingPage() {
         </section>
       )}
 
-      {/* Account activation panel */}
-      {submitStatus === 'success' && !user && formMode === 'booking' && activationState !== 'done' && activationState !== 'dismissed' && (
+      {/* Account activation panel (only shown when capturedEmail is set — not available in Stripe redirect flow) */}
+      {submitStatus === 'success' && !user && formMode === 'booking' && capturedEmail && activationState !== 'done' && activationState !== 'dismissed' && (
         <section style={{ padding: '0 1.5rem 5rem' }}>
           <div style={{ maxWidth: '40rem', margin: '0 auto' }}>
             <div style={{ background: 'var(--surface)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '0.75rem', padding: '2rem 2rem 1.75rem' }}>
@@ -787,37 +834,20 @@ export default function BookingPage() {
                         )}
                       </div>
 
-                      {/* Payment preference */}
-                      <div style={{ marginBottom: '1.75rem' }}>
-                        <label style={{ display: 'block', marginBottom: '0.375rem' }}>How would you like to pay your deposit?</label>
-                        {studioSettings?.deposit_amount_fixed && (
-                          <p style={{ ...mono, fontSize: '0.72rem', letterSpacing: '0.08em', color: 'rgba(201,168,76,0.6)', marginBottom: '0.75rem' }}>
-                            A £{studioSettings.deposit_amount_fixed} deposit is required to hold your appointment.
-                          </p>
-                        )}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                          <button
-                            type="button"
-                            onClick={() => setPaymentMethod('cash')}
-                            style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: paymentMethod === 'cash' ? 'rgba(201,168,76,0.1)' : 'transparent', border: `1px solid ${paymentMethod === 'cash' ? 'var(--gold)' : 'var(--border)'}`, borderRadius: '0.5rem', cursor: 'pointer', textAlign: 'left', transition: 'border-color 0.2s, background 0.2s' }}
-                          >
-                            <span style={{ width: '1rem', height: '1rem', borderRadius: '50%', border: `2px solid ${paymentMethod === 'cash' ? 'var(--gold)' : 'var(--border)'}`, background: paymentMethod === 'cash' ? 'var(--gold)' : 'transparent', flexShrink: 0, position: 'relative' }}>
-                              {paymentMethod === 'cash' && <span style={{ position: 'absolute', inset: '2px', background: 'var(--bg)', borderRadius: '50%' }} />}
-                            </span>
-                            <div>
-                              <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: paymentMethod === 'cash' ? 'var(--cream)' : 'var(--text)', fontWeight: paymentMethod === 'cash' ? 500 : 400 }}>Cash on the day</p>
-                              <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.775rem', color: 'var(--text-low)', lineHeight: 1.4 }}>Pay your deposit in cash when you arrive</p>
-                            </div>
-                          </button>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', background: 'transparent', border: '1px solid var(--border)', borderRadius: '0.5rem', opacity: 0.45, cursor: 'default' }}>
-                            <span style={{ width: '1rem', height: '1rem', borderRadius: '50%', border: '2px solid var(--border)', flexShrink: 0 }} />
-                            <div>
-                              <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: 'var(--text)' }}>Online by card</p>
-                              <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.775rem', color: 'var(--text-low)', lineHeight: 1.4 }}>Coming soon</p>
-                            </div>
+                      {/* Deposit info */}
+                      {studioSettings?.deposit_amount_fixed && (
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.875rem', padding: '1rem 1.125rem', background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '0.625rem', marginBottom: '1.75rem' }}>
+                          <span style={{ fontSize: '1rem', lineHeight: 1, marginTop: '0.1rem', opacity: 0.85 }}>🔒</span>
+                          <div>
+                            <p style={{ margin: '0 0 0.25rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--cream)', fontWeight: 500 }}>
+                              £{studioSettings.deposit_amount_fixed} deposit required to hold your appointment
+                            </p>
+                            <p style={{ margin: 0, ...mono, fontSize: '0.68rem', letterSpacing: '0.06em', color: 'var(--text-low)', lineHeight: 1.5 }}>
+                              Secure card payment via Stripe — you&apos;ll be redirected after confirming
+                            </p>
                           </div>
                         </div>
-                      </div>
+                      )}
 
                       {/* Cancellation policy acknowledgment */}
                       <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer', marginBottom: '1.75rem', padding: '1rem', background: 'rgba(201,168,76,0.04)', border: `1px solid ${policyAccepted ? 'rgba(201,168,76,0.3)' : 'var(--border)'}`, borderRadius: '0.5rem', transition: 'border-color 0.2s' }}>
@@ -842,13 +872,19 @@ export default function BookingPage() {
                           className="btn-primary"
                           style={{ flex: 1, justifyContent: 'center', opacity: (isSubmitting || !policyAccepted) ? 0.55 : 1 }}
                         >
-                          <span>{isSubmitting ? 'Submitting…' : 'Confirm booking request'}</span>
+                          <span>
+                            {isSubmitting
+                              ? 'Redirecting to payment…'
+                              : studioSettings?.deposit_amount_fixed
+                                ? `Confirm & pay £${studioSettings.deposit_amount_fixed} deposit`
+                                : 'Confirm booking request'}
+                          </span>
                           <span className="btn-icon" aria-hidden="true">↗</span>
                         </button>
                       </div>
 
                       <p style={{ textAlign: 'center', ...mono, fontSize: '0.65rem', letterSpacing: '0.06em', color: 'var(--text-low)', marginTop: '1rem', lineHeight: 1.6 }}>
-                        We&apos;ll review and confirm within 24 hours
+                        You&apos;ll be taken to Stripe to pay your deposit. We&apos;ll confirm within 24 hours.
                       </p>
                     </div>
                   )}
