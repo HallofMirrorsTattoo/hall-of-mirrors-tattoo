@@ -5,40 +5,29 @@ import Image from 'next/image';
 
 const BURNS = ['kenBurns1', 'kenBurns2', 'kenBurns3', 'kenBurns4'] as const;
 
-const photos = [
-  { src: '/assets/shop-carousel/DSCF4101.jpg',   alt: 'Hall of Mirrors Tattoo Studio — Castle Street, Liverpool' },
-  { src: '/assets/shop-carousel/DSCF4116.jpg',   alt: 'Bespoke neo-traditional tattooing — Hall of Mirrors Liverpool' },
-  { src: '/assets/shop-carousel/DSCF4137.jpg',   alt: 'Custom tattoo design — Hall of Mirrors, Liverpool city centre' },
-  { src: '/assets/shop-carousel/DSCF4160.jpg',   alt: 'Original tattoo artistry — Hall of Mirrors Liverpool' },
-  { src: '/assets/shop-carousel/DSCF4185.jpg',   alt: 'Neo-traditional tattoo work — Hall of Mirrors' },
-  { src: '/assets/shop-carousel/DSCF4202.jpg',   alt: 'Hall of Mirrors private studio — Liverpool' },
-  { src: '/assets/shop-carousel/E-DSCF3014.jpg', alt: 'Bespoke tattoo — Hall of Mirrors Tattoo Studio Liverpool' },
-  { src: '/assets/shop-carousel/E-DSCF3032.jpg', alt: 'Custom neo-traditional tattoo — Hall of Mirrors' },
-  { src: '/assets/shop-carousel/E-DSCF3034.jpg', alt: 'Hall of Mirrors tattoo studio — Castle Street Liverpool' },
-  { src: '/assets/shop-carousel/E-DSCF3046.jpg', alt: 'Neo-traditional tattoo artistry — Liverpool' },
-  { src: '/assets/shop-carousel/E-DSCF3058.jpg', alt: 'Hall of Mirrors — bespoke tattoo studio, Liverpool city centre' },
-].map((p, i) => ({ ...p, animation: BURNS[i % 4] }));
-
 // Expo-out for the incoming slide: snaps to attention quickly, then settles.
 // Quartic ease-in for the outgoing slide: holds presence, then releases gracefully.
 const TRANSITION_IN  = 'opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1)';
 const TRANSITION_OUT = 'opacity 2.2s cubic-bezier(0.895, 0.03, 0.685, 0.22)';
 
-export default function ShopCarousel() {
+interface CarouselPhoto { src: string; alt: string; }
+
+export default function ShopCarousel({ photos }: { photos: CarouselPhoto[] }) {
+  const slides = photos.map((p, i) => ({ ...p, animation: BURNS[i % 4] }));
   const [current, setCurrent] = useState(0);
   const [prev, setPrev] = useState<number | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setPrev(current);
-      setCurrent((c) => (c + 1) % photos.length);
+      setCurrent((c) => (c + 1) % slides.length);
     }, 7000);
     return () => clearInterval(interval);
-  }, [current]);
+  }, [current, slides.length]);
 
   return (
     <div className="absolute inset-0 overflow-hidden" style={{ backgroundColor: 'var(--bg)' }}>
-      {photos.map(({ src, alt, animation }, i) => (
+      {slides.map(({ src, alt, animation }, i) => (
         <div
           key={src}
           className="absolute inset-0"

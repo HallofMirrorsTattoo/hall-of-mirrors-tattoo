@@ -97,6 +97,22 @@ export default function Home() {
     '/assets/shop-carousel/DSCF4185.jpg',
   );
 
+  // ── Carousel photos ─────────────────────────────────────────────────────────
+  // Reads every image in public/assets/shop-carousel/ automatically.
+  // Add or remove photos from that folder and they'll appear in the carousel.
+  const carouselPhotos: { src: string; alt: string }[] = (() => {
+    try {
+      const dir = join(process.cwd(), 'public', 'assets', 'shop-carousel');
+      return readdirSync(dir)
+        .filter(f => /\.(jpe?g|png|webp|avif)$/i.test(f))
+        .sort()
+        .map(f => ({
+          src: `/assets/shop-carousel/${f}`,
+          alt: 'Hall of Mirrors Tattoo Studio — Castle Street, Liverpool',
+        }));
+    } catch { return []; }
+  })();
+
   return (
     <div className="w-full">
       <script
@@ -106,7 +122,7 @@ export default function Home() {
 
       {/* ── HERO ─────────────────────────────────────────────────────────────── */}
       <div className="sticky top-0 z-0 w-full -mt-24 md:-mt-32" style={{ height: '100dvh' }}>
-        <ShopCarousel />
+        <ShopCarousel photos={carouselPhotos} />
 
         {/* Large atmospheric watermark text */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10" aria-hidden="true">
