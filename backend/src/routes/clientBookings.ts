@@ -112,6 +112,7 @@ router.get('/:id', async (req: Request, res: Response) => {
               b.client_budget, b.price_offer_status, b.price_offer_note,
               b.payment_method, b.artist_notes,
               b.price_estimate_from, b.price_estimate_to,
+              b.deposit_paid,
               b.created_at, b.updated_at,
               a.id as artist_id, a.full_name as artist_name, a.specialties, a.bio, a.instagram_handle,
               CASE WHEN cf.id IS NOT NULL THEN true ELSE false END as consent_form_signed
@@ -164,6 +165,10 @@ router.get('/:id', async (req: Request, res: Response) => {
         price_offer_note: booking.price_offer_note ?? null,
         payment_method: booking.payment_method ?? 'not_set',
         consent_form_signed: booking.consent_form_signed ?? false,
+        artist_notes: booking.artist_notes ?? null,
+        price_estimate_from: booking.price_estimate_from ?? null,
+        price_estimate_to: booking.price_estimate_to ?? null,
+        deposit_paid: booking.deposit_paid ?? false,
         artist: booking.artist_id ? {
           id: booking.artist_id,
           name: booking.artist_name,

@@ -49,6 +49,7 @@ interface BookingDetail {
   artist_notes?: string | null;
   price_estimate_from?: number | null;
   price_estimate_to?: number | null;
+  deposit_paid?: boolean;
 }
 
 interface Msg {
@@ -150,12 +151,52 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
   const msgAreaRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Deposit payment state
+  const [depositPaying, setDepositPaying] = useState(false);
+  const [depositError, setDepositError] = useState('');
+  const [depositSuccess, setDepositSuccess] = useState<string | null>(null); // booking_reference of just-paid deposit
+
   // Mobile detection
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
+  }, []);
+
+  // Detect return from Stripe Checkout
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session_id');
+    const bookingRef = params.get('booking_reference');
+    const depositCancelled = params.get('deposit_cancelled');
+
+    if (depositCancelled === 'true') {
+      window.history.replaceState({}, '', window.location.pathname);
+      setDepositError('Payment was cancelled. You can try again from your booking details.');
+      return;
+    }
+
+    if (sessionId && bookingRef) {
+      window.history.replaceState({}, '', window.location.pathname);
+      setDepositPaying(true);
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/payments/verify-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, booking_reference: bookingRef }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.success) {
+            setDepositSuccess(bookingRef);
+          } else {
+            setDepositError(data.error || 'Payment verification failed. Please contact us.');
+          }
+        })
+        .catch(() => setDepositError('Payment verification failed. Please contact us.'))
+        .finally(() => setDepositPaying(false));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Fetch booking list
@@ -527,6 +568,55 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
             </div>
           )}
         </div>
+
+        {/* Deposit payment success banner */}
+        {depositSuccess === detail.booking_reference && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.875rem 1rem', background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: '0.5rem' }}>
+            <span style={{ color: 'rgba(34,197,94,0.9)', fontSize: '1.125rem' }}>✓</span>
+            <div>
+              <p style={{ margin: 0, fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(34,197,94,0.8)' }}>Deposit paid</p>
+              <p style={{ margin: '0.2rem 0 0', fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-mid)' }}>Your deposit has been received. Your appointment is now fully secured.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Pay deposit CTA */}
+        {detail.appointment_status === 'pending_consent' && !detail.deposit_paid && depositSuccess !== detail.booking_reference && detail.deposit_price > 0 && (
+          <div style={{ padding: '1.125rem 1.25rem', background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.25)', borderRadius: '0.625rem' }}>
+            <p style={{ margin: '0 0 0.25rem', fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.7)' }}>Deposit required</p>
+            <p style={{ margin: '0 0 1rem', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--cream)', fontWeight: 500 }}>
+              £{detail.deposit_price} to secure your appointment
+            </p>
+            {depositError && <p style={{ margin: '0 0 0.75rem', fontSize: '0.8125rem', color: '#f87171' }}>{depositError}</p>}
+            <button
+              type="button"
+              disabled={depositPaying}
+              onClick={async () => {
+                setDepositError('');
+                setDepositPaying(true);
+                try {
+                  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/payments/create-checkout-session`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+                    body: JSON.stringify({ booking_reference: detail.booking_reference }),
+                  });
+                  const data = await res.json();
+                  if (!res.ok || !data.url) throw new Error(data.error || 'Failed to start payment');
+                  window.location.href = data.url;
+                } catch (err) {
+                  setDepositError(err instanceof Error ? err.message : 'Payment failed. Please try again.');
+                  setDepositPaying(false);
+                }
+              }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '0.8rem', background: 'var(--gold)', color: 'var(--bg)', border: 'none', borderRadius: '0.5rem', fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600, cursor: depositPaying ? 'default' : 'pointer', opacity: depositPaying ? 0.65 : 1, transition: 'opacity 0.2s' }}
+            >
+              {depositPaying ? 'Redirecting…' : `Pay £${detail.deposit_price} deposit →`}
+            </button>
+            <p style={{ margin: '0.625rem 0 0', textAlign: 'center', fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.06em', color: 'var(--text-low)' }}>
+              Secure payment via Stripe
+            </p>
+          </div>
+        )}
 
         {/* Artist notes */}
         {detail.artist_notes && (

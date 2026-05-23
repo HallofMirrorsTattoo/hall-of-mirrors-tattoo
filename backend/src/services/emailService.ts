@@ -205,6 +205,7 @@ export async function sendBookingConfirmedToClient(data: {
   endTime: string;
   notifyEndTime: boolean;
   artistName?: string;
+  depositAmount?: number;
 }): Promise<void> {
   const dateStr = new Intl.DateTimeFormat('en-GB', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
@@ -225,6 +226,19 @@ export async function sendBookingConfirmedToClient(data: {
   const googleUrl = buildGoogleCalUrl(apptDateStr, data.startTime, data.endTime);
   const icsBase64 = buildIcsBase64(apptDateStr, data.startTime, data.endTime, data.bookingReference);
 
+  const depositSection = data.depositAmount
+    ? `
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0; background:#1a1714; border-radius:8px; padding:20px;">
+        <tr><td style="padding:4px 0;">
+          <p style="margin:0 0 8px; font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:#9a9082;">Deposit required</p>
+          <p style="margin:0 0 12px; font-size:22px; font-weight:600; color:#c9a84c;">£${data.depositAmount.toFixed(2)}</p>
+          <p style="margin:0; font-size:14px; color:#d4c9b8; line-height:1.6;">A deposit of £${data.depositAmount.toFixed(2)} is required to secure your appointment. Please pay via your client dashboard.</p>
+        </td></tr>
+      </table>
+      ${ctaButton(`${FRONTEND_URL}/client/dashboard`, 'Pay Your Deposit Now')}
+    `
+    : ctaButton(`${FRONTEND_URL}/client/dashboard`, 'View Your Dashboard');
+
   const content = `
     ${heading(`Your appointment is confirmed.`)}
     ${body(`Great news, ${data.clientName} — your tattoo session has been scheduled.`)}
@@ -235,8 +249,9 @@ export async function sendBookingConfirmedToClient(data: {
     </table>
     ${finishNote}
     ${calendarBlock(googleUrl)}
-    ${body(`You&apos;ll need to complete a consent form before your session if you haven&apos;t already. You can find it in your dashboard.`)}
-    ${ctaButton(`${FRONTEND_URL}/client/dashboard`, 'View Your Dashboard')}
+    ${depositSection}
+    ${body(`You&apos;ll also need to complete a consent form before your session. You can find it in your dashboard.`)}
+    ${data.depositAmount ? '' : ctaButton(`${FRONTEND_URL}/client/dashboard`, 'View Your Dashboard')}
   `;
 
   await send({

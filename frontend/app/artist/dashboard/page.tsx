@@ -149,8 +149,9 @@ export default function ArtistDashboard() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [bookingError, setBookingError] = useState('');
 
-  // Confirm-booking form state (duration + notify)
+  // Confirm-booking form state (duration + deposit + notify)
   const [confirmDurationHours, setConfirmDurationHours] = useState(2);
+  const [confirmDepositAmount, setConfirmDepositAmount] = useState('');
   const [confirmNotifyEnd, setConfirmNotifyEnd] = useState(true);
 
   // Private artist notes state
@@ -748,7 +749,7 @@ export default function ArtistDashboard() {
     bookingId: string,
     status: string,
     notes: string,
-    opts?: { duration_hours?: number; notify_end_time?: boolean; new_appointment_date?: string; new_appointment_time?: string; payment_method?: string }
+    opts?: { duration_hours?: number; notify_end_time?: boolean; new_appointment_date?: string; new_appointment_time?: string; payment_method?: string; deposit_amount?: number }
   ) => {
     try {
       setIsUpdating(true);
@@ -766,6 +767,7 @@ export default function ArtistDashboard() {
       const refreshed = await fetchBookings();
       setSelectedBooking(refreshed.find((b) => b.id === bookingId) ?? null);
       setConfirmDurationHours(2);
+      setConfirmDepositAmount('');
       setConfirmNotifyEnd(true);
     } catch (err) {
       setBookingError(err instanceof Error ? err.message : 'Failed to update booking');
@@ -1579,6 +1581,28 @@ export default function ArtistDashboard() {
                   )}
                 </div>
 
+                {/* Deposit amount */}
+                <div>
+                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', display: 'block', marginBottom: '0.5rem' }}>
+                    Deposit amount
+                  </span>
+                  <div style={{ position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontFamily: '"DM Mono", monospace', fontSize: '0.75rem', color: 'var(--text-low)', pointerEvents: 'none' }}>£</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      placeholder="50"
+                      value={confirmDepositAmount}
+                      onChange={(e) => setConfirmDepositAmount(e.target.value)}
+                      style={{ width: '100%', paddingLeft: '1.75rem' }}
+                    />
+                  </div>
+                  <p style={{ margin: '0.375rem 0 0', fontFamily: '"DM Mono", monospace', fontSize: '0.67rem', letterSpacing: '0.06em', color: 'var(--text-low)', lineHeight: 1.5 }}>
+                    Client will receive a Stripe payment link for this amount
+                  </p>
+                </div>
+
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', cursor: 'pointer' }}>
                   <input
                     type="checkbox"
@@ -1605,10 +1629,11 @@ export default function ArtistDashboard() {
                   onClick={() => handleStatusUpdate(selectedBooking.id, 'confirmed', '', {
                     duration_hours: confirmDurationHours,
                     notify_end_time: confirmNotifyEnd,
+                    deposit_amount: parseFloat(confirmDepositAmount) || 0,
                   })}
-                  disabled={isUpdating}
+                  disabled={isUpdating || !confirmDepositAmount.trim() || parseFloat(confirmDepositAmount) <= 0}
                   className="btn-primary"
-                  style={{ width: '100%', padding: '0.75rem', opacity: isUpdating ? 0.6 : 1, cursor: isUpdating ? 'default' : 'pointer' }}
+                  style={{ width: '100%', padding: '0.75rem', opacity: (isUpdating || !confirmDepositAmount.trim() || parseFloat(confirmDepositAmount) <= 0) ? 0.5 : 1, cursor: (isUpdating || !confirmDepositAmount.trim() || parseFloat(confirmDepositAmount) <= 0) ? 'default' : 'pointer' }}
                 >
                   {isUpdating ? 'Confirming…' : 'Confirm & Schedule'}
                 </button>

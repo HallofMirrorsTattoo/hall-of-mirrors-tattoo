@@ -59,8 +59,8 @@ router.post('/create-checkout-session', async (req: Request, res: Response) => {
         },
       ],
       mode: 'payment',
-      success_url: `${frontendUrl}/booking?session_id={CHECKOUT_SESSION_ID}&booking_reference=${encodeURIComponent(booking_reference)}`,
-      cancel_url: `${frontendUrl}/booking?cancelled=true`,
+      success_url: `${frontendUrl}/client/dashboard?session_id={CHECKOUT_SESSION_ID}&booking_reference=${encodeURIComponent(booking_reference)}&tab=bookings`,
+      cancel_url: `${frontendUrl}/client/dashboard?tab=bookings&deposit_cancelled=true`,
       metadata: { booking_reference },
     });
 

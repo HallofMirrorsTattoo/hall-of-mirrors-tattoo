@@ -524,7 +524,7 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
     }
 
     const { id } = req.params;
-    const { status, notes, duration_hours, notify_end_time, new_appointment_date, new_appointment_time, payment_method } = req.body;
+    const { status, notes, duration_hours, notify_end_time, new_appointment_date, new_appointment_time, payment_method, deposit_amount } = req.body;
 
     // Validate status
     const validStatuses = ['pending_review', 'pending_consent', 'confirmed', 'completed', 'cancelled'];
@@ -595,6 +595,15 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
       params.splice(params.length - 1, 0, payment_method);
     }
 
+    // Artist sets deposit amount when confirming the booking
+    if (resolvedStatus === 'pending_consent' && deposit_amount !== undefined) {
+      const da = parseFloat(String(deposit_amount));
+      if (!isNaN(da) && da >= 0) {
+        setClauses.push(`deposit_amount = $${params.length}`);
+        params.splice(params.length - 1, 0, da);
+      }
+    }
+
     // Artist-initiated reschedule: update date + time
     if (new_appointment_date && new_appointment_time) {
       const newDateTime = `${new_appointment_date}T${new_appointment_time}:00`;
@@ -650,6 +659,7 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
       const appointmentDate = new Date(booking.appointment_date_time);
       const notifyEnd = notify_end_time !== undefined ? Boolean(notify_end_time) : true;
 
+      const depositAmt = deposit_amount !== undefined ? parseFloat(String(deposit_amount)) : parseFloat(booking.deposit_amount ?? '0');
       sendBookingConfirmedToClient({
         clientEmail: booking.email,
         clientName: `${booking.first_name} ${booking.last_name}`,
@@ -659,6 +669,7 @@ export async function updateBookingStatusByArtist(req: Request, res: Response) {
         endTime: `${String(endHour).padStart(2, '0')}:00`,
         notifyEndTime: notifyEnd,
         artistName: booking.artist_name ?? undefined,
+        depositAmount: depositAmt > 0 ? depositAmt : undefined,
       }).catch((e) => console.error('[email] booking confirmed failed:', e));
     }
 
