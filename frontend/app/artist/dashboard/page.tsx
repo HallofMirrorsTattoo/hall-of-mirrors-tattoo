@@ -214,7 +214,8 @@ export default function ArtistDashboard() {
   // Inline booking detail thread (separate from messages-tab chat above)
   interface DetailMsg { id: string; sender_type: 'artist' | 'client'; body: string | null; image_url: string | null; created_at: string; }
   const [detailMsgs, setDetailMsgs] = useState<DetailMsg[]>([]);
-  const [detailDraft, setDetailDraft] = useState('');
+  const detailDraftRef = useRef<HTMLTextAreaElement>(null);
+  const [detailDraftHasContent, setDetailDraftHasContent] = useState(false);
   const [detailSending, setDetailSending] = useState(false);
   const [detailMsgError, setDetailMsgError] = useState('');
   const [detailImage, setDetailImage] = useState<File | null>(null);
@@ -897,14 +898,15 @@ export default function ArtistDashboard() {
   }, [detailMsgs]);
 
   const sendDetailMsg = async () => {
-    if ((!detailDraft.trim() && !detailImage) || detailSending || !selectedBooking?.id) return;
+    const draftBody = detailDraftRef.current?.value?.trim() ?? '';
+    if ((!draftBody && !detailImage) || detailSending || !selectedBooking?.id) return;
     setDetailSending(true);
     setDetailMsgError('');
     try {
       let res: Response;
       if (detailImage) {
         const fd = new FormData();
-        if (detailDraft.trim()) fd.append('body', detailDraft.trim());
+        if (draftBody) fd.append('body', draftBody);
         fd.append('image', detailImage);
         res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/messages/${selectedBooking.id}`, {
           method: 'POST',
@@ -915,13 +917,14 @@ export default function ArtistDashboard() {
         res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/messages/${selectedBooking.id}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-          body: JSON.stringify({ body: detailDraft.trim() }),
+          body: JSON.stringify({ body: draftBody }),
         });
       }
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to send');
       setDetailMsgs(prev => [...prev, data.message]);
-      setDetailDraft('');
+      if (detailDraftRef.current) detailDraftRef.current.value = '';
+      setDetailDraftHasContent(false);
       setDetailImage(null);
       setDetailImagePreview(null);
     } catch (e) {
@@ -1783,8 +1786,8 @@ export default function ArtistDashboard() {
               style={{ flexShrink: 0, width: '2.25rem', height: '2.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', background: detailImage ? 'rgba(201,168,76,0.15)' : 'var(--surface)', border: `1px solid ${detailImage ? 'rgba(201,168,76,0.5)' : 'var(--border)'}`, borderRadius: '0.5rem', cursor: 'pointer', color: detailImage ? 'var(--gold)' : 'var(--text-mid)', fontSize: '0.9rem', lineHeight: 1 }}
             >📎</button>
             <textarea
-              value={detailDraft}
-              onChange={(e) => setDetailDraft(e.target.value)}
+              ref={detailDraftRef}
+              onInput={(e) => setDetailDraftHasContent((e.target as HTMLTextAreaElement).value.trim().length > 0)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDetailMsg(); } }}
               placeholder="Message client… (Enter to send)"
               rows={2}
@@ -1793,9 +1796,9 @@ export default function ArtistDashboard() {
             <button
               type="button"
               onClick={sendDetailMsg}
-              disabled={(!detailDraft.trim() && !detailImage) || detailSending}
+              disabled={(!detailDraftHasContent && !detailImage) || detailSending}
               className="btn-primary"
-              style={{ padding: '0.5rem 0.875rem', flexShrink: 0, opacity: ((!detailDraft.trim() && !detailImage) || detailSending) ? 0.5 : 1, cursor: ((!detailDraft.trim() && !detailImage) || detailSending) ? 'default' : 'pointer' }}
+              style={{ padding: '0.5rem 0.875rem', flexShrink: 0, opacity: ((!detailDraftHasContent && !detailImage) || detailSending) ? 0.5 : 1, cursor: ((!detailDraftHasContent && !detailImage) || detailSending) ? 'default' : 'pointer' }}
             >
               {detailSending ? '…' : '→'}
             </button>

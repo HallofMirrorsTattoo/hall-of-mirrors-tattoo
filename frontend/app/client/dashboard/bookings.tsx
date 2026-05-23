@@ -142,7 +142,8 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
 
   // Messaging state
   const [messages, setMessages] = useState<Msg[]>([]);
-  const [msgDraft, setMsgDraft] = useState('');
+  const msgDraftRef = useRef<HTMLTextAreaElement>(null);
+  const [msgDraftHasContent, setMsgDraftHasContent] = useState(false);
   const [msgSending, setMsgSending] = useState(false);
   const [msgError, setMsgError] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -229,7 +230,8 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
     if (!selectedId || !accessToken) { setDetail(null); return; }
     setDetailLoading(true);
     setMessages([]);
-    setMsgDraft('');
+    if (msgDraftRef.current) msgDraftRef.current.value = '';
+    setMsgDraftHasContent(false);
     setImageFile(null);
     setImagePreview(null);
     (async () => {
@@ -271,14 +273,15 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
 
   // Send message (text and/or image)
   const sendMessage = async () => {
-    if ((!msgDraft.trim() && !imageFile) || msgSending || !selectedId) return;
+    const body = msgDraftRef.current?.value?.trim() ?? '';
+    if ((!body && !imageFile) || msgSending || !selectedId) return;
     setMsgSending(true);
     setMsgError('');
     try {
       let res: Response;
       if (imageFile) {
         const fd = new FormData();
-        if (msgDraft.trim()) fd.append('body', msgDraft.trim());
+        if (body) fd.append('body', body);
         fd.append('image', imageFile);
         res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/client/messages/${selectedId}`, {
           method: 'POST',
@@ -289,13 +292,14 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
         res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/client/messages/${selectedId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-          body: JSON.stringify({ body: msgDraft.trim() }),
+          body: JSON.stringify({ body }),
         });
       }
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to send');
       setMessages(prev => [...prev, data.message]);
-      setMsgDraft('');
+      if (msgDraftRef.current) msgDraftRef.current.value = '';
+      setMsgDraftHasContent(false);
       setImageFile(null);
       setImagePreview(null);
     } catch (err) {
@@ -798,8 +802,8 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
                 📎
               </button>
               <textarea
-                value={msgDraft}
-                onChange={(e) => setMsgDraft(e.target.value)}
+                ref={msgDraftRef}
+                onInput={(e) => setMsgDraftHasContent((e.target as HTMLTextAreaElement).value.trim().length > 0)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
                 placeholder="Write a message… (Enter to send)"
                 rows={2}
@@ -809,9 +813,9 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
               />
               <button
                 onClick={sendMessage}
-                disabled={(!msgDraft.trim() && !imageFile) || msgSending}
+                disabled={(!msgDraftHasContent && !imageFile) || msgSending}
                 className="btn-primary"
-                style={{ padding: '0.5rem 0.875rem', flexShrink: 0, opacity: ((!msgDraft.trim() && !imageFile) || msgSending) ? 0.5 : 1, cursor: ((!msgDraft.trim() && !imageFile) || msgSending) ? 'default' : 'pointer', height: '2.25rem', alignSelf: 'flex-end' }}
+                style={{ padding: '0.5rem 0.875rem', flexShrink: 0, opacity: ((!msgDraftHasContent && !imageFile) || msgSending) ? 0.5 : 1, cursor: ((!msgDraftHasContent && !imageFile) || msgSending) ? 'default' : 'pointer', height: '2.25rem', alignSelf: 'flex-end' }}
               >
                 {msgSending ? '…' : '→'}
               </button>

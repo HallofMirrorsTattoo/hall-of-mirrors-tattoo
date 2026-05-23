@@ -797,7 +797,7 @@ export default function BookingPage() {
                           style={{ marginTop: '0.1rem', accentColor: 'var(--gold)', width: '1rem', height: '1rem', flexShrink: 0 }}
                         />
                         <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.6 }}>
-                          I understand that cancellations within {studioSettings?.cancellation_policy_hours ?? 48} hours of my appointment may be subject to a cancellation fee, and that this booking is subject to artist confirmation.
+                          I understand that cancellations made within {studioSettings?.cancellation_policy_hours ?? 24} hours of my appointment will result in the forfeiture of my deposit.
                         </span>
                       </label>
 
