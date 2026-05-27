@@ -6,7 +6,7 @@
 
 ## What This Site Is
 
-**Hall of Mirrors Tattoo Studio** — a private, female-owned tattoo studio at Suite 3, 34 Castle Street, Liverpool, L2 0NR. Owner and sole artist: **Robyn Clove**, neo-traditional specialist.
+**Hall of Mirrors Tattoo Studio** — a private, female-owned tattoo studio at Suite 3, 34 Castle Street, Liverpool, L2 0NR. Owner: **Robyn** (studio admin + resident artist). Second resident artist: **Cristina** (Superstea).
 
 The website serves two audiences:
 - **Public** — brand presence, artist portfolio, and the booking entry point
@@ -24,7 +24,7 @@ The website serves two audiences:
 | Custom domain | hallofmirrorstattoo.com *(currently 503 — under construction)* |
 
 ### Test Credentials
-- **Artist:** `robyn@hallofmirrorstattoo.com` / `robyn123`
+- **Artists:** `robyn@hallofmirrorstattoo.com` and `cristina@hallofmirrorstattoo.com`. Passwords are never stored in source — initial seed passwords are read from `INITIAL_ROBYN_PASSWORD` / `INITIAL_CRISTINA_PASSWORD` env vars in Railway, or generated randomly at first deploy and printed to the deploy log. Each artist should change their password after first login.
 - **Client:** Create via `/client/signup` — any email works
 
 ### ⚠️ Site Status — Under Construction

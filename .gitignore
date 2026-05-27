@@ -22,8 +22,16 @@ dist/
 # Misc
 .DS_Store
 *.pem
+
+# Environment files — never commit anything that could contain real values.
+# frontend/.env.production is intentionally tracked but only ever holds the
+# public NEXT_PUBLIC_API_URL. Real secrets live in Railway / Vercel env vars.
+.env
+.env.*
+!.env.example
+!.env.production
+!.env.local.example
 .env.local
-.env.*.local
 
 # Debug
 npm-debug.log*
@@ -39,7 +47,3 @@ yarn-error.log*
 
 # OS
 Thumbs.db
-.env
-.env.development.local
-.env.test.local
-.env.production.local

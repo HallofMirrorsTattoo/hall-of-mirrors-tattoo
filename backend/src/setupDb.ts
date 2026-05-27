@@ -1,7 +1,26 @@
 import pkg from 'pg';
 import bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 
 const { Client } = pkg;
+
+/**
+ * Resolves an initial password for a seeded artist account.
+ * - Reads from the given env var if set (e.g. INITIAL_ROBYN_PASSWORD)
+ * - Otherwise generates a cryptographically random 24-char password and
+ *   prints it to the deploy log exactly once. The owner reads it, logs in,
+ *   and changes it immediately. No password ever appears in source.
+ */
+function resolveSeedPassword(envVar: string, accountLabel: string): string {
+  const fromEnv = process.env[envVar];
+  if (fromEnv && fromEnv.length >= 8) return fromEnv;
+  const generated = randomBytes(18).toString('base64url'); // ~24 url-safe chars
+  console.log(
+    `\n🔐 [seed] Generated initial password for ${accountLabel}: ${generated}\n` +
+    `   Set ${envVar} in Railway to skip this, or log in and change it now.\n`
+  );
+  return generated;
+}
 
 const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS "User" (
@@ -425,28 +444,22 @@ export async function setupDatabase() {
 
       if (artistResult.rows.length === 0) {
         console.log('🔄 Creating default artist Robyn...');
+        const robynPassword = resolveSeedPassword('INITIAL_ROBYN_PASSWORD', 'robyn@hallofmirrorstattoo.com');
+        const robynHash = await bcrypt.hash(robynPassword, 10);
         await client.query(
           `INSERT INTO "Artist" (id, studio_id, full_name, email, password_hash, specialties, years_experience, bio, instagram_handle, is_active, role, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())`,
-          ['artist-robyn-001', 'default-studio', 'Robyn', 'robyn@hallofmirrorstattoo.com', '$2b$10$bwCLFm5mDzcPdPEdHxtpI.ImZAwxdzrpVl7xoymsE0vRObCPq1V7q', 'Neo-traditional, custom designs', 8, 'Bespoke neo-traditional tattoo artist at Hall of Mirrors, Liverpool.', 'hallofmirrorstattoo', true, 'artist']
+          ['artist-robyn-001', 'default-studio', 'Robyn', 'robyn@hallofmirrorstattoo.com', robynHash, 'Neo-traditional, custom designs', 8, 'Bespoke neo-traditional tattoo artist at Hall of Mirrors, Liverpool.', 'hallofmirrorstattoo', true, 'artist']
         );
         console.log('✅ Default artist Robyn created');
       } else {
-        // Fix bad seed hash if it was created with the wrong hash (one-time migration)
-        await client.query(
-          `UPDATE "Artist" SET password_hash = $1 WHERE email = $2 AND password_hash = $3`,
-          [
-            '$2b$10$bwCLFm5mDzcPdPEdHxtpI.ImZAwxdzrpVl7xoymsE0vRObCPq1V7q',
-            'robyn@hallofmirrorstattoo.com',
-            '$2b$10$Y4qE2Mzj8Y3ZH5L4KQ9sJewQqV9C4mZ2H8K6D2X9L5Y8O1P2Q3R4',
-          ]
-        );
         console.log('✅ Default artist Robyn exists');
       }
 
       // Check if Cristina exists — second resident artist.
-      // Initial password is 'cristina123' (hashed at seed time, never stored
-      // in source). She should change it on first login.
+      // Initial password is resolved from INITIAL_CRISTINA_PASSWORD env var,
+      // or generated randomly and printed to the deploy log on first run.
+      // No password ever appears in source.
       const cristinaResult = await client.query(
         'SELECT id FROM "Artist" WHERE email = $1',
         ['cristina@hallofmirrorstattoo.com']
@@ -460,7 +473,8 @@ export async function setupDatabase() {
 
       if (cristinaResult.rows.length === 0) {
         console.log('🔄 Creating artist Cristina...');
-        const cristinaHash = await bcrypt.hash('cristina123', 10);
+        const cristinaPassword = resolveSeedPassword('INITIAL_CRISTINA_PASSWORD', 'cristina@hallofmirrorstattoo.com');
+        const cristinaHash = await bcrypt.hash(cristinaPassword, 10);
         await client.query(
           `INSERT INTO "Artist" (
              id, studio_id, full_name, email, password_hash,
