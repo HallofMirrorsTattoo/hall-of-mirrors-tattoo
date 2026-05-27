@@ -6,7 +6,6 @@ const STATIC_ROUTES: { url: string; priority: number; changeFrequency: MetadataR
   { url: '',              priority: 1.0,  changeFrequency: 'weekly' },
   { url: '/booking',      priority: 0.9,  changeFrequency: 'monthly' },
   { url: '/artists',      priority: 0.85, changeFrequency: 'weekly' },
-  { url: '/services',     priority: 0.8,  changeFrequency: 'monthly' },
   { url: '/about',        priority: 0.75, changeFrequency: 'monthly' },
 ];
 
