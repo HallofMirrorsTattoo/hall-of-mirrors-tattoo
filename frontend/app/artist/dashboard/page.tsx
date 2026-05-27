@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -182,6 +183,7 @@ export default function ArtistDashboard() {
   const [showDeclinedConsults, setShowDeclinedConsults] = useState(false);
   const [showCompletedChats, setShowCompletedChats] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [archivedConsultIds, setArchivedConsultIds] = useState<Set<string>>(new Set());
   const [closingConsultId, setClosingConsultId] = useState<string | null>(null);
   const [closingNoteText, setClosingNoteText] = useState('');
@@ -355,6 +357,25 @@ export default function ArtistDashboard() {
       fetchProfile(); // for booking_window_months setting on availability tab
     }
   }, [tab, fetchAvailability]);
+
+  // Track viewport for responsive availability layout
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 767px)');
+    const update = () => setIsMobileViewport(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
+  // Lock background scroll when mobile availability sheet is open
+  useEffect(() => {
+    if (!isMobileViewport) return;
+    if (!(tab === 'availability' && selectedDay)) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [isMobileViewport, selectedDay, tab]);
 
   useEffect(() => {
     if (tab === 'profile' && accessToken) {
@@ -1851,6 +1872,28 @@ export default function ArtistDashboard() {
   // ── Sidebar nav content ──────────────────────────────────────────────────
   const SidebarContent = () => (
     <>
+      <Link
+        href="/"
+        aria-label="Back to homepage"
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+          alignSelf: 'flex-start',
+          padding: '0.4rem 0.75rem',
+          marginBottom: '1.25rem',
+          borderRadius: '2rem',
+          border: '1px solid rgba(201,168,76,0.22)',
+          background: 'rgba(201,168,76,0.04)',
+          color: 'var(--text-mid)',
+          fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.16em', textTransform: 'uppercase',
+          textDecoration: 'none',
+          transition: 'color 0.2s ease, border-color 0.2s ease, background 0.2s ease',
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--gold)'; e.currentTarget.style.borderColor = 'rgba(201,168,76,0.5)'; e.currentTarget.style.background = 'rgba(201,168,76,0.09)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-mid)'; e.currentTarget.style.borderColor = 'rgba(201,168,76,0.22)'; e.currentTarget.style.background = 'rgba(201,168,76,0.04)'; }}
+      >
+        <span aria-hidden="true" style={{ fontSize: '0.8rem', lineHeight: 1 }}>←</span>
+        Home
+      </Link>
       <div style={{ marginBottom: '2rem' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '1.25rem', textDecoration: 'none' }}>
           <Image src="/assets/logos/White Logo.png" alt="Hall of Mirrors" width={32} height={32} style={{ width: '2rem', height: 'auto', opacity: 0.85 }} />
@@ -2770,7 +2813,8 @@ export default function ArtistDashboard() {
                 borderRadius: '0.75rem',
                 padding: '1.5rem 1.75rem',
                 marginBottom: '1.5rem',
-                maxWidth: '760px',
+                maxWidth: '480px',
+                width: '100%',
               }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   <div>
@@ -2865,10 +2909,19 @@ export default function ArtistDashboard() {
             );
           })()}
 
-          <div style={{ display: 'grid', gridTemplateColumns: selectedDay ? 'minmax(0,480px) 320px' : '1fr', gap: '1.5rem', alignItems: 'start' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isMobileViewport
+              ? '1fr'
+              : (selectedDay ? 'minmax(0,480px) 320px' : 'minmax(0,480px)'),
+            gap: '1.5rem',
+            alignItems: 'start',
+            maxWidth: '824px',
+            width: '100%',
+          }}>
 
             {/* Calendar panel */}
-            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '1.5rem', maxWidth: '480px' }}>
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '1.5rem', width: '100%', maxWidth: '480px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                 <button
                   type="button"
@@ -3020,9 +3073,10 @@ export default function ArtistDashboard() {
               </div>
             </div>
 
-            {/* Slot management panel */}
-            {selectedDay && (
-              <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '1.5rem', position: 'sticky', top: '5rem' }}>
+            {/* Slot management panel — desktop: sticky side panel; mobile: bottom-sheet portaled to body to escape .tab-content transform containing block */}
+            {selectedDay && (() => {
+              const slotPanelContent = (
+                <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
                   <div>
                     <p style={{ margin: 0, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1.125rem', color: 'var(--cream)' }}>
@@ -3147,8 +3201,53 @@ export default function ArtistDashboard() {
                     </div>
                   );
                 })()}
-              </div>
-            )}
+                </>
+              );
+
+              if (isMobileViewport && typeof document !== 'undefined') {
+                return createPortal(
+                  <>
+                    <div
+                      onClick={() => setSelectedDay(null)}
+                      style={{
+                        position: 'fixed', inset: 0, zIndex: 80,
+                        background: 'rgba(0,0,0,0.55)',
+                        backdropFilter: 'blur(3px)',
+                        WebkitBackdropFilter: 'blur(3px)',
+                        animation: 'fadeIn 0.2s ease both',
+                      }}
+                    />
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      role="dialog"
+                      aria-modal="true"
+                      aria-label="Manage availability"
+                      style={{
+                        position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 81,
+                        background: 'var(--surface)',
+                        borderTop: '1px solid rgba(201,168,76,0.18)',
+                        borderRadius: '1.25rem 1.25rem 0 0',
+                        padding: '0.75rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom))',
+                        maxHeight: '85vh',
+                        overflowY: 'auto',
+                        boxShadow: '0 -12px 40px rgba(0,0,0,0.55)',
+                        animation: 'slideUp 0.28s cubic-bezier(0.22, 1, 0.36, 1) both',
+                      }}
+                    >
+                      <div aria-hidden="true" style={{ width: '40px', height: '4px', borderRadius: '2px', background: 'rgba(201,168,76,0.3)', margin: '0 auto 0.875rem' }} />
+                      {slotPanelContent}
+                    </div>
+                  </>,
+                  document.body
+                );
+              }
+
+              return (
+                <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '1.5rem', position: 'sticky', top: '5rem' }}>
+                  {slotPanelContent}
+                </div>
+              );
+            })()}
           </div>
           </>
         )}

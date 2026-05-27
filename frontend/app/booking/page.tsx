@@ -143,6 +143,7 @@ function BookingPageContent() {
 
   const { register, handleSubmit, formState: { errors }, reset, setValue, watch, trigger, getValues } = useForm<BookingFormData>({
     resolver: zodResolver(BookingSchema),
+    defaultValues: { artistId: '' },
   });
 
   const watchedArtistId = watch('artistId');
@@ -179,7 +180,17 @@ function BookingPageContent() {
         if (res.ok) {
           const data = await res.json();
           const list: Artist[] = data.artists || [];
-          setArtists(list);
+          // Ensure Robyn appears above Cristina; everything else stays in API order.
+          const ordered = [...list].sort((a, b) => {
+            const an = (a.full_name || '').toLowerCase();
+            const bn = (b.full_name || '').toLowerCase();
+            const aRobyn = an.includes('robyn');
+            const bRobyn = bn.includes('robyn');
+            if (aRobyn && !bRobyn) return -1;
+            if (bRobyn && !aRobyn) return 1;
+            return 0;
+          });
+          setArtists(ordered);
           // Honour ?artist=<id> from deep links (e.g. artist profile page CTA)
           if (prefilledArtistId && list.some(a => a.id === prefilledArtistId)) {
             setValue('artistId', prefilledArtistId);

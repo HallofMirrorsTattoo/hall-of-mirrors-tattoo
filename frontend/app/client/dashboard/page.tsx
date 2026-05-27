@@ -140,6 +140,33 @@ export default function ClientDashboardPage() {
   // ── Sidebar content ──────────────────────────────────────────────────────
   const SidebarContent = () => (
     <>
+      {/* Back to homepage */}
+      <Link
+        href="/"
+        aria-label="Back to homepage"
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+          alignSelf: 'flex-start',
+          padding: '0.4rem 0.75rem',
+          marginBottom: '1.25rem',
+          borderRadius: '2rem',
+          border: '1px solid rgba(201,168,76,0.22)',
+          background: 'rgba(201,168,76,0.04)',
+          color: 'var(--text-mid)',
+          fontFamily: '"DM Mono", monospace',
+          fontSize: '0.68rem',
+          letterSpacing: '0.16em',
+          textTransform: 'uppercase',
+          textDecoration: 'none',
+          transition: 'color 0.2s ease, border-color 0.2s ease, background 0.2s ease',
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--gold)'; e.currentTarget.style.borderColor = 'rgba(201,168,76,0.5)'; e.currentTarget.style.background = 'rgba(201,168,76,0.09)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-mid)'; e.currentTarget.style.borderColor = 'rgba(201,168,76,0.22)'; e.currentTarget.style.background = 'rgba(201,168,76,0.04)'; }}
+      >
+        <span aria-hidden="true" style={{ fontSize: '0.8rem', lineHeight: 1 }}>←</span>
+        Home
+      </Link>
+
       {/* Logo + identity */}
       <div style={{ marginBottom: '2rem' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '1.25rem', textDecoration: 'none' }}>
