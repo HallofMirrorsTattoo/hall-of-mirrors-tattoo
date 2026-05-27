@@ -25,7 +25,7 @@ const BookingSchema = z.object({
   estimatedPlacement:      z.string().min(2, 'Please specify placement'),
   referralSource:          z.string().optional(),
   notes:                   z.string().optional(),
-  artistId:                z.string().optional(),
+  artistId:                z.string().min(1, 'Please choose an artist'),
   clientBudget:            z.preprocess(v => v === '' || v === undefined || v === null ? undefined : Number(v), z.number().positive().optional()),
 });
 
@@ -259,8 +259,10 @@ function BookingPageContent() {
         if (!user) {
           throw new Error('Please log in or create an account to request a consultation, this enables direct messaging with your artist.');
         }
-        const artistId = data.artistId || artists[0]?.id;
-        if (!artistId) throw new Error('No artist found — please try again.');
+        // Zod requires artistId at this point, but be defensive in case the
+        // artist list was empty for some reason at submit time.
+        const artistId = data.artistId;
+        if (!artistId) throw new Error('Please choose an artist before submitting.');
         const message = data.tattooDesignDescription + (data.notes ? `\n\nAdditional notes: ${data.notes}` : '');
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/client/consultations`, {
           method: 'POST',
@@ -284,7 +286,7 @@ function BookingPageContent() {
       } else {
         const payload: Record<string, unknown> = {
           ...data,
-          artistId: data.artistId || undefined,
+          artistId: data.artistId, // required by the schema
           clientBudget: data.clientBudget || undefined,
           payment_method: 'not_set',
         };
@@ -608,9 +610,14 @@ function BookingPageContent() {
 
                           {/* Artist */}
                           <div style={{ marginBottom: '1.5rem' }}>
-                            <label htmlFor="artistId">Preferred Artist</label>
-                            <select {...register('artistId')} id="artistId" disabled={loadingArtists}>
-                              <option value="">No preference — studio assigns</option>
+                            <label htmlFor="artistId">Artist</label>
+                            <select
+                              {...register('artistId')}
+                              id="artistId"
+                              disabled={loadingArtists}
+                              style={errors.artistId ? { borderColor: 'rgba(239,68,68,0.5)' } : {}}
+                            >
+                              <option value="" disabled>Choose your artist…</option>
                               {artists.map((a) => (
                                 <option key={a.id} value={a.id}>
                                   {a.full_name}
@@ -620,7 +627,12 @@ function BookingPageContent() {
                             {loadingArtists && (
                               <p style={{ ...mono, fontSize: '0.72rem', letterSpacing: '0.1em', color: 'var(--text-low)', marginTop: '0.375rem' }}>Loading artists…</p>
                             )}
-                            {hasArtist && (
+                            {errors.artistId && (
+                              <p style={{ ...mono, fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--error-text)', marginTop: '0.375rem' }}>
+                                {errors.artistId.message}
+                              </p>
+                            )}
+                            {hasArtist && !errors.artistId && (
                               <p style={{ ...mono, fontSize: '0.72rem', letterSpacing: '0.08em', color: 'rgba(201,168,76,0.55)', marginTop: '0.5rem' }}>
                                 Showing live availability for this artist
                               </p>
@@ -736,13 +748,23 @@ function BookingPageContent() {
                           <p style={{ ...mono, fontSize: '0.68rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.85)', marginBottom: '1.5rem' }}>02 — Your idea</p>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '1.25rem' }}>
                             <div>
-                              <label htmlFor="artistId">Preferred Artist</label>
-                              <select {...register('artistId')} id="artistId" disabled={loadingArtists}>
-                                <option value="">No preference — studio assigns</option>
+                              <label htmlFor="artistId">Artist</label>
+                              <select
+                                {...register('artistId')}
+                                id="artistId"
+                                disabled={loadingArtists}
+                                style={errors.artistId ? { borderColor: 'rgba(239,68,68,0.5)' } : {}}
+                              >
+                                <option value="" disabled>Choose your artist…</option>
                                 {artists.map((a) => (
                                   <option key={a.id} value={a.id}>{a.full_name}</option>
                                 ))}
                               </select>
+                              {errors.artistId && (
+                                <p style={{ ...mono, fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--error-text)', marginTop: '0.375rem' }}>
+                                  {errors.artistId.message}
+                                </p>
+                              )}
                             </div>
                             <div>
                               <label htmlFor="tattooDesignDescription">Describe your idea</label>
