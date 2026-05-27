@@ -95,7 +95,7 @@ export async function submitConsentForm(req: Request, res: Response) {
       `SELECT b.id, b.booking_reference, b.appointment_date_time, b.placement, b.estimated_size, b.tattoo_description,
               b.user_id, b.guest_email, b.guest_name,
               u.first_name, u.last_name, u.email, u.phone, u.address, u.city, u.postcode,
-              a.full_name as artist_name
+              a.full_name as artist_name, a.email as artist_email
        FROM "Booking" b
        LEFT JOIN "User" u ON b.user_id = u.id
        LEFT JOIN "Artist" a ON b.artist_id = a.id
@@ -273,6 +273,9 @@ export async function submitConsentForm(req: Request, res: Response) {
         bookingReference: booking.booking_reference,
         formReference: formRef,
         pdfBase64,
+        // Route a copy to the booking's artist so they see their own clients'
+        // signed forms in their own inbox, not just the studio archive.
+        artistEmail: booking.artist_email ?? undefined,
       }).catch((e) => console.error('[email] consent studio email failed:', e));
     } catch (pdfErr) {
       console.error('[pdf] generation failed (non-fatal):', pdfErr);

@@ -519,6 +519,9 @@ export async function sendConsentFormToStudio(data: {
   bookingReference: string;
   formReference: string;
   pdfBase64: string;
+  /** Optional — the artist who owns the booking. If provided and different
+   *  from the studio inbox, they receive a copy of the signed form too. */
+  artistEmail?: string;
 }): Promise<void> {
   const content = `
     ${heading(`New consent form submitted.`)}
@@ -532,20 +535,30 @@ export async function sendConsentFormToStudio(data: {
     ${ctaButton(`${FRONTEND_URL}/artist/dashboard`, 'View in Dashboard')}
   `;
 
-  await send({
-    to: STUDIO_EMAIL,
-    from: { email: FROM_EMAIL, name: 'Hall of Mirrors Booking System' },
-    subject: `Consent form signed: ${data.clientName} — ${data.bookingReference}`,
-    html: baseTemplate(content),
-    attachments: [
-      {
-        content: data.pdfBase64,
-        filename: `consent-form-${data.formReference}.pdf`,
-        type: 'application/pdf',
-        disposition: 'attachment',
-      },
-    ],
-  });
+  // Always notify the studio inbox as the archive recipient; if a specific
+  // artist owns the booking, send them a copy too. Mirrors how
+  // sendBookingNotificationToStudio routes recipients.
+  const recipients = [STUDIO_EMAIL];
+  if (data.artistEmail && data.artistEmail !== STUDIO_EMAIL) {
+    recipients.push(data.artistEmail);
+  }
+
+  for (const to of recipients) {
+    await send({
+      to,
+      from: { email: FROM_EMAIL, name: 'Hall of Mirrors Booking System' },
+      subject: `Consent form signed: ${data.clientName} — ${data.bookingReference}`,
+      html: baseTemplate(content),
+      attachments: [
+        {
+          content: data.pdfBase64,
+          filename: `consent-form-${data.formReference}.pdf`,
+          type: 'application/pdf',
+          disposition: 'attachment',
+        },
+      ],
+    });
+  }
 }
 
 export async function sendArtistCancellationToClient(data: {
