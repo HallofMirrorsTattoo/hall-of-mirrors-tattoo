@@ -265,6 +265,38 @@ export default function ArtistDashboard() {
   const [profileError, setProfileError] = useState('');
   const [editingSection, setEditingSection] = useState<string | null>(null);
 
+  // Artist password change
+  const [pwCurrent, setPwCurrent] = useState('');
+  const [pwNew, setPwNew] = useState('');
+  const [pwConfirm, setPwConfirm] = useState('');
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwError, setPwError] = useState('');
+  const [pwSuccess, setPwSuccess] = useState('');
+
+  const changeArtistPassword = async () => {
+    setPwError('');
+    setPwSuccess('');
+    if (pwNew.length < 8) { setPwError('New password must be at least 8 characters.'); return; }
+    if (pwNew !== pwConfirm) { setPwError('New password and confirmation do not match.'); return; }
+    setPwSaving(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/artist/change-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ current_password: pwCurrent, new_password: pwNew }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to change password');
+      setPwSuccess('Password updated.');
+      setPwCurrent(''); setPwNew(''); setPwConfirm('');
+      setTimeout(() => setPwSuccess(''), 3000);
+    } catch (err) {
+      setPwError(err instanceof Error ? err.message : 'Failed to change password.');
+    } finally {
+      setPwSaving(false);
+    }
+  };
+
   // ── Portfolio photos state ─────────────────────────────────────────────────
   interface PortfolioPhoto { id: string; public_url: string; display_order: number; created_at: string; }
   const [portfolioPhotos, setPortfolioPhotos] = useState<PortfolioPhoto[]>([]);
@@ -3672,6 +3704,45 @@ export default function ArtistDashboard() {
                     {calendarActing ? 'Redirecting…' : 'Connect Google Calendar'}
                   </button>
                 )}
+              </div>
+
+              {/* ── Security: change password ────────────────────────────────── */}
+              <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.875rem', padding: '1.75rem 2rem 1.5rem', marginBottom: '1.5rem' }}>
+                <h3 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.25rem', fontWeight: 300, color: 'var(--gold)', margin: '0 0 0.25rem', letterSpacing: '-0.01em' }}>Security</h3>
+                <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-mid)', lineHeight: 1.6, margin: '0 0 1.25rem' }}>
+                  Change the password for your artist account.
+                </p>
+                {pwError && (
+                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: '#e57373', letterSpacing: '0.05em', marginBottom: '0.875rem' }}>{pwError}</p>
+                )}
+                {pwSuccess && (
+                  <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: 'var(--gold)', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>{pwSuccess}</p>
+                )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <label style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-mid)', textTransform: 'uppercase' }}>Current password</label>
+                    <input type="password" value={pwCurrent} onChange={e => setPwCurrent(e.target.value)} autoComplete="current-password" style={inputSt} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <label style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-mid)', textTransform: 'uppercase' }}>New password</label>
+                    <input type="password" value={pwNew} onChange={e => setPwNew(e.target.value)} autoComplete="new-password" style={inputSt} />
+                    <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.06em', color: 'var(--text-low)' }}>At least 8 characters.</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    <label style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-mid)', textTransform: 'uppercase' }}>Confirm new password</label>
+                    <input type="password" value={pwConfirm} onChange={e => setPwConfirm(e.target.value)} autoComplete="new-password" style={inputSt} />
+                  </div>
+                </div>
+                <div style={{ marginTop: '1.25rem', display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={changeArtistPassword}
+                    disabled={pwSaving || !pwCurrent || !pwNew || !pwConfirm}
+                    className="btn-primary"
+                    style={{ fontSize: '0.8125rem', padding: '0.5625rem 1.375rem', opacity: (pwSaving || !pwCurrent || !pwNew || !pwConfirm) ? 0.6 : 1 }}
+                  >
+                    <span>{pwSaving ? 'Updating…' : 'Update password'}</span>
+                  </button>
+                </div>
               </div>
 
             </div>

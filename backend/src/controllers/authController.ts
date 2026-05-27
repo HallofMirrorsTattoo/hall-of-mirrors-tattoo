@@ -163,6 +163,47 @@ export async function artistRefresh(req: Request, res: Response) {
   }
 }
 
+export async function changeArtistPassword(req: Request, res: Response) {
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  try {
+    if (!req.artist) {
+      return res.status(401).json({ success: false, error: 'Not authenticated' });
+    }
+    const { current_password, new_password } = req.body;
+    if (!current_password || !new_password) {
+      return res.status(400).json({ success: false, error: 'Current and new password are required' });
+    }
+    if (typeof new_password !== 'string' || new_password.length < 8) {
+      return res.status(400).json({ success: false, error: 'New password must be at least 8 characters' });
+    }
+
+    await client.connect();
+    const result = await client.query(
+      `SELECT password_hash FROM "Artist" WHERE id = $1`,
+      [req.artist.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Artist not found' });
+    }
+    const match = await bcrypt.compare(current_password, result.rows[0].password_hash);
+    if (!match) {
+      return res.status(401).json({ success: false, error: 'Current password is incorrect' });
+    }
+
+    const new_hash = await bcrypt.hash(new_password, 10);
+    await client.query(
+      `UPDATE "Artist" SET password_hash = $1, updated_at = NOW() WHERE id = $2`,
+      [new_hash, req.artist.id]
+    );
+    res.json({ success: true, message: 'Password updated' });
+  } catch (error) {
+    console.error('Artist change password error:', error);
+    res.status(500).json({ success: false, error: 'Failed to change password' });
+  } finally {
+    await client.end();
+  }
+}
+
 export async function getArtistProfile(req: Request, res: Response) {
   const client = new Client({
     connectionString: process.env.DATABASE_URL,

@@ -191,6 +191,7 @@ CREATE INDEX IF NOT EXISTS "AvailabilityBlock_artist_date_idx" ON "AvailabilityB
 
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS password_reset_token TEXT;
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS password_reset_expires TIMESTAMP;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;
 ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS appointment_time TEXT;
 ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS notify_end_time BOOLEAN NOT NULL DEFAULT true;
 ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMP;

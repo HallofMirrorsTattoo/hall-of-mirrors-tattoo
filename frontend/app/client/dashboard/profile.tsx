@@ -186,7 +186,7 @@ function HealthTextField({ label, value, onChange }: { label: string; value: str
 }
 
 export default function ProfileTab() {
-  const { accessToken } = useClientAuth();
+  const { accessToken, logout } = useClientAuth();
   const [form, setForm] = useState<ProfileData>({
     first_name: '', last_name: '', email: '', phone: '',
     address: '', city: '', postcode: '',
@@ -197,6 +197,21 @@ export default function ProfileTab() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+
+  // Security: change password
+  const [pwCurrent, setPwCurrent] = useState('');
+  const [pwNew, setPwNew] = useState('');
+  const [pwConfirm, setPwConfirm] = useState('');
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwError, setPwError] = useState('');
+  const [pwSuccess, setPwSuccess] = useState('');
+
+  // Delete account flow
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteAck, setDeleteAck] = useState(false);
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   useEffect(() => {
     if (!accessToken) return;
@@ -253,6 +268,64 @@ export default function ProfileTab() {
 
   const handleChange = (name: keyof ProfileData, value: string) => {
     setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwError('');
+    setPwSuccess('');
+    if (pwNew.length < 8) {
+      setPwError('New password must be at least 8 characters.');
+      return;
+    }
+    if (pwNew !== pwConfirm) {
+      setPwError('New password and confirmation do not match.');
+      return;
+    }
+    setPwSaving(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/client/change-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ current_password: pwCurrent, new_password: pwNew }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to change password');
+      setPwSuccess('Password updated.');
+      setPwCurrent(''); setPwNew(''); setPwConfirm('');
+      setTimeout(() => setPwSuccess(''), 3000);
+    } catch (err) {
+      setPwError(err instanceof Error ? err.message : 'Failed to change password.');
+    } finally {
+      setPwSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleteError('');
+    if (!deletePassword) {
+      setDeleteError('Please enter your password to confirm.');
+      return;
+    }
+    if (!deleteAck) {
+      setDeleteError('Please acknowledge the data retention notice.');
+      return;
+    }
+    setDeleteSubmitting(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/client/me`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ password: deletePassword }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Failed to close account');
+      logout();
+      window.location.href = '/';
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to close account.');
+      setDeleteSubmitting(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -403,6 +476,212 @@ export default function ProfileTab() {
           {!saving && <span className="btn-icon" aria-hidden="true">→</span>}
         </button>
       </form>
+
+      {/* ── Security: change password ────────────────────────────────────── */}
+      <section style={{ marginTop: '3.5rem' }}>
+        <p style={sectionHeadStyle}>Security</p>
+        <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-mid)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+          Change the password for your account.
+        </p>
+        <form onSubmit={handleChangePassword}>
+          {pwError && (
+            <div className="alert-error" style={{ marginBottom: '1rem' }}>{pwError}</div>
+          )}
+          {pwSuccess && (
+            <div style={{ padding: '0.875rem 1rem', background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '0.5rem', marginBottom: '1rem' }}>
+              <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--gold)', fontFamily: '"DM Sans", sans-serif' }}>{pwSuccess}</p>
+            </div>
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+            <div>
+              <label style={labelStyle}>Current password</label>
+              <input
+                type="password"
+                value={pwCurrent}
+                onChange={(e) => setPwCurrent(e.target.value)}
+                autoComplete="current-password"
+                style={inputStyle}
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>New password</label>
+              <input
+                type="password"
+                value={pwNew}
+                onChange={(e) => setPwNew(e.target.value)}
+                autoComplete="new-password"
+                style={inputStyle}
+              />
+              <p style={{ margin: '0.4rem 0 0', fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem', color: 'var(--text-low)' }}>At least 8 characters.</p>
+            </div>
+            <div>
+              <label style={labelStyle}>Confirm new password</label>
+              <input
+                type="password"
+                value={pwConfirm}
+                onChange={(e) => setPwConfirm(e.target.value)}
+                autoComplete="new-password"
+                style={inputStyle}
+              />
+            </div>
+          </div>
+          <button
+            type="submit"
+            disabled={pwSaving || !pwCurrent || !pwNew || !pwConfirm}
+            className="btn-primary"
+            style={{ marginTop: '1.25rem', padding: '0.875rem 2.5rem', opacity: (pwSaving || !pwCurrent || !pwNew || !pwConfirm) ? 0.6 : 1, cursor: pwSaving ? 'default' : 'pointer' }}
+          >
+            <span>{pwSaving ? 'Updating…' : 'Update password'}</span>
+            {!pwSaving && <span className="btn-icon" aria-hidden="true">→</span>}
+          </button>
+        </form>
+      </section>
+
+      {/* ── Danger zone: close account ───────────────────────────────────── */}
+      <section style={{ marginTop: '3.5rem' }}>
+        <p style={{ ...sectionHeadStyle, color: '#f87171', borderBottomColor: 'rgba(239,68,68,0.25)' }}>Close account</p>
+        <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-mid)', lineHeight: 1.65, marginBottom: '0.75rem' }}>
+          Closing your account will end your access to the client portal, stop all future emails from us, and revoke your ability to book through this site.
+        </p>
+        <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-low)', lineHeight: 1.65, marginBottom: '1.5rem' }}>
+          For your safety and ours, your booking history, signed consent forms, messages, deposits paid or forfeited, and any cancellation records are retained in accordance with Liverpool City Council tattoo studio licensing requirements. They are kept securely and used only if needed for aftercare follow-up or a regulatory enquiry.
+        </p>
+        <button
+          type="button"
+          onClick={() => { setDeleteOpen(true); setDeleteError(''); setDeletePassword(''); setDeleteAck(false); }}
+          style={{
+            padding: '0.75rem 1.5rem',
+            borderRadius: '0.5rem',
+            background: 'transparent',
+            border: '1px solid rgba(239,68,68,0.45)',
+            color: '#f87171',
+            fontFamily: '"DM Mono", monospace',
+            fontSize: '0.72rem',
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+            transition: 'background 0.2s ease, border-color 0.2s ease',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.7)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.45)'; }}
+        >
+          Close my account
+        </button>
+      </section>
+
+      {/* Close-account confirmation modal */}
+      {deleteOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirm account closure"
+          style={{
+            position: 'fixed', inset: 0, zIndex: 200,
+            background: 'rgba(0,0,0,0.65)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '1.25rem',
+            animation: 'fadeIn 0.2s ease both',
+          }}
+          onClick={() => !deleteSubmitting && setDeleteOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%', maxWidth: '440px',
+              background: 'var(--surface)',
+              border: '1px solid rgba(239,68,68,0.25)',
+              borderRadius: '1rem',
+              padding: '1.75rem',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.55)',
+            }}
+          >
+            <p style={{ ...sectionHeadStyle, color: '#f87171', borderBottom: 'none', marginBottom: '0.75rem', paddingBottom: 0 }}>This is permanent</p>
+            <h3 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300, fontSize: '1.5rem', color: 'var(--cream)', margin: '0 0 0.75rem', lineHeight: 1.2 }}>
+              Close your Hall of Mirrors account?
+            </h3>
+            <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-mid)', lineHeight: 1.6, marginBottom: '0.625rem' }}>
+              You will be logged out immediately. You will no longer be able to log in, message your artist, sign new consent forms, or receive any emails from us.
+            </p>
+            <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-low)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+              Your existing booking history, signed consent forms, messages, deposits paid or forfeited, and cancellation records will be retained securely in line with Liverpool City Council tattoo studio licensing requirements.
+            </p>
+
+            {deleteError && (
+              <div className="alert-error" style={{ marginBottom: '1rem' }}>{deleteError}</div>
+            )}
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={labelStyle}>Confirm with your password</label>
+              <input
+                type="password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                autoComplete="current-password"
+                style={inputStyle}
+                disabled={deleteSubmitting}
+              />
+            </div>
+
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.625rem', marginBottom: '1.5rem', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={deleteAck}
+                onChange={(e) => setDeleteAck(e.target.checked)}
+                disabled={deleteSubmitting}
+                style={{ width: '1rem', height: '1rem', marginTop: '0.15rem', flexShrink: 0, accentColor: 'rgba(239,68,68,0.85)' }}
+              />
+              <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-mid)', lineHeight: 1.55 }}>
+                I understand my booking, consent, message, and payment records will be retained in accordance with Liverpool City Council regulations.
+              </span>
+            </label>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setDeleteOpen(false)}
+                disabled={deleteSubmitting}
+                style={{
+                  padding: '0.7rem 1.25rem',
+                  borderRadius: '0.5rem',
+                  background: 'transparent',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text-mid)',
+                  fontFamily: '"DM Mono", monospace',
+                  fontSize: '0.72rem',
+                  letterSpacing: '0.16em',
+                  textTransform: 'uppercase',
+                  cursor: deleteSubmitting ? 'default' : 'pointer',
+                  opacity: deleteSubmitting ? 0.5 : 1,
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={deleteSubmitting || !deletePassword || !deleteAck}
+                style={{
+                  padding: '0.7rem 1.25rem',
+                  borderRadius: '0.5rem',
+                  background: 'rgba(239,68,68,0.12)',
+                  border: '1px solid rgba(239,68,68,0.55)',
+                  color: '#f87171',
+                  fontFamily: '"DM Mono", monospace',
+                  fontSize: '0.72rem',
+                  letterSpacing: '0.16em',
+                  textTransform: 'uppercase',
+                  cursor: (deleteSubmitting || !deletePassword || !deleteAck) ? 'default' : 'pointer',
+                  opacity: (deleteSubmitting || !deletePassword || !deleteAck) ? 0.5 : 1,
+                }}
+              >
+                {deleteSubmitting ? 'Closing…' : 'Permanently close'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

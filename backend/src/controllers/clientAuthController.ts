@@ -543,34 +543,93 @@ export async function updateClientProfile(req: Request, res: Response) {
   }
 }
 
+export async function changeClientPassword(req: Request, res: Response) {
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, error: 'Not authenticated' });
+    }
+    const { current_password, new_password } = req.body;
+    if (!current_password || !new_password) {
+      return res.status(400).json({ success: false, error: 'Current and new password are required' });
+    }
+    if (typeof new_password !== 'string' || new_password.length < 8) {
+      return res.status(400).json({ success: false, error: 'New password must be at least 8 characters' });
+    }
+
+    await client.connect();
+    const result = await client.query(
+      `SELECT password_hash FROM "User" WHERE id = $1`,
+      [req.user.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    const match = await bcrypt.compare(current_password, result.rows[0].password_hash);
+    if (!match) {
+      return res.status(401).json({ success: false, error: 'Current password is incorrect' });
+    }
+
+    const new_hash = await bcrypt.hash(new_password, 10);
+    await client.query(
+      `UPDATE "User" SET password_hash = $1, password_reset_token = NULL, password_reset_expires = NULL, updated_at = NOW() WHERE id = $2`,
+      [new_hash, req.user.id]
+    );
+    res.json({ success: true, message: 'Password updated' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ success: false, error: 'Failed to change password' });
+  } finally {
+    await client.end();
+  }
+}
+
+// Closes the client's access to the account WITHOUT removing their booking,
+// consent, message, or deposit history — the studio is required to retain
+// those records in accordance with Liverpool City Council tattoo studio
+// licensing rules. After this runs the user can no longer log in, but every
+// historical record continues to FK to their original row and stays intact.
 export async function deleteClientAccount(req: Request, res: Response) {
   const client = new Client({ connectionString: process.env.DATABASE_URL });
   try {
     if (!req.user) {
       return res.status(401).json({ success: false, error: 'Not authenticated' });
     }
+    const { password } = req.body || {};
+    if (!password) {
+      return res.status(400).json({ success: false, error: 'Password confirmation is required' });
+    }
+
     await client.connect();
+    const result = await client.query(
+      `SELECT password_hash, account_status FROM "User" WHERE id = $1`,
+      [req.user.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    if (result.rows[0].account_status === 'deleted') {
+      return res.status(400).json({ success: false, error: 'Account is already closed' });
+    }
+    const match = await bcrypt.compare(password, result.rows[0].password_hash);
+    if (!match) {
+      return res.status(401).json({ success: false, error: 'Password is incorrect' });
+    }
+
+    // Preserve all personal data and historical records. Only block future
+    // login + future password reset, and stamp the closure date.
     await client.query(
       `UPDATE "User" SET
-        email = 'deleted_' || id || '@deleted.invalid',
-        first_name = 'Deleted',
-        last_name = 'Account',
         password_hash = '',
-        phone = NULL,
-        date_of_birth = NULL,
-        address = NULL,
-        city = NULL,
-        postcode = NULL,
-        emergency_contact_name = NULL,
-        emergency_contact_phone = NULL,
         password_reset_token = NULL,
         password_reset_expires = NULL,
         account_status = 'deleted',
+        deleted_at = NOW(),
         updated_at = NOW()
       WHERE id = $1`,
       [req.user.id]
     );
-    res.json({ success: true, message: 'Account deleted' });
+    res.json({ success: true, message: 'Account closed' });
   } catch (error) {
     console.error('Delete account error:', error);
     res.status(500).json({ success: false, error: 'Failed to delete account' });
