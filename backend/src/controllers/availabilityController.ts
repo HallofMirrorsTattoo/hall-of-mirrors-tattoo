@@ -47,6 +47,19 @@ export async function getArtistAvailability(req: Request, res: Response) {
 
     await client.connect();
 
+    // Booking window: how many months ahead clients can book.
+    // Defaults to 3 if column missing or NULL. Range enforced at write time.
+    const artistRow = await client.query(
+      `SELECT booking_window_months FROM "Artist" WHERE id = $1`,
+      [artistId]
+    );
+    const bookingWindowMonths = Number(artistRow.rows[0]?.booking_window_months) || 3;
+
+    // Compute the last day clients can book (today + window months, end of that month)
+    const today = new Date();
+    const windowEnd = new Date(today.getFullYear(), today.getMonth() + bookingWindowMonths, 0);
+    const maxBookingDate = `${windowEnd.getFullYear()}-${String(windowEnd.getMonth() + 1).padStart(2, '0')}-${String(windowEnd.getDate()).padStart(2, '0')}`;
+
     // Manual artist blocks (whole day or specific slot)
     const blocksResult = await client.query(
       `SELECT id, artist_id, blocked_date::text as blocked_date, blocked_slot, reason
@@ -118,6 +131,8 @@ export async function getArtistAvailability(req: Request, res: Response) {
       blockedDays,
       slotData,
       blocks: blocksResult.rows,
+      bookingWindowMonths,
+      maxBookingDate,
     });
   } catch (error) {
     console.error('Get availability error:', error);

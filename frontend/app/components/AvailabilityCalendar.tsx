@@ -12,6 +12,8 @@ export interface AvailabilityData {
   blockedDays: string[];
   slotData: Record<string, { blocked: string[]; booked: string[] }>;
   blocks: Array<{ id: string; blocked_date: string; blocked_slot: string | null; reason: string | null }>;
+  bookingWindowMonths?: number;
+  maxBookingDate?: string; // YYYY-MM-DD inclusive
 }
 
 interface Props {
@@ -19,13 +21,25 @@ interface Props {
   selectedDate: string | null;
   onDateSelect: (date: string) => void;
   onAvailabilityLoad?: (data: AvailabilityData) => void;
+  /**
+   * When true (default), grays out dates and locks month navigation beyond the
+   * artist's booking window. Set false for artist-side flows where the artist
+   * needs to pick dates further out (e.g. counter-offers, reschedules).
+   */
+  enforceBookingWindow?: boolean;
 }
 
 function toDateStr(year: number, month: number, day: number): string {
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
-export default function AvailabilityCalendar({ artistId, selectedDate, onDateSelect, onAvailabilityLoad }: Props) {
+export default function AvailabilityCalendar({
+  artistId,
+  selectedDate,
+  onDateSelect,
+  onAvailabilityLoad,
+  enforceBookingWindow = true,
+}: Props) {
   const today = new Date();
   const todayStr = toDateStr(today.getFullYear(), today.getMonth(), today.getDate());
 
@@ -86,12 +100,23 @@ export default function AvailabilityCalendar({ artistId, selectedDate, onDateSel
     viewYear > today.getFullYear() ||
     (viewYear === today.getFullYear() && viewMonth > today.getMonth());
 
+  // Booking window cap: parse maxBookingDate ('YYYY-MM-DD') into year/month.
+  const maxDateStr = enforceBookingWindow ? availability?.maxBookingDate : undefined;
+  const [maxYear, maxMonth] = maxDateStr
+    ? [parseInt(maxDateStr.substring(0, 4), 10), parseInt(maxDateStr.substring(5, 7), 10) - 1]
+    : [Infinity, Infinity];
+
+  const canGoNext = !maxDateStr
+    ? true
+    : viewYear < maxYear || (viewYear === maxYear && viewMonth < maxMonth);
+
   const prevMonth = () => {
     if (!canGoPrev) return;
     if (viewMonth === 0) { setViewMonth(11); setViewYear((y) => y - 1); }
     else setViewMonth((m) => m - 1);
   };
   const nextMonth = () => {
+    if (!canGoNext) return;
     if (viewMonth === 11) { setViewMonth(0); setViewYear((y) => y + 1); }
     else setViewMonth((m) => m + 1);
   };
@@ -153,8 +178,9 @@ export default function AvailabilityCalendar({ artistId, selectedDate, onDateSel
         <button
           type="button"
           onClick={nextMonth}
-          style={{ ...navBtn }}
-          onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--gold)')}
+          disabled={!canGoNext}
+          style={{ ...navBtn, opacity: canGoNext ? 1 : 0.25, cursor: canGoNext ? 'pointer' : 'default' }}
+          onMouseEnter={(e) => canGoNext && (e.currentTarget.style.borderColor = 'var(--gold)')}
           onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
           aria-label="Next month"
         >
@@ -197,9 +223,10 @@ export default function AvailabilityCalendar({ artistId, selectedDate, onDateSel
         {cells.map(({ dateStr, inMonth }) => {
           const isPast = dateStr < todayStr;
           const isToday = dateStr === todayStr;
-          const isBlocked = inMonth && !isPast && (availability?.blockedDays.includes(dateStr) ?? false);
+          const isPastWindow = !!maxDateStr && dateStr > maxDateStr;
+          const isBlocked = inMonth && !isPast && !isPastWindow && (availability?.blockedDays.includes(dateStr) ?? false);
           const isSelected = selectedDate === dateStr;
-          const isClickable = inMonth && !isPast && !isBlocked;
+          const isClickable = inMonth && !isPast && !isBlocked && !isPastWindow;
           const dayNum = parseInt(dateStr.split('-')[2], 10);
 
           let bg = 'transparent';
@@ -220,6 +247,9 @@ export default function AvailabilityCalendar({ artistId, selectedDate, onDateSel
           } else if (isPast) {
             color = 'var(--text-low)';
             opacity = 0.3;
+          } else if (isPastWindow) {
+            color = 'var(--text-low)';
+            opacity = 0.22;
           } else if (isBlocked) {
             color = 'var(--text-low)';
             opacity = 0.28;
@@ -285,6 +315,21 @@ export default function AvailabilityCalendar({ artistId, selectedDate, onDateSel
           </div>
         ))}
       </div>
+
+      {/* Booking window notice — only when enforced and we have a max date */}
+      {maxDateStr && (
+        <p style={{
+          margin: '0.875rem 0 0',
+          fontFamily: '"DM Mono", monospace',
+          fontSize: '0.65rem',
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: 'rgba(154,144,130,0.65)',
+          textAlign: 'center',
+        }}>
+          Bookings open through {new Date(`${maxDateStr}T12:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+        </p>
+      )}
     </div>
   );
 }

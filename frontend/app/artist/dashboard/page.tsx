@@ -241,6 +241,8 @@ export default function ArtistDashboard() {
   const [avError, setAvError]       = useState('');
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [isBlocking, setIsBlocking]   = useState(false);
+  const [windowSaving, setWindowSaving] = useState(false);
+  const [windowSaved, setWindowSaved]   = useState(false);
 
   // ── Artist profile state ───────────────────────────────────────────────────
   interface ArtistProfile {
@@ -248,8 +250,9 @@ export default function ArtistDashboard() {
     bio: string;
     instagram_handle: string;
     portrait_url: string;
+    booking_window_months: number;
   }
-  const emptyProfile: ArtistProfile = { full_name: '', bio: '', instagram_handle: '', portrait_url: '' };
+  const emptyProfile: ArtistProfile = { full_name: '', bio: '', instagram_handle: '', portrait_url: '', booking_window_months: 3 };
   const [profile, setProfile] = useState<ArtistProfile>(emptyProfile);
   const [profileSaving, setProfileSaving] = useState(false);
   const [portraitUploading, setPortraitUploading] = useState(false);
@@ -346,6 +349,7 @@ export default function ArtistDashboard() {
   useEffect(() => {
     if (tab === 'availability' && artist?.id && accessToken) {
       fetchAvailability();
+      fetchProfile(); // for booking_window_months setting on availability tab
     }
   }, [tab, fetchAvailability]);
 
@@ -435,6 +439,7 @@ export default function ArtistDashboard() {
         bio: a.bio ?? '',
         instagram_handle: a.instagram_handle ?? '',
         portrait_url: a.portrait_url ?? '',
+        booking_window_months: Number(a.booking_window_months) || 3,
       });
     } catch { /* non-critical */ }
   };
@@ -464,6 +469,26 @@ export default function ArtistDashboard() {
     } finally {
       setProfileSaving(false);
     }
+  };
+
+  const saveBookingWindow = async (months: number) => {
+    if (!accessToken) return;
+    setWindowSaving(true);
+    setWindowSaved(false);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/profile`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ booking_window_months: months }),
+      });
+      if (!res.ok) throw new Error('Failed to save booking window');
+      setProfile(prev => ({ ...prev, booking_window_months: months }));
+      setWindowSaved(true);
+      setTimeout(() => setWindowSaved(false), 2000);
+      // Refresh the artist calendar so the lock reflects immediately
+      fetchAvailability();
+    } catch { /* silently fail — the optimistic UI rolls back next fetch */ }
+    finally { setWindowSaving(false); }
   };
 
   const uploadPortrait = async (file: File) => {
@@ -1335,6 +1360,7 @@ export default function ArtistDashboard() {
                     selectedDate={rescheduleDate}
                     onDateSelect={(d) => { setRescheduleDate(d); setRescheduleSlot(null); }}
                     onAvailabilityLoad={setRescheduleAvailData}
+                    enforceBookingWindow={false}
                   />
                 </div>
                 {rescheduleDate && (
@@ -1462,6 +1488,7 @@ export default function ArtistDashboard() {
                     selectedDate={counterOfferDate}
                     onDateSelect={(d) => { setCounterOfferDate(d); setCounterOfferSlot(null); }}
                     onAvailabilityLoad={setCounterOfferAvailData}
+                    enforceBookingWindow={false}
                   />
                 </div>
                 {counterOfferDate && (
@@ -1662,6 +1689,7 @@ export default function ArtistDashboard() {
                     selectedDate={counterOfferDate}
                     onDateSelect={(d) => { setCounterOfferDate(d); setCounterOfferSlot(null); }}
                     onAvailabilityLoad={setCounterOfferAvailData}
+                    enforceBookingWindow={false}
                   />
                 </div>
                 {counterOfferDate && (
@@ -2697,6 +2725,118 @@ export default function ArtistDashboard() {
 
         {/* ── Availability tab ─────────────────────────────────────────────── */}
         {tab === 'availability' && (
+          <>
+
+          {/* ── Booking window setting ─────────────────────────────────────── */}
+          {(() => {
+            const months = profile.booking_window_months || 3;
+            const horizon = (() => {
+              const n = new Date();
+              const end = new Date(n.getFullYear(), n.getMonth() + months, 0);
+              return end.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+            })();
+            return (
+              <div style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: '0.75rem',
+                padding: '1.5rem 1.75rem',
+                marginBottom: '1.5rem',
+                maxWidth: '760px',
+              }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  <div>
+                    <p style={{
+                      margin: 0,
+                      fontFamily: '"DM Mono", monospace',
+                      fontSize: '0.68rem',
+                      letterSpacing: '0.18em',
+                      textTransform: 'uppercase',
+                      color: 'rgba(201,168,76,0.7)',
+                    }}>
+                      Booking horizon
+                    </p>
+                    <h2 style={{
+                      margin: '0.35rem 0 0.5rem',
+                      fontFamily: '"Cormorant Garamond", serif',
+                      fontStyle: 'italic',
+                      fontWeight: 300,
+                      fontSize: '1.625rem',
+                      color: 'var(--cream)',
+                      lineHeight: 1.1,
+                      letterSpacing: '-0.01em',
+                    }}>
+                      How far ahead can clients book?
+                    </h2>
+                    <p style={{
+                      margin: 0,
+                      fontFamily: '"DM Sans", sans-serif',
+                      fontSize: '0.875rem',
+                      color: 'var(--text-mid)',
+                      lineHeight: 1.65,
+                      maxWidth: '54ch',
+                    }}>
+                      Limit how far into the future clients can see availability. Anything past your horizon is hidden from the booking calendar — keeping your schedule focused on the near term.
+                    </p>
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {[1, 2, 3, 4, 6, 9, 12].map(m => {
+                        const active = months === m;
+                        return (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => !windowSaving && saveBookingWindow(m)}
+                            disabled={windowSaving}
+                            style={{
+                              padding: '0.5rem 0.875rem',
+                              minWidth: '3.25rem',
+                              borderRadius: '0.375rem',
+                              border: active ? '1px solid var(--gold)' : '1px solid var(--border)',
+                              background: active ? 'rgba(201,168,76,0.14)' : 'transparent',
+                              color: active ? 'var(--gold)' : 'var(--text)',
+                              fontFamily: '"DM Sans", sans-serif',
+                              fontSize: '0.875rem',
+                              fontWeight: active ? 500 : 400,
+                              cursor: windowSaving ? 'wait' : 'pointer',
+                              transition: 'border-color 0.2s ease, background 0.2s ease, color 0.2s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!active && !windowSaving) {
+                                e.currentTarget.style.borderColor = 'rgba(201,168,76,0.4)';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!active) e.currentTarget.style.borderColor = 'var(--border)';
+                            }}
+                          >
+                            {m} {m === 1 ? 'month' : 'months'}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <p style={{
+                      margin: '0.875rem 0 0',
+                      fontFamily: '"DM Mono", monospace',
+                      fontSize: '0.68rem',
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      color: windowSaved ? 'var(--gold)' : 'var(--text-low)',
+                      transition: 'color 0.3s ease',
+                    }}>
+                      {windowSaved
+                        ? '✓ Saved'
+                        : `Clients can book through ${horizon}`}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           <div style={{ display: 'grid', gridTemplateColumns: selectedDay ? 'minmax(0,480px) 320px' : '1fr', gap: '1.5rem', alignItems: 'start' }}>
 
             {/* Calendar panel */}
@@ -2982,6 +3122,7 @@ export default function ArtistDashboard() {
               </div>
             )}
           </div>
+          </>
         )}
         {/* ── Stats tab ────────────────────────────────────────────────────── */}
         {tab === 'stats' && (() => {

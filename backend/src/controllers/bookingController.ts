@@ -66,6 +66,24 @@ export async function createBooking(req: Request, res: Response) {
       appointmentDateTime = validatedData.preferredDate!;
     }
 
+    // Enforce artist's booking window — clients can only book within N months ahead
+    if (validatedData.artistId && validatedData.appointmentDate) {
+      const winRow = await client.query(
+        `SELECT booking_window_months FROM "Artist" WHERE id = $1`,
+        [validatedData.artistId]
+      );
+      const months = Number(winRow.rows[0]?.booking_window_months) || 3;
+      const now = new Date();
+      const windowEnd = new Date(now.getFullYear(), now.getMonth() + months, 0);
+      const maxDateStr = `${windowEnd.getFullYear()}-${String(windowEnd.getMonth() + 1).padStart(2, '0')}-${String(windowEnd.getDate()).padStart(2, '0')}`;
+      if (validatedData.appointmentDate > maxDateStr) {
+        return res.status(409).json({
+          success: false,
+          error: 'This artist is only accepting bookings up to ' + maxDateStr + '. Please choose an earlier date.',
+        });
+      }
+    }
+
     // Validate slot availability when artist + slot both specified
     if (validatedData.artistId && appointmentTime && validatedData.appointmentDate) {
       // Check artist's manual blocks (whole day or specific hour)

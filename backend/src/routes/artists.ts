@@ -70,9 +70,19 @@ router.get('/', getAllActiveArtists);
 
 // PATCH /api/artist/profile — artist updates their own Artist row
 router.patch('/profile', authMiddleware, async (req: Request, res: Response) => {
-  const allowed = ['full_name', 'bio', 'specialties', 'years_experience', 'instagram_handle', 'portrait_url'];
+  const allowed = ['full_name', 'bio', 'specialties', 'years_experience', 'instagram_handle', 'portrait_url', 'booking_window_months'];
   const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k));
   if (updates.length === 0) return res.status(400).json({ error: 'No valid fields provided' });
+
+  // Validate booking window if provided: integer in [1, 12]
+  const bw = updates.find(([k]) => k === 'booking_window_months');
+  if (bw) {
+    const n = Number(bw[1]);
+    if (!Number.isInteger(n) || n < 1 || n > 12) {
+      return res.status(400).json({ error: 'booking_window_months must be an integer between 1 and 12' });
+    }
+    bw[1] = n;
+  }
 
   const setClauses = updates.map(([k], i) => `"${k}" = $${i + 1}`).join(', ');
   const values = [...updates.map(([, v]) => v), req.artist!.id];
@@ -83,7 +93,7 @@ router.patch('/profile', authMiddleware, async (req: Request, res: Response) => 
     const result = await client.query(
       `UPDATE "Artist" SET ${setClauses}, updated_at = NOW()
        WHERE id = $${values.length}
-       RETURNING id, full_name, bio, specialties, years_experience, instagram_handle, email`,
+       RETURNING id, full_name, bio, specialties, years_experience, instagram_handle, email, booking_window_months`,
       values
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Artist not found' });
