@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -93,7 +93,19 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+// Suspense wrapper required by Next.js 14 because BookingPageContent calls
+// useSearchParams(), which forces the page out of static generation unless
+// it sits inside a <Suspense>. Without this the production build fails at
+// the "Generating static pages" step with a CSR bailout error.
 export default function BookingPage() {
+  return (
+    <Suspense fallback={null}>
+      <BookingPageContent />
+    </Suspense>
+  );
+}
+
+function BookingPageContent() {
   const { user, accessToken, activate } = useClientAuth();
   const searchParams = useSearchParams();
   const initialMode = searchParams?.get('mode') === 'consultation' ? 'consultation' : 'booking';
