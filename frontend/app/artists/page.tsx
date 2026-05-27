@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import AnimatedSection from '../components/AnimatedSection';
+import { sortArtists } from '@/lib/artistOrder';
 
 export const metadata = {
   title: 'Our Artists | Hall of Mirrors Tattoo Studio Liverpool',
@@ -63,7 +64,8 @@ const imgFilter = 'brightness(0.87) contrast(1.06) saturate(0.72) sepia(0.08)';
 export default async function ArtistsPage() {
   const artists = await fetchArtists();
   const hasCristina = artists.some(a => a.full_name.toLowerCase().includes('cristina'));
-  const displayArtists = hasCristina ? artists : [...artists, CRISTINA_PLACEHOLDER];
+  const merged = hasCristina ? artists : [...artists, CRISTINA_PLACEHOLDER];
+  const displayArtists = sortArtists(merged);
 
   return (
     <div style={{ backgroundColor: 'var(--bg)', minHeight: '100vh' }}>

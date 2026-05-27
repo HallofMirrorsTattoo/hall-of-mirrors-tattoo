@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
 import { useClientAuth } from '@/lib/clientAuthContext';
+import { sortArtists } from '@/lib/artistOrder';
 import AvailabilityCalendar, { AvailabilityData } from '@/app/components/AvailabilityCalendar';
 import TimeSlotPicker from '@/app/components/TimeSlotPicker';
 import type { StudioSettings } from '@/lib/studioSettings';
@@ -180,17 +181,7 @@ function BookingPageContent() {
         if (res.ok) {
           const data = await res.json();
           const list: Artist[] = data.artists || [];
-          // Ensure Robyn appears above Cristina; everything else stays in API order.
-          const ordered = [...list].sort((a, b) => {
-            const an = (a.full_name || '').toLowerCase();
-            const bn = (b.full_name || '').toLowerCase();
-            const aRobyn = an.includes('robyn');
-            const bRobyn = bn.includes('robyn');
-            if (aRobyn && !bRobyn) return -1;
-            if (bRobyn && !aRobyn) return 1;
-            return 0;
-          });
-          setArtists(ordered);
+          setArtists(sortArtists(list));
           // Honour ?artist=<id> from deep links (e.g. artist profile page CTA)
           if (prefilledArtistId && list.some(a => a.id === prefilledArtistId)) {
             setValue('artistId', prefilledArtistId);

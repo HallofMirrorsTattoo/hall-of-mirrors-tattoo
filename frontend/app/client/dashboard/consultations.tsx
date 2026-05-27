@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type React from 'react';
 import { useClientAuth } from '@/lib/clientAuthContext';
+import { sortArtists } from '@/lib/artistOrder';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -330,7 +331,8 @@ export default function ConsultationsTab() {
     fetch(`${API}/api/artist`)
       .then((r) => r.ok ? r.json() : null)
       .then((d) => {
-        const list = d?.artists ?? [];
+        const raw: Array<{ id: string; full_name: string }> = d?.artists ?? [];
+        const list = sortArtists(raw);
         setAvailableArtists(list);
         if (list.length === 1) setSelectedArtistId(list[0].id);
       })
