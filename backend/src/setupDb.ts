@@ -1,4 +1,5 @@
 import pkg from 'pg';
+import bcrypt from 'bcrypt';
 
 const { Client } = pkg;
 
@@ -441,6 +442,63 @@ export async function setupDatabase() {
           ]
         );
         console.log('✅ Default artist Robyn exists');
+      }
+
+      // Check if Cristina exists — second resident artist.
+      // Initial password is 'cristina123' (hashed at seed time, never stored
+      // in source). She should change it on first login.
+      const cristinaResult = await client.query(
+        'SELECT id FROM "Artist" WHERE email = $1',
+        ['cristina@hallofmirrorstattoo.com']
+      );
+
+      const CRISTINA_BIO = [
+        "My name is Cristina. My tattoo name is Superstea. And my personal philosophy is simple: drink Coke, wear Adidas Hyper Sleek and make beautiful tattoos. I spend my work hours between neo-trad with a twist and blackwork illustrative.",
+        "When I'm not drawing or tattooing, I'm usually obsessing about time travel, the simulation theory, alternate realities, post-apocalyptic fashion and whether Jedi mind tricks should be taught in schools. I used to be a journalist and write news for a national news television in Romania, but the love for tattooing won and now I'm helping people customise their avatar, while using a vegan set-up (because no one has to suffer for the pictures we put under the skin).",
+        "The things I like tattooing the most are somewhere between a Victorian botanist's notebook and a fever dream. Wild flowers, poisonous plants, animal skulls or forgotten relics, but I won't say 'no' to pop culture either. If any of this sounds good to you, maybe we're running on similar software. Whether you're looking to mark a milestone, reclaim a piece of yourself or simply give your character a very cool upgrade, I'd love to help. Get in touch and let's start designing your next tattoo.",
+      ].join('\n\n');
+
+      if (cristinaResult.rows.length === 0) {
+        console.log('🔄 Creating artist Cristina...');
+        const cristinaHash = await bcrypt.hash('cristina123', 10);
+        await client.query(
+          `INSERT INTO "Artist" (
+             id, studio_id, full_name, email, password_hash,
+             bio, instagram_handle, portrait_url,
+             is_active, role, booking_window_months, created_at, updated_at
+           ) VALUES (
+             $1, $2, $3, $4, $5,
+             $6, $7, $8,
+             $9, $10, $11, NOW(), NOW()
+           )`,
+          [
+            'artist-cristina-001',
+            'default-studio',
+            'Cristina',
+            'cristina@hallofmirrorstattoo.com',
+            cristinaHash,
+            CRISTINA_BIO,
+            'supersteatattoo',
+            '/assets/artists/cristina.jpg',
+            true,
+            'artist',
+            3,
+          ]
+        );
+        console.log('✅ Artist Cristina created');
+      } else {
+        // Keep bio + instagram + portrait in sync with the canonical copy
+        // until Cristina starts editing them from her dashboard. Only updates
+        // rows where the bio is empty so we don't stomp on her edits.
+        await client.query(
+          `UPDATE "Artist"
+             SET bio = COALESCE(NULLIF(bio, ''), $1),
+                 instagram_handle = COALESCE(NULLIF(instagram_handle, ''), $2),
+                 portrait_url = COALESCE(NULLIF(portrait_url, ''), $3)
+           WHERE email = $4`,
+          [CRISTINA_BIO, 'supersteatattoo', '/assets/artists/cristina.jpg', 'cristina@hallofmirrorstattoo.com']
+        );
+        console.log('✅ Artist Cristina exists');
       }
 
       await client.end();
