@@ -425,7 +425,7 @@ export default function ClientDashboardPage() {
               © {new Date().getFullYear()} Hall of Mirrors Tattoo. All rights reserved.
             </p>
             <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.1em', color: 'var(--text-mid)', margin: 0 }}>
-              Liverpool City Council Reg. · A11394900
+              Fully licensed by Liverpool City Council
             </p>
           </div>
         </main>

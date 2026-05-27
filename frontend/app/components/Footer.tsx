@@ -186,7 +186,7 @@ export default async function Footer() {
             color: 'var(--text-mid)',
             maxWidth: 'none',
           }}>
-            Liverpool City Council Reg. · A11394900
+            Fully licensed by Liverpool City Council
           </p>
         </div>
 
