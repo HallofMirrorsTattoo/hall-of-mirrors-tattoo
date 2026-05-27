@@ -12,7 +12,6 @@ interface ArtistData {
   full_name: string;
   bio: string | null;
   instagram_handle: string | null;
-  booking_count: number;
   photos: { id: string; public_url: string }[];
   portrait_url: string | null;
 }
@@ -24,7 +23,6 @@ const CRISTINA_STATIC: ArtistData = {
   full_name: 'Cristina',
   bio: "My name is Cristina. My tattoo name is Superstea. And my personal philosophy is simple: drink Coke, wear Adidas Hyper Sleek and make beautiful tattoos. I spend my work hours between neo-trad with a twist and blackwork illustrative.\n\nWhen I'm not drawing or tattooing, I'm usually obsessing about time travel, the simulation theory, alternate realities, post-apocalyptic fashion and whether Jedi mind tricks should be taught in schools. I used to be a journalist and write news for a national news television in Romania, but the love for tattooing won and now I'm helping people customise their avatar, while using a vegan set-up (because no one has to suffer for the pictures we put under the skin).\n\nThe things I like tattooing the most are somewhere between a Victorian botanist's notebook and a fever dream. Wild flowers, poisonous plants, animal skulls or forgotten relics, but I won't say 'no' to pop culture either. If any of this sounds good to you, maybe we're running on similar software. Whether you're looking to mark a milestone, reclaim a piece of yourself or simply give your character a very cool upgrade, I'd love to help. Get in touch and let's start designing your next tattoo.",
   instagram_handle: 'supersteatattoo',
-  booking_count: 0,
   photos: [],
   portrait_url: '/assets/artists/cristina.jpg',
 };
@@ -239,19 +237,6 @@ export default async function ArtistPage({ params }: { params: { slug: string } 
               </>
             )}
           </div>
-          {/* Stat strip below portrait */}
-          {artist.booking_count > 0 && (
-            <div style={{ display: 'flex', gap: '1.5rem', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)' }}>
-              <div>
-                <p style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.75rem', fontWeight: 300, color: 'var(--gold)', margin: 0, lineHeight: 1 }}>
-                  {artist.booking_count}
-                </p>
-                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.6rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-low)', margin: '0.25rem 0 0' }}>
-                  Sessions booked
-                </p>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Info column */}
