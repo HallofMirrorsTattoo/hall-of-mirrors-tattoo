@@ -93,6 +93,11 @@ interface Booking {
   has_consent_form?: boolean;
   client_session_count?: number;
   payment_method?: string;
+  // Agreed totals — populated once the deposit is received and the price is locked in.
+  // pg returns DECIMAL as a string, so these can arrive as strings or numbers.
+  deposit_amount?: number | string | null;
+  balance_due?: number | string | null;
+  deposit_paid?: boolean;
 }
 
 interface Consultation {
@@ -3302,12 +3307,22 @@ export default function ArtistDashboard() {
           const thisMonthConfirmed = confirmed.filter(b => getMonthKey(b) === thisMonthKey);
           const lastMonthCompleted = completed.filter(b => getMonthKey(b) === lastMonthKey);
 
-          const estimateRevenue = (list: Booking[]) =>
-            list.reduce((sum, b) => sum + Math.round((b.estimated_duration_minutes ?? 60) / 60 * 150), 0);
+          // Revenue uses the agreed price (deposit + balance) for bookings where
+          // a deposit has been received. Until that point the price isn't locked
+          // in, so we don't count it. Cancelled bookings are excluded.
+          const toNumber = (v: number | string | null | undefined) => {
+            if (v === null || v === undefined) return 0;
+            const n = typeof v === 'string' ? parseFloat(v) : v;
+            return Number.isFinite(n) ? n : 0;
+          };
+          const agreedTotal = (b: Booking) => toNumber(b.deposit_amount) + toNumber(b.balance_due);
+          const isLockedIn = (b: Booking) => Boolean(b.deposit_paid) && b.appointment_status !== 'cancelled';
+          const sumAgreed = (list: Booking[]) =>
+            list.filter(isLockedIn).reduce((sum, b) => sum + agreedTotal(b), 0);
 
-          const allTimeRevenue    = estimateRevenue(completed);
-          const thisMonthRevenue  = estimateRevenue([...thisMonthCompleted, ...thisMonthConfirmed]);
-          const lastMonthRevenue  = estimateRevenue(lastMonthCompleted);
+          const allTimeRevenue    = sumAgreed(completed);
+          const thisMonthRevenue  = sumAgreed([...thisMonthCompleted, ...thisMonthConfirmed]);
+          const lastMonthRevenue  = sumAgreed(lastMonthCompleted);
 
           const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
           const monthLabel     = `${MONTH_NAMES[now.getMonth()]} ${now.getFullYear()}`;
@@ -3334,11 +3349,11 @@ export default function ArtistDashboard() {
                 ))}
               </div>
 
-              {/* Revenue estimate */}
+              {/* Locked-in revenue */}
               <div style={{ background: 'var(--surface)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '0.75rem', padding: '1.5rem', marginBottom: '2rem' }}>
-                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', margin: '0 0 0.25rem' }}>Revenue Estimate</p>
+                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', margin: '0 0 0.25rem' }}>Locked-in Revenue</p>
                 <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', color: 'var(--text-low)', margin: '0 0 1.5rem' }}>
-                  Calculated at £150/hr from session duration. Actual totals depend on your invoicing.
+                  Agreed totals (deposit + balance) for bookings where the deposit has been received. Bookings without a deposit aren&apos;t counted yet.
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1.5rem' }}>
                   {[
