@@ -150,11 +150,12 @@ export default function Services() {
               Custom tattoos, cover-ups &amp; consultations
             </h1>
             <p style={{ maxWidth: '52ch' }}>
-              Hall of Mirrors is Robyn&apos;s private studio on Castle Street, Liverpool.
-              Her style is neo-traditional at its core — but every person who comes in
-              brings their own version of that. Animals, ladies, timeless objects, pop
-              culture, nostalgia. Whatever the idea, it starts with your story and ends
-              on your skin. Walk-ins welcome on the day. Always bespoke.
+              Hall of Mirrors is a private tattoo studio on Castle Street, Liverpool.
+              Our work sits at neo-traditional and blackwork illustrative, but every
+              person who comes in brings their own version of that. Animals, ladies,
+              timeless objects, pop culture, nostalgia. Whatever the idea, it starts
+              with your story and ends on your skin. Walk-ins welcome on the day.
+              Always bespoke.
             </p>
           </AnimatedSection>
         </div>
@@ -324,9 +325,9 @@ export default function Services() {
               <p className="eyebrow" style={{ marginBottom: '0.5rem' }}>Deposits</p>
               <p style={{ fontSize: '0.9rem', maxWidth: '62ch' }}>
                 A non-refundable deposit is required to secure your booking. This is deducted
-                from the final session price on the day. Cancellations within 48 hours forfeit
-                the deposit. We appreciate you respecting our time — we&apos;re a small studio
-                and last-minute cancellations have a real impact.
+                from the final session price on the day. Cancellations within 48 hours of your
+                appointment forfeit the deposit. We appreciate you respecting our time, we&apos;re
+                a small studio and last-minute cancellations have a real impact.
               </p>
             </div>
           </AnimatedSection>
@@ -334,7 +335,7 @@ export default function Services() {
           {/* CTAs */}
           <AnimatedSection delay={500} className="mt-16 flex gap-3 flex-col sm:flex-row">
             <Link href="/booking" className="btn-primary">
-              <span>Book Appointment</span>
+              <span>Book a session</span>
               <span className="btn-icon" aria-hidden="true">↗</span>
             </Link>
             <Link href="/artists" className="btn-secondary">

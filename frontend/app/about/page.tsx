@@ -408,7 +408,7 @@ export default async function About() {
               },
               {
                 q: 'Do I need to pay a deposit?',
-                a: 'Yes. A non-refundable deposit is required to secure your booking, which is deducted from your final session price on the day. Cancellations within 48 hours forfeit the deposit.',
+                a: 'Yes. A non-refundable deposit is required to secure your booking, which is deducted from your final session price on the day. Cancellations within 48 hours of your appointment forfeit the deposit.',
               },
               {
                 q: 'How do I pay on the day?',
@@ -459,10 +459,10 @@ export default async function About() {
         flexWrap: 'wrap',
       }}>
         <Link href="/booking" className="btn-primary">
-          <span>Book Appointment</span>
+          <span>Book a session</span>
           <span className="btn-icon" aria-hidden="true">↗</span>
         </Link>
-        <Link href="/artists" className="btn-secondary">Meet Our Artists</Link>
+        <Link href="/artists" className="btn-secondary">Meet the Artists</Link>
       </section>
 
     </div>

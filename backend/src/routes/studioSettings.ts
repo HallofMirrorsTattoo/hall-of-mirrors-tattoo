@@ -98,7 +98,7 @@ studioSettingsRouter.patch('/', ownerOnly, async (req: Request, res: Response) =
     if (result.rows.length === 0) {
       await client.query(
         `INSERT INTO "Studio" (id, studio_name, address, postcode, cancellation_policy_hours, created_at, updated_at)
-         VALUES ('hom-studio', 'Hall of Mirrors Tattoo', '', '', 24, NOW(), NOW())
+         VALUES ('default-studio', 'Hall of Mirrors Tattoo', 'Suite 3, 34 Castle Street', 'L2 0NR', 48, NOW(), NOW())
          ON CONFLICT (id) DO NOTHING`
       );
       result = await client.query(

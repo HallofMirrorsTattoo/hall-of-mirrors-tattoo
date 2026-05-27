@@ -306,7 +306,7 @@ export default function ConsultationsTab() {
       if (!res.ok) throw new Error(data.error || 'Failed');
       setConsultations(data.consultations || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load');
+      setError(err instanceof Error ? err.message : 'We couldn’t load your consultations. Refresh to try again.');
     }
   }, [accessToken, API]);
 
@@ -565,7 +565,7 @@ export default function ConsultationsTab() {
                     <div style={{ padding: '1.125rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                       <div>
                         <p style={{ margin: '0 0 0.2rem', ...serif, fontStyle: 'italic', fontWeight: 400, fontSize: '1.0625rem', color: 'var(--cream)' }}>
-                          {b.artist_name || 'Robyn'} · {dateStr}
+                          {b.artist_name || 'Your artist'} · {dateStr}
                         </p>
                         <p style={{ margin: 0, ...mono, fontSize: '0.7rem', letterSpacing: '0.08em', color: 'var(--text-low)' }}>
                           {b.booking_reference}
@@ -686,7 +686,7 @@ export default function ConsultationsTab() {
                     <div style={{ padding: '1.25rem 1.5rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
                         <p style={{ margin: 0, ...serif, fontStyle: 'italic', fontWeight: 400, fontSize: '1.0625rem', color: 'var(--cream)' }}>
-                          {c.artist_name || 'Robyn'}
+                          {c.artist_name || 'Your artist'}
                         </p>
                         <StatusBadge status={c.status} inDialogue={inDialogue} />
                       </div>
@@ -698,7 +698,7 @@ export default function ConsultationsTab() {
                       {c.artist_response && (
                         <div style={{ marginTop: '0.875rem', padding: '0.875rem 1rem', background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: '0.5rem' }}>
                           <p style={{ margin: '0 0 0.375rem', ...mono, fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)' }}>
-                            {c.artist_name || 'Robyn'}&apos;s response
+                            {c.artist_name ? `${c.artist_name}'s response` : 'Artist response'}
                           </p>
                           <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: 'var(--text)', lineHeight: 1.65 }}>
                             {c.artist_response}
@@ -719,7 +719,7 @@ export default function ConsultationsTab() {
                           onClick={() => toggleChat(chatKey)}
                           style={{ width: '100%', padding: '0.875rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', color: isOpen ? 'var(--gold)' : 'var(--text-mid)', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', transition: 'color 0.2s ease' }}
                         >
-                          <span>{isOpen ? 'Close chat' : inDialogue ? 'Robyn has a question — open chat' : 'Open chat →'}</span>
+                          <span>{isOpen ? 'Close chat' : inDialogue ? `${c.artist_name ?? 'Your artist'} has a question, open chat` : 'Open chat →'}</span>
                           <span style={{ ...mono, fontSize: '0.75rem', opacity: 0.7 }}>{isOpen ? '↑' : '↓'}</span>
                         </button>
                         <ChatPanel
@@ -819,7 +819,7 @@ export default function ConsultationsTab() {
                               <textarea
                                 value={bookingForm.notes}
                                 onChange={(e) => setBookingForm((p) => ({ ...p, notes: e.target.value }))}
-                                placeholder="Anything else Robyn should know…"
+                                placeholder="Anything else your artist should know…"
                                 rows={3}
                                 style={{ width: '100%', padding: '0.625rem 0.875rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--cream)', fontSize: '0.875rem', lineHeight: 1.5, resize: 'vertical', fontFamily: '"DM Sans", sans-serif', boxSizing: 'border-box' }}
                               />

@@ -244,7 +244,7 @@ export default function ProfileTab() {
           }
         }
       } catch {
-        setError('Failed to load profile');
+        setError('We couldn’t load your profile. Refresh to try again.');
       } finally {
         setLoading(false);
       }
@@ -271,7 +271,7 @@ export default function ProfileTab() {
       setSuccess('Profile updated.');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save');
+      setError(err instanceof Error ? err.message : 'We couldn’t save your changes. Please try again.');
     } finally {
       setSaving(false);
     }

@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS "Studio" (
     hours_sunday_end TEXT,
     deposit_amount_fixed DECIMAL(10,2),
     deposit_percentage DECIMAL(5,2),
-    cancellation_policy_hours INTEGER NOT NULL DEFAULT 24,
+    cancellation_policy_hours INTEGER NOT NULL DEFAULT 48,
     about_section TEXT,
     instagram_handle TEXT,
     facebook_url TEXT,
@@ -200,6 +200,10 @@ ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS deposit_payment_method TEXT;
 ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS deposit_amount DECIMAL(10,2) NOT NULL DEFAULT 0;
 ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS balance_due DECIMAL(10,2) NOT NULL DEFAULT 0;
 
+-- Bump existing studio rows from the old 24-hour default to the canonical 48-hour policy.
+-- Safe to re-run: only updates rows still on the old default.
+UPDATE "Studio" SET cancellation_policy_hours = 48 WHERE cancellation_policy_hours = 24;
+
 CREATE TABLE IF NOT EXISTS "MedicalHistory" (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL UNIQUE,
@@ -334,7 +338,7 @@ CREATE TABLE IF NOT EXISTS "ArtistGoogleToken" (
 -- 'default-studio' — we converged on 'default-studio' because every Booking
 -- references it via studio_id. The duplicate is removed below if present.
 INSERT INTO "Studio" (id, studio_name, address, postcode, cancellation_policy_hours, created_at, updated_at)
-VALUES ('default-studio', 'Hall of Mirrors Tattoo', 'Suite 3, 34 Castle Street', 'L2 0NR', 24, NOW(), NOW())
+VALUES ('default-studio', 'Hall of Mirrors Tattoo', 'Suite 3, 34 Castle Street', 'L2 0NR', 48, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
 -- Drop the legacy duplicate row if it exists. Safe because nothing FKs to it.

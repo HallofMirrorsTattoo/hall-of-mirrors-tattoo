@@ -231,7 +231,7 @@ export default function Header() {
                     Login
                   </Link>
                   <Link href="/booking" onClick={() => setIsOpen(false)} className="btn-primary" style={{ justifyContent: 'center' }}>
-                    <span>Book Appointment</span>
+                    <span>Book a session</span>
                     <span className="btn-icon" aria-hidden="true">↗</span>
                   </Link>
                 </>

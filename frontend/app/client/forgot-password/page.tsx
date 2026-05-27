@@ -90,7 +90,7 @@ export default function ForgotPasswordPage() {
               className="btn-primary"
               style={{ width: '100%', justifyContent: 'center', padding: '0.875rem', opacity: loading ? 0.6 : 1, cursor: loading ? 'default' : 'pointer' }}
             >
-              <span>{loading ? 'Sending...' : 'Send reset link'}</span>
+              <span>{loading ? 'Sending…' : 'Send reset link'}</span>
               {!loading && <span className="btn-icon" aria-hidden="true">→</span>}
             </button>
 

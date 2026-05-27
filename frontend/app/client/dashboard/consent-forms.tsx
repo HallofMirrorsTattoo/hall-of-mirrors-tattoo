@@ -57,9 +57,9 @@ export default function ConsentFormsTab() {
         });
         const data = await res.json();
         if (res.ok) setBookings(data.bookings || []);
-        else setError(data.error || 'Failed to load');
+        else setError(data.error || 'We couldn’t load your consent forms. Refresh to try again.');
       } catch {
-        setError('Failed to load consent forms');
+        setError('We couldn’t load your consent forms. Refresh to try again.');
       } finally {
         setLoading(false);
       }

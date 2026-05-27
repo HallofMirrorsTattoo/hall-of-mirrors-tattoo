@@ -2098,18 +2098,28 @@ export default function ArtistDashboard() {
         {tab === 'bookings' && (
           <div>
             <div>
-              {/* Status filter */}
+              {/* Status filter — labels match the StatusBadge map so the same
+                  word the artist sees on the badge is what they pick in the filter. */}
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-                {['all', 'pending_review', 'pending_consent', 'confirmed', 'rescheduled', 'completed', 'cancelled'].map((s) => (
+                {([
+                  { value: 'all',              label: 'All' },
+                  { value: 'pending_review',   label: 'Pending review' },
+                  { value: 'pending_consent',  label: 'Pending consent' },
+                  { value: 'confirmed',        label: 'Confirmed' },
+                  { value: 'counter_offered',  label: 'Counter offer' },
+                  { value: 'rescheduled',      label: 'Reschedule request' },
+                  { value: 'completed',        label: 'Completed' },
+                  { value: 'cancelled',        label: 'Cancelled' },
+                ] as const).map(({ value, label }) => (
                   <button
-                    key={s}
-                    onClick={() => setStatusFilter(s)}
+                    key={value}
+                    onClick={() => setStatusFilter(value)}
                     style={{
                       padding: '0.3rem 0.875rem',
                       borderRadius: '2rem',
-                      border: `1px solid ${statusFilter === s ? 'var(--gold)' : 'var(--border)'}`,
-                      background: statusFilter === s ? 'rgba(201,168,76,0.1)' : 'none',
-                      color: statusFilter === s ? 'var(--gold)' : 'var(--text-mid)',
+                      border: `1px solid ${statusFilter === value ? 'var(--gold)' : 'var(--border)'}`,
+                      background: statusFilter === value ? 'rgba(201,168,76,0.1)' : 'none',
+                      color: statusFilter === value ? 'var(--gold)' : 'var(--text-mid)',
                       fontFamily: '"DM Mono", monospace',
                       fontSize: '0.75rem',
                       letterSpacing: '0.1em',
@@ -2118,7 +2128,7 @@ export default function ArtistDashboard() {
                       transition: 'all 0.3s ease',
                     }}
                   >
-                    {s === 'all' ? 'All' : s.replace(/_/g, ' ')}
+                    {label}
                   </button>
                 ))}
               </div>

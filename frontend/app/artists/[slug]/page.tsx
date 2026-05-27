@@ -288,7 +288,7 @@ export default async function ArtistPage({ params }: { params: { slug: string } 
               className="btn-primary"
               style={{ alignSelf: 'flex-start' }}
             >
-              <span>Book with {artist.full_name}</span>
+              <span>Book a session with {artist.full_name}</span>
               <span className="btn-icon" aria-hidden="true">↗</span>
             </Link>
 

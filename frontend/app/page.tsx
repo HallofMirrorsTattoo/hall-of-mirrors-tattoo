@@ -203,7 +203,7 @@ export default function Home() {
         >
           <div className="flex justify-center">
             <Link href="/booking" className="btn-primary">
-              <span>Book Appointment</span>
+              <span>Book a session</span>
               <span className="btn-icon" aria-hidden="true">↗</span>
             </Link>
           </div>

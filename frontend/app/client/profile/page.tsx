@@ -129,7 +129,7 @@ export default function ClientProfilePage() {
           });
         }
       } catch (err) {
-        setError('Failed to load profile');
+        setError('We couldn’t load your profile. Refresh to try again.');
       } finally {
         setLoading(false);
       }
@@ -179,7 +179,7 @@ export default function ClientProfilePage() {
       setSuccess('Profile updated.');
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save');
+      setError(err instanceof Error ? err.message : 'We couldn’t save your changes. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -282,7 +282,7 @@ export default function ClientProfilePage() {
             className="btn-primary"
             style={{ padding: '0.875rem 2.5rem', opacity: saving ? 0.6 : 1, cursor: saving ? 'default' : 'pointer' }}
           >
-            <span>{saving ? 'Saving...' : 'Save changes'}</span>
+            <span>{saving ? 'Saving…' : 'Save changes'}</span>
             {!saving && <span className="btn-icon" aria-hidden="true">→</span>}
           </button>
         </form>

@@ -48,8 +48,8 @@ function toSlug(name: string): string {
   return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 }
 
-// Static record — rendered when the API doesn't yet return Cristina.
-// Remove once her Artist row is live in the DB.
+// Static record for Cristina until her Artist row is live in the DB. Removed
+// automatically below once the API returns her, so leaving this in is safe.
 const CRISTINA_PLACEHOLDER: Artist = {
   id: 'static-cristina',
   full_name: 'Cristina',
@@ -105,6 +105,7 @@ export default async function ArtistsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {displayArtists.map((artist, i) => {
               const slug = toSlug(artist.full_name);
+              // Legacy 'placeholder-' prefix kept for safety; Cristina now uses 'static-' and is treated as a real entry.
               const isPlaceholder = artist.id.startsWith('placeholder-');
 
               const cardContent = (
@@ -246,7 +247,7 @@ export default async function ArtistsPage() {
             </p>
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
               <Link href="/booking" className="btn-primary">
-                <span>Book Appointment</span>
+                <span>Book a session</span>
                 <span className="btn-icon" aria-hidden="true">↗</span>
               </Link>
               <Link href="/about" className="btn-secondary">About the Studio</Link>

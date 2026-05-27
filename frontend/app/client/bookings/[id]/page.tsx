@@ -141,7 +141,7 @@ export default function BookingDetailPage() {
         if (!res.ok) throw new Error(data.error || `Error ${res.status}`);
         setBooking(data.booking);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load booking');
+        setError(err instanceof Error ? err.message : 'We couldn’t load this booking. Refresh to try again.');
       } finally {
         setLoading(false);
       }
@@ -187,7 +187,7 @@ export default function BookingDetailPage() {
       if (msgDraftRef.current) msgDraftRef.current.value = '';
       setMsgDraftHasContent(false);
     } catch (err) {
-      setMsgError(err instanceof Error ? err.message : 'Failed to send message');
+      setMsgError(err instanceof Error ? err.message : 'Your message didn’t go through. Try again.');
     } finally {
       setMsgSending(false);
     }
@@ -242,7 +242,7 @@ export default function BookingDetailPage() {
           body: JSON.stringify({ appointment_status: 'cancelled' }),
         }
       );
-      if (!res.ok) throw new Error('Failed to cancel booking');
+      if (!res.ok) throw new Error('We couldn’t cancel your booking. Please try again or message your artist.');
       setBooking(prev => prev ? { ...prev, appointment_status: 'cancelled' } : prev);
       setMode('view');
     } catch (err) {
@@ -268,7 +268,7 @@ export default function BookingDetailPage() {
           }),
         }
       );
-      if (!res.ok) throw new Error('Failed to reschedule booking');
+      if (!res.ok) throw new Error('We couldn’t reschedule your booking. Please try again.');
       const data = await res.json();
       setBooking(prev => prev ? {
         ...prev,
@@ -293,7 +293,7 @@ export default function BookingDetailPage() {
         `${process.env.NEXT_PUBLIC_API_URL}/api/client/bookings/${bookingId}/accept-offer`,
         { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` } }
       );
-      if (!res.ok) throw new Error('Failed to accept offer');
+      if (!res.ok) throw new Error('We couldn’t accept this offer. Please try again.');
       setBooking(prev => prev ? {
         ...prev,
         appointment_status: 'pending_consent',
@@ -467,7 +467,7 @@ export default function BookingDetailPage() {
                         )}
                       </div>
                       <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-mid)', lineHeight: 1.6, margin: '0 0 1rem' }}>
-                        If you need a different date, send Robyn a message — she can update the booking from her side.
+                        If you need a different date, send {booking.artist?.name ?? 'your artist'} a message and they can update the booking from their side.
                       </p>
                       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                         <button

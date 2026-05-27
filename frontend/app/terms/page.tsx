@@ -15,8 +15,8 @@ export default function Terms() {
         <section>
           <h2 className="text-2xl font-serif text-primary-light font-semibold mb-3">2. Booking & Cancellation Policy</h2>
           <p>
-            <strong>Cancellation:</strong> Free cancellation up to 24 hours before your appointment.
-            Cancellations within 24 hours will result in forfeiture of the deposit.
+            <strong>Cancellation:</strong> Free cancellation up to 48 hours before your appointment.
+            Cancellations within 48 hours will result in forfeiture of the deposit.
           </p>
         </section>
 
@@ -24,7 +24,7 @@ export default function Terms() {
           <h2 className="text-2xl font-serif text-primary-light font-semibold mb-3">3. Deposits</h2>
           <p>
             A non-refundable deposit is required to secure your booking. Exceptions: If Hall of Mirrors
-            cancels or rejects the booking, a full refund is issued. If you cancel more than 24 hours before
+            cancels or rejects the booking, a full refund is issued. If you cancel more than 48 hours before
             your appointment, you receive a full refund.
           </p>
         </section>

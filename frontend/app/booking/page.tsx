@@ -245,7 +245,7 @@ export default function BookingPage() {
     try {
       if (formMode === 'consultation') {
         if (!user) {
-          throw new Error('Please log in or create an account to request a consultation — this enables direct messaging with Robyn.');
+          throw new Error('Please log in or create an account to request a consultation, this enables direct messaging with your artist.');
         }
         const artistId = data.artistId || artists[0]?.id;
         if (!artistId) throw new Error('No artist found — please try again.');
@@ -352,7 +352,7 @@ export default function BookingPage() {
           </h1>
           <p style={{ maxWidth: '40ch', margin: '0 auto', color: 'var(--text-mid)', fontSize: '0.9375rem', lineHeight: 1.7 }}>
             We keep bookings limited so every session gets the time it deserves.
-            Robyn will confirm within 24 hours.
+            Your artist will confirm within 24 hours.
           </p>
           {user && (
             <p style={{ marginTop: '1rem', ...mono, fontSize: '0.72rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.5)' }}>
@@ -376,7 +376,7 @@ export default function BookingPage() {
                 </h2>
                 <p style={{ color: 'var(--text-mid)', fontSize: '0.9375rem', lineHeight: 1.7, maxWidth: '30ch', margin: '0 auto 2rem' }}>
                   {formMode === 'consultation'
-                    ? 'Robyn will be in touch. You can message her directly from your dashboard once she responds.'
+                    ? `${confirmedArtist || 'Your artist'} will be in touch. You can message them directly from your dashboard once they respond.`
                     : 'We\'ll review and confirm within 24 hours. Check your email for a copy of this request.'}
                 </p>
 
@@ -537,7 +537,7 @@ export default function BookingPage() {
                 {formMode === 'consultation' && (
                   <div style={{ padding: '0.875rem 1rem', background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: '0.5rem', marginBottom: '1.5rem' }}>
                     <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-mid)', lineHeight: 1.6 }}>
-                      No date needed — just describe your idea. Robyn will get back to you and you&apos;ll be able to message directly from your dashboard.
+                      No date needed, just describe your idea. Your artist will get back to you and you&apos;ll be able to message directly from your dashboard.
                       {!user && <><br /><span style={{ color: 'rgba(201,168,76,0.8)' }}> Please <a href="/client/login" style={{ color: 'var(--gold)' }}>log in</a> first to enable messaging.</span></>}
                     </p>
                   </div>
@@ -557,7 +557,7 @@ export default function BookingPage() {
                     <div key="step-1" className="tab-content">
                       <p style={{ ...mono, fontSize: '0.68rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.85)', marginBottom: '1.5rem' }}>01 — Your details</p>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
                         <div>
                           <label htmlFor="clientName">Full Name</label>
                           <input {...register('clientName')} type="text" id="clientName" placeholder="Your name"
@@ -678,7 +678,7 @@ export default function BookingPage() {
                               {errors.tattooDesignDescription && <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--error-text)', marginTop: '0.375rem' }}>{errors.tattooDesignDescription.message}</p>}
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
                               <div>
                                 <label htmlFor="estimatedSize">Estimated Size</label>
                                 <select {...register('estimatedSize')} id="estimatedSize" style={errors.estimatedSize ? { borderColor: 'rgba(239,68,68,0.5)' } : {}}>
@@ -755,7 +755,7 @@ export default function BookingPage() {
                         {formMode === 'consultation' ? (
                           <button type="submit" disabled={isSubmitting} className="btn-primary" style={{ flex: 1, justifyContent: 'center', opacity: isSubmitting ? 0.7 : 1 }}>
                             <span>{isSubmitting ? 'Sending…' : 'Send consultation request'}</span>
-                            <span className="btn-icon" aria-hidden="true">↗</span>
+                            {!isSubmitting && <span className="btn-icon" aria-hidden="true">↗</span>}
                           </button>
                         ) : (
                           <button type="button" onClick={nextStep} className="btn-primary" style={{ flex: 1, justifyContent: 'center' }}>
@@ -808,7 +808,7 @@ export default function BookingPage() {
                           style={{ marginTop: '0.1rem', accentColor: 'var(--gold)', width: '1rem', height: '1rem', flexShrink: 0 }}
                         />
                         <span style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text)', lineHeight: 1.6 }}>
-                          I understand that cancellations made within {studioSettings?.cancellation_policy_hours ?? 24} hours of my appointment will result in the forfeiture of my deposit.
+                          I understand that cancellations made within {studioSettings?.cancellation_policy_hours ?? 48} hours of my appointment will result in the forfeiture of my deposit.
                         </span>
                       </label>
 
@@ -823,7 +823,7 @@ export default function BookingPage() {
                           style={{ flex: 1, justifyContent: 'center', opacity: (isSubmitting || !policyAccepted) ? 0.55 : 1 }}
                         >
                           <span>{isSubmitting ? 'Submitting…' : 'Confirm booking request'}</span>
-                          <span className="btn-icon" aria-hidden="true">↗</span>
+                          {!isSubmitting && <span className="btn-icon" aria-hidden="true">↗</span>}
                         </button>
                       </div>
 

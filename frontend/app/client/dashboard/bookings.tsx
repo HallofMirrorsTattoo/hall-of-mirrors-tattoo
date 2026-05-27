@@ -206,7 +206,7 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
           `${process.env.NEXT_PUBLIC_API_URL}/api/client/bookings`,
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
-        if (!response.ok) throw new Error('Failed to fetch bookings');
+        if (!response.ok) throw new Error('We couldn’t load your bookings. Refresh to try again.');
         const data = await response.json();
         const list: Booking[] = data.bookings || [];
         setBookings(list);
@@ -215,7 +215,7 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
         ).length;
         onBadgeUpdate?.(badge);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load bookings');
+        setError(err instanceof Error ? err.message : 'We couldn’t load your bookings. Refresh to try again.');
       } finally {
         setLoading(false);
       }
@@ -301,7 +301,7 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
       setImageFile(null);
       setImagePreview(null);
     } catch (err) {
-      setMsgError(err instanceof Error ? err.message : 'Failed to send message');
+      setMsgError(err instanceof Error ? err.message : 'Your message didn’t go through. Try again.');
     } finally {
       setMsgSending(false);
     }
@@ -349,10 +349,10 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
         No bookings yet
       </p>
       <p style={{ fontSize: '0.875rem', color: 'var(--text-low)', marginBottom: '1.5rem' }}>
-        Ready to book your first session with Robyn?
+        Ready to book your first session?
       </p>
       <Link href="/booking" className="btn-primary">
-        <span>Book Your First Appointment</span>
+        <span>Book a session</span>
         <span className="btn-icon" aria-hidden="true">↗</span>
       </Link>
     </div>
@@ -494,7 +494,7 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
         {needsResponse && (
           <div style={{ padding: '0.875rem 1rem', background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '0.5rem' }}>
             <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--gold)', margin: '0 0 0.625rem' }}>
-              Robyn has proposed a new time
+              {detail.artist?.name ?? 'Your artist'} has proposed a new time
             </p>
             {/* Original date (strikethrough) → Proposed date (gold) */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
@@ -526,7 +526,7 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
         {detail.appointment_status === 'counter_offered' && detail.counter_offered_by === 'client' && (
           <div style={{ padding: '0.625rem 0.875rem', background: 'rgba(154,144,130,0.08)', border: '1px solid var(--border)', borderRadius: '0.5rem' }}>
             <p style={{ margin: 0, fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-mid)' }}>
-              Awaiting Robyn&apos;s response
+              Awaiting your artist&apos;s response
             </p>
           </div>
         )}
@@ -603,7 +603,7 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
                     body: JSON.stringify({ booking_reference: detail.booking_reference }),
                   });
                   const data = await res.json();
-                  if (!res.ok || !data.url) throw new Error(data.error || 'Failed to start payment');
+                  if (!res.ok || !data.url) throw new Error(data.error || 'We couldn’t start your payment. Try again.');
                   window.location.href = data.url;
                 } catch (err) {
                   setDepositError(err instanceof Error ? err.message : 'Payment failed. Please try again.');
@@ -671,14 +671,14 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {(() => {
               const hoursUntil = (new Date(detail.appointment_date).getTime() - Date.now()) / 3_600_000;
-              const within48 = hoursUntil >= 0 && hoursUntil < 48;
-              return within48 ? (
+              const withinCancelWindow = hoursUntil >= 0 && hoursUntil < 48;
+              return withinCancelWindow ? (
                 <div style={{ padding: '0.5rem 0.75rem', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '0.375rem' }}>
                   <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(239,68,68,0.8)', margin: '0 0 0.15rem' }}>
                     Deposit at risk
                   </p>
                   <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.75rem', color: 'var(--text)', lineHeight: 1.5, margin: 0 }}>
-                    Rescheduling within 48 hours will forfeit your deposit.
+                    Rescheduling within 48 hours of your appointment will forfeit your deposit.
                   </p>
                 </div>
               ) : null;

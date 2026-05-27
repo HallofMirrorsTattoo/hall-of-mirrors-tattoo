@@ -394,10 +394,10 @@ export default function ClientDashboardPage() {
 
           {/* Mini-footer */}
           <div style={{ borderTop: '1px solid rgba(201,168,76,0.08)', paddingTop: '2rem', marginTop: '5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.1em', color: 'var(--text-low)', opacity: 0.5, margin: 0 }}>
+            <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.1em', color: 'var(--text-mid)', margin: 0 }}>
               © {new Date().getFullYear()} Hall of Mirrors Tattoo. All rights reserved.
             </p>
-            <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.1em', color: 'var(--text-low)', opacity: 0.4, margin: 0 }}>
+            <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.1em', color: 'var(--text-mid)', margin: 0 }}>
               Liverpool City Council Reg. · A11394900
             </p>
           </div>

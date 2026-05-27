@@ -149,8 +149,7 @@ export default async function Footer() {
             fontFamily: '"DM Mono", monospace',
             fontSize: '0.75rem',
             letterSpacing: '0.1em',
-            color: 'var(--text-low)',
-            opacity: 0.7,
+            color: 'var(--text-mid)',
             maxWidth: 'none',
           }}>
             © {new Date().getFullYear()} Hall of Mirrors Tattoo. All rights reserved.
@@ -159,8 +158,7 @@ export default async function Footer() {
             fontFamily: '"DM Mono", monospace',
             fontSize: '0.75rem',
             letterSpacing: '0.1em',
-            color: 'var(--text-low)',
-            opacity: 0.4,
+            color: 'var(--text-mid)',
             maxWidth: 'none',
           }}>
             Liverpool City Council Reg. · A11394900

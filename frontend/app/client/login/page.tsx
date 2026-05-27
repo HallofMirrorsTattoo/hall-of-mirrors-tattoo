@@ -19,7 +19,7 @@ export default function ClientLoginPage() {
 
     try {
       await login(formData.email, formData.password);
-      setSuccess('Login successful. Redirecting...');
+      setSuccess('Login successful. Redirecting…');
       setTimeout(() => router.push('/client/dashboard'), 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
@@ -91,7 +91,7 @@ export default function ClientLoginPage() {
                 className="btn-primary w-full justify-center"
                 style={{ opacity: isLoading ? 0.7 : 1, marginTop: '0.5rem' }}
               >
-                <span>{isLoading ? 'Logging in...' : 'Log in'}</span>
+                <span>{isLoading ? 'Logging in…' : 'Log in'}</span>
                 {!isLoading && <span className="btn-icon" aria-hidden="true">→</span>}
               </button>
             </form>
