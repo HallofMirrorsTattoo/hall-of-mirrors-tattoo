@@ -204,6 +204,17 @@ ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS balance_due DECIMAL(10,2) NOT NUL
 -- Safe to re-run: only updates rows still on the old default.
 UPDATE "Studio" SET cancellation_policy_hours = 48 WHERE cancellation_policy_hours = 24;
 
+-- Studio social handles default to the studio account. Without this, the seed
+-- left them NULL and the studio-settings dashboard or older seeds had pointed
+-- them at the founder's personal accounts. Safe to re-run: only fills nulls
+-- or replaces a known personal handle with the canonical studio one.
+UPDATE "Studio"
+  SET instagram_handle = 'hallofmirrorstattoo'
+  WHERE instagram_handle IS NULL OR instagram_handle = '';
+UPDATE "Studio"
+  SET tiktok_handle = 'hallofmirrorstattoo'
+  WHERE tiktok_handle IS NULL OR tiktok_handle = '';
+
 CREATE TABLE IF NOT EXISTS "MedicalHistory" (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL UNIQUE,

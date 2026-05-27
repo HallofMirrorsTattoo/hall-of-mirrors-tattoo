@@ -164,10 +164,11 @@ export default async function ArtistPage({ params }: { params: { slug: string } 
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* Back link */}
+      {/* Back link — server component, so hover lives in CSS (footer-link class) */}
       <div style={{ maxWidth: '64rem', margin: '0 auto', padding: '6rem 1.5rem 0' }}>
         <Link
           href="/artists"
+          className="footer-link"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -178,10 +179,7 @@ export default async function ArtistPage({ params }: { params: { slug: string } 
             textTransform: 'uppercase',
             color: 'rgba(201,168,76,0.75)',
             textDecoration: 'none',
-            transition: 'color 0.2s ease',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--gold)')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(201,168,76,0.75)')}
         >
           <span aria-hidden="true">←</span> All artists
         </Link>

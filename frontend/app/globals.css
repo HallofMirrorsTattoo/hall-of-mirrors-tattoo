@@ -475,15 +475,31 @@ a {
 }
 .footer-link:hover { color: var(--gold); }
 
+/* Circular icon button used for footer social links — Instagram, TikTok, etc.
+   Subtle by default; gold border + lift on hover. */
 .footer-social {
-  font-family: 'DM Mono', monospace;
-  font-size: 0.6rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--text-low);
-  transition: color 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  color: var(--text-mid);
+  background: transparent;
+  transition: border-color 0.25s ease, color 0.25s ease, transform 0.25s ease, background 0.25s ease;
 }
-.footer-social:hover { color: var(--gold); }
+.footer-social svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  display: block;
+}
+.footer-social:hover {
+  color: var(--gold);
+  border-color: rgba(201, 168, 76, 0.6);
+  background: rgba(201, 168, 76, 0.06);
+  transform: translateY(-1px);
+}
 
 .footer-address-link {
   text-decoration: none;
