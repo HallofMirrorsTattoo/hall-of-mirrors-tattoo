@@ -7,8 +7,11 @@ import { sendWelcomeEmail, sendPasswordResetEmail } from '../services/emailServi
 
 const { Client } = pkg;
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_key';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'dev_refresh_secret_key';
+if (!process.env.JWT_SECRET || !process.env.JWT_REFRESH_SECRET) {
+  throw new Error('FATAL: JWT_SECRET and JWT_REFRESH_SECRET must be set in the environment.');
+}
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
 export async function clientSignup(req: Request, res: Response) {
   const client = new Client({
@@ -381,12 +384,15 @@ export async function forgotPassword(req: Request, res: Response) {
     }
 
     const user = result.rows[0];
+    // Raw token goes in the email; only its sha256 hash is stored. A DB leak
+    // therefore cannot be used to hijack a pending reset.
     const token = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
     const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
     await client.query(
       `UPDATE "User" SET password_reset_token = $1, password_reset_expires = $2 WHERE id = $3`,
-      [token, expires, user.id]
+      [tokenHash, expires, user.id]
     );
 
     sendPasswordResetEmail({
@@ -416,9 +422,11 @@ export async function resetPassword(req: Request, res: Response) {
     }
 
     await client.connect();
+    // Compare against the stored sha256 hash, not the raw token.
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
     const result = await client.query(
       `SELECT id, email, first_name FROM "User" WHERE email = $1 AND password_reset_token = $2 AND password_reset_expires > NOW()`,
-      [email, token]
+      [email, tokenHash]
     );
 
     if (result.rows.length === 0) {

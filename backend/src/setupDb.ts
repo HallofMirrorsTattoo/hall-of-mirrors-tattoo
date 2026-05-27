@@ -175,6 +175,8 @@ ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS appointment_time TEXT;
 ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS notify_end_time BOOLEAN NOT NULL DEFAULT true;
 ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMP;
 ALTER TABLE "Message" ADD COLUMN IF NOT EXISTS consultation_id TEXT;
+ALTER TABLE "Message" ALTER COLUMN body DROP NOT NULL;
+ALTER TABLE "Message" ALTER COLUMN booking_id DROP NOT NULL;
 ALTER TABLE "Consultation" ADD COLUMN IF NOT EXISTS status_updated_at TIMESTAMP;
 ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS counter_offer_date DATE;
 ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS counter_offer_time TEXT;
@@ -328,9 +330,15 @@ CREATE TABLE IF NOT EXISTS "ArtistGoogleToken" (
     FOREIGN KEY (artist_id) REFERENCES "Artist"(id) ON DELETE CASCADE
 );
 
+-- Single canonical studio row. Older seeds wrote both 'hom-studio' and
+-- 'default-studio' — we converged on 'default-studio' because every Booking
+-- references it via studio_id. The duplicate is removed below if present.
 INSERT INTO "Studio" (id, studio_name, address, postcode, cancellation_policy_hours, created_at, updated_at)
-VALUES ('hom-studio', 'Hall of Mirrors Tattoo', '', '', 24, NOW(), NOW())
+VALUES ('default-studio', 'Hall of Mirrors Tattoo', 'Suite 3, 34 Castle Street', 'L2 0NR', 24, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
+
+-- Drop the legacy duplicate row if it exists. Safe because nothing FKs to it.
+DELETE FROM "Studio" WHERE id = 'hom-studio';
 `;
 
 export async function setupDatabase() {
@@ -386,7 +394,7 @@ export async function setupDatabase() {
         await client.query(
           `INSERT INTO "Studio" (id, studio_name, address, postcode, phone, email, hours_monday_start, hours_monday_end, hours_tuesday_start, hours_tuesday_end, hours_wednesday_start, hours_wednesday_end, hours_thursday_start, hours_thursday_end, hours_friday_start, hours_friday_end, hours_saturday_start, hours_saturday_end, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, NOW(), NOW())`,
-          ['default-studio', 'Hall of Mirrors Tattoo', '123 High Street', 'AB12 3CD', '+44 123 456 7890', 'bookings@hallofmirrors.tattoo', '10:00', '18:00', '10:00', '18:00', '10:00', '18:00', '10:00', '18:00', '10:00', '18:00', '10:00', '16:00']
+          ['default-studio', 'Hall of Mirrors Tattoo', 'Suite 3, 34 Castle Street', 'L2 0NR', '', 'studio@hallofmirrorstattoo.com', '10:00', '18:00', '10:00', '18:00', '10:00', '18:00', '10:00', '18:00', '10:00', '18:00', '10:00', '18:00']
         );
         console.log('✅ Default studio created');
       } else {

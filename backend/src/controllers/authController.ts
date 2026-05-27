@@ -5,8 +5,11 @@ import jwt from 'jsonwebtoken';
 
 const { Client } = pkg;
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_key';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'dev_refresh_secret_key';
+if (!process.env.JWT_SECRET || !process.env.JWT_REFRESH_SECRET) {
+  throw new Error('FATAL: JWT_SECRET and JWT_REFRESH_SECRET must be set in the environment.');
+}
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
 export async function artistLogin(req: Request, res: Response) {
   const client = new Client({

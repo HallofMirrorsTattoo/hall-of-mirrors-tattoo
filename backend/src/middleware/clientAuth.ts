@@ -25,9 +25,15 @@ export function clientAuthMiddleware(req: Request, res: Response, next: NextFunc
       });
     }
 
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      console.error('FATAL: JWT_SECRET is not set. Refusing to verify tokens.');
+      return res.status(500).json({ success: false, error: 'Server misconfigured' });
+    }
+
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev_secret_key') as any;
+    const decoded = jwt.verify(token, secret) as any;
 
     // Attach user data to request
     req.user = {

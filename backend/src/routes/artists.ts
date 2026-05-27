@@ -13,6 +13,7 @@ import {
   artistPriceOffer,
 } from '../controllers/bookingController.js';
 import { authMiddleware } from '../middleware/auth.js';
+import { ALLOWED_IMAGE_MIME } from '../utils/storage.js';
 
 const { Client } = pkg;
 const router = express.Router();
@@ -26,8 +27,8 @@ const photoUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) cb(null, true);
-    else cb(new Error('Only image files are allowed'));
+    if (ALLOWED_IMAGE_MIME.has(file.mimetype)) cb(null, true);
+    else cb(new Error('Only JPEG, PNG, WebP, GIF, or HEIC images are allowed'));
   },
 });
 
@@ -108,8 +109,8 @@ const portraitUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) cb(null, true);
-    else cb(new Error('Only image files are allowed'));
+    if (ALLOWED_IMAGE_MIME.has(file.mimetype)) cb(null, true);
+    else cb(new Error('Only JPEG, PNG, WebP, GIF, or HEIC images are allowed'));
   },
 });
 

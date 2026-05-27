@@ -165,7 +165,7 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  // Detect return from Stripe Checkout
+  // Detect return from Stripe Checkout (waits for accessToken to be hydrated)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get('session_id');
@@ -174,31 +174,29 @@ export default function BookingsTab({ onBadgeUpdate }: Props) {
 
     if (depositCancelled === 'true') {
       window.history.replaceState({}, '', window.location.pathname);
-      setDepositError('Payment was cancelled. You can try again from your booking details.');
+      setDepositError('You cancelled the payment. You can try again from your booking below.');
       return;
     }
 
-    if (sessionId && bookingRef) {
-      window.history.replaceState({}, '', window.location.pathname);
-      setDepositPaying(true);
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/payments/verify-session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_id: sessionId, booking_reference: bookingRef }),
+    if (!sessionId || !bookingRef || !accessToken) return;
+    window.history.replaceState({}, '', window.location.pathname);
+    setDepositPaying(true);
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/payments/verify-session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({ session_id: sessionId, booking_reference: bookingRef }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success) {
+          setDepositSuccess(bookingRef);
+        } else {
+          setDepositError(data.error || 'We couldn’t verify your payment. Please contact the studio.');
+        }
       })
-        .then((r) => r.json())
-        .then((data) => {
-          if (data.success) {
-            setDepositSuccess(bookingRef);
-          } else {
-            setDepositError(data.error || 'Payment verification failed. Please contact us.');
-          }
-        })
-        .catch(() => setDepositError('Payment verification failed. Please contact us.'))
-        .finally(() => setDepositPaying(false));
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      .catch(() => setDepositError('We couldn’t verify your payment. Please contact the studio.'))
+      .finally(() => setDepositPaying(false));
+  }, [accessToken]);
 
   // Fetch booking list
   useEffect(() => {

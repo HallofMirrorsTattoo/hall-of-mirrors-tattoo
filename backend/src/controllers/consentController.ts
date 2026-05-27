@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import pkg from 'pg';
+import { randomUUID } from 'crypto';
 import { generateConsentFormPDF } from '../services/pdfService.js';
 import { sendConsentFormToClient, sendConsentFormToStudio } from '../services/emailService.js';
 
@@ -117,7 +118,7 @@ export async function submitConsentForm(req: Request, res: Response) {
       return res.status(409).json({ success: false, error: 'Consent form already submitted for this booking' });
     }
 
-    const formId = crypto.randomUUID();
+    const formId = randomUUID();
     const formRef = `CF-${booking.booking_reference}`;
     const now = new Date();
 
@@ -156,7 +157,7 @@ export async function submitConsentForm(req: Request, res: Response) {
         current_medications = EXCLUDED.current_medications,
         updated_at = NOW()`,
       [
-        crypto.randomUUID(), req.user.id,
+        randomUUID(), req.user.id,
         !!medical.pregnant_or_breastfeeding, !!medical.blood_borne_conditions, !!medical.diabetes,
         !!medical.heart_condition, !!medical.haemophilia_or_bleeding_disorder, !!medical.epilepsy_or_seizure,
         medical.skin_conditions || null, !!medical.autoimmune_conditions, !!medical.blood_thinners,

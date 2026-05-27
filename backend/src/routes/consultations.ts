@@ -1,16 +1,13 @@
 import express from 'express';
-import {
-  createConsultation,
-  getConsultations,
-  getConsultationById,
-  updateConsultation,
-} from '../controllers/consultationController.js';
+import { createConsultation } from '../controllers/consultationController.js';
 
 const router = express.Router();
 
+// Public — used by the public consultation request form.
 router.post('/', createConsultation);
-router.get('/', getConsultations);
-router.get('/:id', getConsultationById);
-router.patch('/:id', updateConsultation);
+
+// Legacy unauthenticated GET/PATCH endpoints removed — artist reads/writes go
+// through /api/artist/consultations (scoped by artist), client reads go through
+// /api/client/consultations (scoped by user).
 
 export default router;

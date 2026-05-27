@@ -11,7 +11,10 @@ import {
 
 const router = Router();
 
-const JWT_SECRET = process.env.JWT_SECRET ?? 'fallback-secret';
+if (!process.env.JWT_SECRET) {
+  throw new Error('FATAL: JWT_SECRET must be set in the environment.');
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 const FRONTEND_URL =
   process.env.FRONTEND_URL ?? 'https://hall-of-mirrors-tattoo.vercel.app';
 

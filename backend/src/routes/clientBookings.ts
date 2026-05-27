@@ -517,7 +517,7 @@ router.get('/:id/ics', async (req: Request, res: Response) => {
     await client.connect();
     const result = await client.query(
       `SELECT b.booking_reference, b.appointment_date_time, b.appointment_time,
-              b.estimated_duration_minutes, b.tattoo_placement,
+              b.estimated_duration_minutes, b.placement as tattoo_placement,
               a.full_name as artist_name
        FROM "Booking" b
        LEFT JOIN "Artist" a ON b.artist_id = a.id

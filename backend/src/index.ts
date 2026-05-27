@@ -57,21 +57,33 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rate limiting
+// Rate limiting — global default, then stricter buckets on auth endpoints below.
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 300, // dashboards poll messages every 30s — generous global cap
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use(limiter);
+
+// Stricter limit for credential endpoints — defends against brute-force and
+// password-reset enumeration without locking users out of normal browsing.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Too many attempts. Please try again in a few minutes.' },
+});
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Routes
-app.use('/api/auth', authRouter);
-app.use('/api/auth/client', clientAuthRouter);
+// Routes — auth bucket gets the stricter limiter applied at the mount point
+app.use('/api/auth', authLimiter, authRouter);
+app.use('/api/auth/client', authLimiter, clientAuthRouter);
 app.use('/api/artist', artistsRouter);
 app.use('/api/artists', artistsRouter); // alias — plural form used by some clients
 app.use('/api/client/bookings', clientBookingsRouter);
@@ -118,6 +130,15 @@ app.listen(PORT, () => {
     console.error('⚠️ Database setup error:', error);
   }
 })();
+
+// Process-level error guards — log but stay alive. We've had calendar push
+// callbacks throw uncaught into the void, which historically crashed the process.
+process.on('unhandledRejection', (reason) => {
+  console.error('[unhandledRejection]', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[uncaughtException]', err);
+});
 
 // Graceful shutdown
 process.on('SIGINT', async () => {

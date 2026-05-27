@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import Stripe from 'stripe';
 import pkg from 'pg';
+import { clientAuthMiddleware } from '../middleware/clientAuth.js';
 
 const { Client } = pkg;
 const router = express.Router();
@@ -16,25 +17,32 @@ function getStripe() {
 // Body: { booking_reference: string }
 // Creates a Stripe Checkout Session and returns { url }
 // ---------------------------------------------------------------------------
-router.post('/create-checkout-session', async (req: Request, res: Response) => {
+router.post('/create-checkout-session', clientAuthMiddleware, async (req: Request, res: Response) => {
   try {
+    if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
     const { booking_reference } = req.body as { booking_reference?: string };
     if (!booking_reference) {
       return res.status(400).json({ error: 'booking_reference is required' });
     }
 
-    // Fetch deposit amount for this booking
+    // Fetch deposit amount for this booking AND verify ownership
     const db = new Client({ connectionString: process.env.DATABASE_URL });
     await db.connect();
     let depositAmount: number;
     try {
       const { rows } = await db.query(
-        `SELECT deposit_amount, deposit_paid FROM "Booking" WHERE booking_reference = $1`,
-        [booking_reference],
+        `SELECT b.deposit_amount, b.deposit_paid
+         FROM "Booking" b
+         LEFT JOIN "User" u ON b.user_id = u.id
+         WHERE b.booking_reference = $1 AND (b.user_id = $2 OR u.email = $3)`,
+        [booking_reference, req.user.id, req.user.email],
       );
       if (!rows[0]) return res.status(404).json({ error: 'Booking not found' });
       if (rows[0].deposit_paid) return res.status(400).json({ error: 'Deposit already paid' });
       depositAmount = parseFloat(rows[0].deposit_amount);
+      if (!Number.isFinite(depositAmount) || depositAmount <= 0) {
+        return res.status(400).json({ error: 'Deposit amount not set for this booking' });
+      }
     } finally {
       await db.end();
     }
@@ -76,8 +84,9 @@ router.post('/create-checkout-session', async (req: Request, res: Response) => {
 // Body: { session_id: string, booking_reference: string }
 // Verifies a completed Stripe Checkout Session and marks deposit as paid
 // ---------------------------------------------------------------------------
-router.post('/verify-session', async (req: Request, res: Response) => {
+router.post('/verify-session', clientAuthMiddleware, async (req: Request, res: Response) => {
   try {
+    if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
     const { session_id, booking_reference } = req.body as {
       session_id?: string;
       booking_reference?: string;
@@ -100,19 +109,25 @@ router.post('/verify-session', async (req: Request, res: Response) => {
     const db = new Client({ connectionString: process.env.DATABASE_URL });
     await db.connect();
     try {
-      await db.query(
-        `UPDATE "Booking"
+      // Idempotent: only mark paid if the booking belongs to the user AND isn't already paid.
+      // Returns the affected row so we can tell "first verification" from "replay".
+      const result = await db.query(
+        `UPDATE "Booking" b
          SET deposit_paid = true,
              deposit_payment_method = 'card',
              deposit_paid_date = NOW()
-         WHERE booking_reference = $1`,
-        [booking_reference],
+         FROM "User" u
+         WHERE b.booking_reference = $1
+           AND b.deposit_paid = false
+           AND (b.user_id = $2 OR (b.user_id = u.id AND u.email = $3))
+         RETURNING b.id`,
+        [booking_reference, req.user.id, req.user.email],
       );
+      // Either way we return success — the dashboard re-fetches state.
+      return res.json({ success: true, firstVerification: (result.rowCount ?? 0) > 0 });
     } finally {
       await db.end();
     }
-
-    return res.json({ success: true });
   } catch (err: any) {
     console.error('[payments] verify-session error:', err);
     return res.status(500).json({ error: err.message || 'Failed to verify session' });

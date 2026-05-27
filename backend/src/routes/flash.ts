@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto';
 import multer from 'multer';
 import { authMiddleware } from '../middleware/auth.js';
 import { sendFlashSlotClaimed } from '../services/emailService.js';
+import { ALLOWED_IMAGE_MIME } from '../utils/storage.js';
 
 const { Client } = pkg;
 
@@ -14,7 +15,14 @@ async function uploadToSupabase(buffer: Buffer, fileName: string, mimeType: stri
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceKey) throw new Error('Supabase storage not configured');
   const bucket = 'design-ideas';
-  const path = `flash/${Date.now()}-${fileName}`;
+  // Never trust user-supplied filename — use UUID with a safe extension.
+  const extMap: Record<string, string> = {
+    'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp',
+    'image/gif': 'gif', 'image/heic': 'heic', 'image/heif': 'heif',
+  };
+  const ext = extMap[mimeType] || 'jpg';
+  const path = `flash/${Date.now()}-${randomUUID()}.${ext}`;
+  void fileName; // intentionally unused — sanitise inputs
   const res = await fetch(`${supabaseUrl}/storage/v1/object/${bucket}/${path}`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${serviceKey}`, 'Content-Type': mimeType, 'x-upsert': 'true' },
@@ -28,8 +36,8 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) cb(null, true);
-    else cb(new Error('Images only'));
+    if (ALLOWED_IMAGE_MIME.has(file.mimetype)) cb(null, true);
+    else cb(new Error('Only JPEG, PNG, WebP, GIF, or HEIC images are allowed'));
   },
 });
 

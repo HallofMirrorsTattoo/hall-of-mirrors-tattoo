@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import pkg from 'pg';
-import { authMiddleware } from '../middleware/auth.js';
+import { authMiddleware, ownerOnly } from '../middleware/auth.js';
 
 const { Client } = pkg;
 
@@ -66,8 +66,8 @@ studioSettingsRouter.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// PATCH /api/artist/studio-settings
-studioSettingsRouter.patch('/', async (req: Request, res: Response) => {
+// PATCH /api/artist/studio-settings — owner only (Robyn)
+studioSettingsRouter.patch('/', ownerOnly, async (req: Request, res: Response) => {
   const allowed = [
     'studio_name', 'address', 'postcode', 'phone', 'email',
     'hours_monday_start', 'hours_monday_end',
