@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Book a Tattoo Appointment | Hall of Mirrors Liverpool',
-    description: 'Book your tattoo at Hall of Mirrors, Castle Street Liverpool. Bespoke neo-traditional tattooing from £150. Limited availability.',
+    description: 'Book your tattoo at Hall of Mirrors, Castle Street Liverpool. Bespoke neo-traditional tattooing from £50. Limited availability.',
   },
 };
 
