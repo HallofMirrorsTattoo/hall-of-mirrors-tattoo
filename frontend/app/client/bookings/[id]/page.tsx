@@ -119,7 +119,9 @@ export default function BookingDetailPage() {
 
   interface BookingMsg { id: string; sender_type: 'client' | 'artist'; body: string; created_at: string; }
   const [messages, setMessages] = useState<BookingMsg[]>([]);
-  const [msgDraft, setMsgDraft] = useState('');
+  // Uncontrolled draft — prevents per-keystroke re-renders that dismiss the iOS keyboard
+  const msgDraftRef = useRef<HTMLTextAreaElement>(null);
+  const [msgDraftHasContent, setMsgDraftHasContent] = useState(false);
   const [msgSending, setMsgSending] = useState(false);
   const [msgError, setMsgError] = useState('');
   const msgAreaRef = useRef<HTMLDivElement>(null);
@@ -169,19 +171,21 @@ export default function BookingDetailPage() {
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!msgDraft.trim() || msgSending) return;
+    const body = msgDraftRef.current?.value?.trim() ?? '';
+    if (!body || msgSending) return;
     setMsgSending(true);
     setMsgError('');
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/client/messages/${bookingId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ body: msgDraft.trim() }),
+        body: JSON.stringify({ body }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to send');
       setMessages(prev => [...prev, data.message]);
-      setMsgDraft('');
+      if (msgDraftRef.current) msgDraftRef.current.value = '';
+      setMsgDraftHasContent(false);
     } catch (err) {
       setMsgError(err instanceof Error ? err.message : 'Failed to send message');
     } finally {
@@ -1014,20 +1018,23 @@ export default function BookingDetailPage() {
                     {msgError && <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', color: 'var(--error-text)' }}>{msgError}</p>}
                     <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'flex-end' }}>
                       <textarea
-                        value={msgDraft}
-                        onChange={(e) => setMsgDraft(e.target.value)}
+                        ref={msgDraftRef}
+                        defaultValue=""
+                        onInput={(e) => setMsgDraftHasContent((e.target as HTMLTextAreaElement).value.trim().length > 0)}
                         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
                         placeholder="Write a message… (Enter to send)"
                         rows={2}
                         style={{ flex: 1, resize: 'none', padding: '0.625rem 0.875rem', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--cream)', fontSize: '0.875rem', lineHeight: 1.5, fontFamily: '"DM Sans", sans-serif', outline: 'none' }}
                         onFocus={(e) => (e.target.style.borderColor = 'rgba(201,168,76,0.5)')}
                         onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+                        aria-label="Write a message"
                       />
                       <button
                         onClick={sendMessage}
-                        disabled={!msgDraft.trim() || msgSending}
+                        disabled={!msgDraftHasContent || msgSending}
                         className="btn-primary"
-                        style={{ padding: '0.625rem 1rem', flexShrink: 0, opacity: (!msgDraft.trim() || msgSending) ? 0.5 : 1, cursor: (!msgDraft.trim() || msgSending) ? 'default' : 'pointer' }}
+                        aria-label="Send message"
+                        style={{ padding: '0.625rem 1rem', flexShrink: 0, opacity: (!msgDraftHasContent || msgSending) ? 0.5 : 1, cursor: (!msgDraftHasContent || msgSending) ? 'default' : 'pointer' }}
                       >
                         {msgSending ? '…' : '→'}
                       </button>

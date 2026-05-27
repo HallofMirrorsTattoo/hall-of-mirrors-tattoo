@@ -103,15 +103,9 @@ export default function ClientLoginPage() {
                 </Link>
               </p>
               <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-low)' }}>
-                No account?{' '}
+                No account, or activating a previous booking?{' '}
                 <Link href="/client/signup" className="footer-link" style={{ color: 'var(--gold)', opacity: 1 }}>
                   Sign up
-                </Link>
-              </p>
-              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-low)' }}>
-                Previous booking?{' '}
-                <Link href="/client/activate" className="footer-link" style={{ color: 'var(--gold)', opacity: 1 }}>
-                  Activate your account
                 </Link>
               </p>
             </div>

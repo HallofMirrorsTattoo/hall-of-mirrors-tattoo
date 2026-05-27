@@ -10,7 +10,7 @@ import { ClientAuthProvider } from '@/lib/clientAuthContext';
 export const metadata: Metadata = {
   metadataBase: new URL('https://hallofmirrorstattoo.com'),
   title: 'Hall of Mirrors Tattoo Studio — Liverpool',
-  description: 'Bespoke tattoo artistry in Liverpool. Neo-traditional specialist Robyn creates timeless, meticulously crafted work. Book your appointment or free consultation.',
+  description: 'Bespoke tattoo artistry in Liverpool city centre. Custom neo-traditional and blackwork tattoos by appointment. Book online or request a free consultation.',
   alternates: {
     canonical: 'https://hallofmirrorstattoo.com',
   },

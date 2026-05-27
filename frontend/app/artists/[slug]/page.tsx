@@ -164,9 +164,32 @@ export default async function ArtistPage({ params }: { params: { slug: string } 
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
+      {/* Back link */}
+      <div style={{ maxWidth: '64rem', margin: '0 auto', padding: '6rem 1.5rem 0' }}>
+        <Link
+          href="/artists"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            fontFamily: '"DM Mono", monospace',
+            fontSize: '0.72rem',
+            letterSpacing: '0.16em',
+            textTransform: 'uppercase',
+            color: 'rgba(201,168,76,0.75)',
+            textDecoration: 'none',
+            transition: 'color 0.2s ease',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--gold)')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(201,168,76,0.75)')}
+        >
+          <span aria-hidden="true">←</span> All artists
+        </Link>
+      </div>
+
       {/* Hero */}
       <section style={{
-        padding: '6rem 1.5rem 4rem',
+        padding: '2rem 1.5rem 4rem',
         maxWidth: '64rem',
         margin: '0 auto',
         display: 'grid',

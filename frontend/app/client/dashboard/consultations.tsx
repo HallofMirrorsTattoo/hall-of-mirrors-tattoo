@@ -273,6 +273,8 @@ export default function ConsultationsTab() {
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [availableArtists, setAvailableArtists] = useState<Array<{ id: string; full_name: string }>>([]);
+  const [selectedArtistId, setSelectedArtistId] = useState('');
 
   // Chat state
   const [openChat, setOpenChat] = useState<OpenChat>(null);
@@ -322,6 +324,18 @@ export default function ConsultationsTab() {
   useEffect(() => {
     Promise.all([fetchConsultations(), fetchBookings()]).finally(() => setLoading(false));
   }, [fetchConsultations, fetchBookings]);
+
+  // Load the public artist list once so the consultation form can offer a picker
+  useEffect(() => {
+    fetch(`${API}/api/artist`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        const list = d?.artists ?? [];
+        setAvailableArtists(list);
+        if (list.length === 1) setSelectedArtistId(list[0].id);
+      })
+      .catch(() => { /* non-critical */ });
+  }, [API]);
 
   const fetchMsgs = useCallback(async (chat: OpenChat) => {
     if (!accessToken || !chat) return;
@@ -374,14 +388,14 @@ export default function ConsultationsTab() {
 
   const handleNewConsultation = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !selectedArtistId) return;
     setSubmitting(true);
     setSubmitError('');
     try {
       const res = await fetch(`${API}/api/client/consultations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ artist_id: 'artist-robyn-001', message: newMessage }),
+        body: JSON.stringify({ artist_id: selectedArtistId, message: newMessage }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to send — please try again.');
@@ -597,9 +611,27 @@ export default function ConsultationsTab() {
                   Request a consultation
                 </h3>
                 <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-low)', marginBottom: '1.25rem', lineHeight: 1.6 }}>
-                  Describe your idea and Robyn will get back to you. No booking needed — this is just a conversation.
+                  Describe your idea and your chosen artist will get back to you. No booking needed, this is just a conversation.
                 </p>
                 <form onSubmit={handleNewConsultation} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {availableArtists.length > 1 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                      <label htmlFor="consult-artist" style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.65)' }}>
+                        Which artist?
+                      </label>
+                      <select
+                        id="consult-artist"
+                        value={selectedArtistId}
+                        onChange={(e) => setSelectedArtistId(e.target.value)}
+                        style={{ padding: '0.65rem 0.875rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--cream)', fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', cursor: 'pointer' }}
+                      >
+                        <option value="">Choose an artist…</option>
+                        {availableArtists.map(a => (
+                          <option key={a.id} value={a.id}>{a.full_name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   <textarea
                     value={newMessage}
                     onChange={(e) => { setNewMessage(e.target.value); if (submitError) setSubmitError(''); }}
@@ -612,7 +644,12 @@ export default function ConsultationsTab() {
                       {submitError}
                     </p>
                   )}
-                  <button type="submit" disabled={submitting || !newMessage.trim()} className="btn-primary" style={{ alignSelf: 'flex-start', opacity: (submitting || !newMessage.trim()) ? 0.5 : 1 }}>
+                  <button
+                    type="submit"
+                    disabled={submitting || !newMessage.trim() || !selectedArtistId}
+                    className="btn-primary"
+                    style={{ alignSelf: 'flex-start', opacity: (submitting || !newMessage.trim() || !selectedArtistId) ? 0.5 : 1 }}
+                  >
                     {submitting ? 'Sending…' : 'Send consultation request'}
                   </button>
                 </form>
@@ -621,7 +658,7 @@ export default function ConsultationsTab() {
           ) : (
             <div style={{ padding: '1rem 1.25rem', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '0.625rem', marginBottom: '1.25rem' }}>
               <p style={{ margin: 0, fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'rgba(34,197,94,0.9)' }}>
-                Consultation request sent — Robyn will be in touch soon.
+                Consultation request sent. Your artist will be in touch soon.
               </p>
             </div>
           )}

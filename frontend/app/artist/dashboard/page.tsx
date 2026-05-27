@@ -188,24 +188,27 @@ export default function ArtistDashboard() {
   const [closingNoteActing, setClosingNoteActing] = useState(false);
   const [showArchivedConsults, setShowArchivedConsults] = useState(false);
 
-  // Consultation chat state
+  // Consultation chat state — uncontrolled refs to prevent per-keystroke
+  // re-renders that dismiss the iOS soft keyboard in this 3600-line component.
   interface ConsultMsg { id: string; consultation_id: string; sender_type: 'client' | 'artist'; body: string | null; image_url: string | null; created_at: string; }
   const [openConsultChatId, setOpenConsultChatId] = useState<string | null>(null);
   const [consultMsgs, setConsultMsgs] = useState<ConsultMsg[]>([]);
-  const [consultMsgDraft, setConsultMsgDraft] = useState('');
+  const consultMsgDraftRef = useRef<HTMLTextAreaElement>(null);
+  const [consultMsgHasContent, setConsultMsgHasContent] = useState(false);
   const [consultMsgSending, setConsultMsgSending] = useState(false);
   const [consultMsgError, setConsultMsgError] = useState('');
   const [consultActionId, setConsultActionId] = useState<string | null>(null);
-  const [consultResponseText, setConsultResponseText] = useState('');
+  const consultResponseTextRef = useRef<HTMLTextAreaElement>(null);
   const [consultActioning, setConsultActioning] = useState(false);
   const consultMsgPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const consultMsgAreaRef = useRef<HTMLDivElement>(null);
 
-  // Booking chat state (in Consultations tab — for confirmed booking threads)
+  // Booking chat state — same uncontrolled-ref pattern
   interface BookingMsg { id: string; booking_id: string; sender_type: 'client' | 'artist'; body: string | null; image_url: string | null; created_at: string; }
   const [openBookingChatId, setOpenBookingChatId] = useState<string | null>(null);
   const [bookingChatMsgs, setBookingChatMsgs] = useState<BookingMsg[]>([]);
-  const [bookingChatDraft, setBookingChatDraft] = useState('');
+  const bookingChatDraftRef = useRef<HTMLTextAreaElement>(null);
+  const [bookingChatHasContent, setBookingChatHasContent] = useState(false);
   const [bookingChatSending, setBookingChatSending] = useState(false);
   const [bookingChatError, setBookingChatError] = useState('');
   const bookingChatPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -724,19 +727,21 @@ export default function ArtistDashboard() {
   }, [bookingChatMsgs]);
 
   const sendBookingChatMsg = async () => {
-    if (!bookingChatDraft.trim() || !openBookingChatId || bookingChatSending) return;
+    const body = bookingChatDraftRef.current?.value?.trim() ?? '';
+    if (!body || !openBookingChatId || bookingChatSending) return;
     setBookingChatSending(true);
     setBookingChatError('');
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/messages/${openBookingChatId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ body: bookingChatDraft.trim() }),
+        body: JSON.stringify({ body }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to send');
       setBookingChatMsgs((prev) => [...prev, data.message]);
-      setBookingChatDraft('');
+      if (bookingChatDraftRef.current) bookingChatDraftRef.current.value = '';
+      setBookingChatHasContent(false);
     } catch (e) {
       setBookingChatError(e instanceof Error ? e.message : 'Failed to send');
     } finally {
@@ -745,19 +750,21 @@ export default function ArtistDashboard() {
   };
 
   const sendConsultMsg = async () => {
-    if (!consultMsgDraft.trim() || !openConsultChatId || consultMsgSending) return;
+    const body = consultMsgDraftRef.current?.value?.trim() ?? '';
+    if (!body || !openConsultChatId || consultMsgSending) return;
     setConsultMsgSending(true);
     setConsultMsgError('');
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/consultation-messages/${openConsultChatId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ body: consultMsgDraft.trim() }),
+        body: JSON.stringify({ body }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to send');
       setConsultMsgs((prev) => [...prev, data.message]);
-      setConsultMsgDraft('');
+      if (consultMsgDraftRef.current) consultMsgDraftRef.current.value = '';
+      setConsultMsgHasContent(false);
     } catch (e) {
       setConsultMsgError(e instanceof Error ? e.message : 'Failed to send');
     } finally {
@@ -958,13 +965,14 @@ export default function ArtistDashboard() {
     const colonIdx = consultActionId.lastIndexOf(':');
     const consultationId = consultActionId.substring(0, colonIdx);
     const action = consultActionId.substring(colonIdx + 1) as 'approve' | 'decline';
+    const responseText = consultResponseTextRef.current?.value?.trim() ?? '';
     setConsultActioning(true);
     setConsultationError('');
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist/consultations/${consultationId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ action, ...(consultResponseText.trim() ? { response_message: consultResponseText.trim() } : {}) }),
+        body: JSON.stringify({ action, ...(responseText ? { response_message: responseText } : {}) }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to update consultation');
@@ -972,12 +980,12 @@ export default function ArtistDashboard() {
       setConsultations((prev) =>
         prev.map((c) =>
           c.consultation_id === consultationId
-            ? { ...c, status: newStatus, artist_response: consultResponseText.trim() || c.artist_response }
+            ? { ...c, status: newStatus, artist_response: responseText || c.artist_response }
             : c
         )
       );
       setConsultActionId(null);
-      setConsultResponseText('');
+      if (consultResponseTextRef.current) consultResponseTextRef.current.value = '';
     } catch (e) {
       setConsultationError(e instanceof Error ? e.message : 'Failed to update consultation');
     } finally {
@@ -2252,14 +2260,14 @@ export default function ArtistDashboard() {
                           <div style={{ display: 'flex', gap: '0.625rem' }}>
                             <button
                               type="button"
-                              onClick={() => { setConsultActionId(`${c.consultation_id}:approve`); setConsultResponseText(''); setConsultationError(''); }}
+                              onClick={() => { setConsultActionId(`${c.consultation_id}:approve`); if (consultResponseTextRef.current) consultResponseTextRef.current.value = ''; setConsultationError(''); }}
                               style={{ padding: '0.5rem 1rem', background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', color: '#16A34A', fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', borderRadius: '0.375rem', cursor: 'pointer' }}
                             >
                               Approve
                             </button>
                             <button
                               type="button"
-                              onClick={() => { setConsultActionId(`${c.consultation_id}:decline`); setConsultResponseText(''); setConsultationError(''); }}
+                              onClick={() => { setConsultActionId(`${c.consultation_id}:decline`); if (consultResponseTextRef.current) consultResponseTextRef.current.value = ''; setConsultationError(''); }}
                               style={{ padding: '0.5rem 1rem', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171', fontFamily: '"DM Mono", monospace', fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', borderRadius: '0.375rem', cursor: 'pointer' }}
                             >
                               Decline
@@ -2271,8 +2279,8 @@ export default function ArtistDashboard() {
                               {actionKey.endsWith(':approve') ? `Approve ${c.first_name}'s consultation` : `Decline ${c.first_name}'s request`}
                             </p>
                             <textarea
-                              value={consultResponseText}
-                              onChange={(e) => setConsultResponseText(e.target.value)}
+                              ref={consultResponseTextRef}
+                              defaultValue=""
                               placeholder={actionKey.endsWith(':approve') ? 'Optional: add a note for the client…' : 'Optional: let them know why…'}
                               rows={3}
                               style={{ width: '100%', padding: '0.75rem 1rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--cream)', fontSize: '0.875rem', lineHeight: 1.6, resize: 'vertical', outline: 'none', boxSizing: 'border-box', marginBottom: '0.75rem', fontFamily: '"DM Sans", sans-serif' }}
@@ -2297,7 +2305,7 @@ export default function ArtistDashboard() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => { setConsultActionId(null); setConsultResponseText(''); setConsultationError(''); }}
+                                onClick={() => { setConsultActionId(null); if (consultResponseTextRef.current) consultResponseTextRef.current.value = ''; setConsultationError(''); }}
                                 className="btn-secondary"
                                 style={{ padding: '0.5rem 0.875rem', fontSize: '0.72rem' }}
                               >
@@ -2316,7 +2324,8 @@ export default function ArtistDashboard() {
                           type="button"
                           onClick={() => {
                             setOpenConsultChatId(isChatOpen ? null : c.consultation_id);
-                            setConsultMsgDraft('');
+                            if (consultMsgDraftRef.current) consultMsgDraftRef.current.value = '';
+                            setConsultMsgHasContent(false);
                             setConsultMsgError('');
                           }}
                           style={{ width: '100%', padding: '0.875rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', color: isChatOpen ? 'var(--gold)' : 'var(--text-mid)', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', transition: 'color 0.2s ease' }}
@@ -2371,21 +2380,24 @@ export default function ArtistDashboard() {
                               {consultMsgError && <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', color: '#f87171' }}>{consultMsgError}</p>}
                               <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'flex-end' }}>
                                 <textarea
-                                  value={consultMsgDraft}
-                                  onChange={(e) => setConsultMsgDraft(e.target.value)}
+                                  ref={consultMsgDraftRef}
+                                  defaultValue=""
+                                  onInput={(e) => setConsultMsgHasContent((e.target as HTMLTextAreaElement).value.trim().length > 0)}
                                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendConsultMsg(); } }}
                                   placeholder="Write a message… (Enter to send)"
                                   rows={2}
                                   style={{ flex: 1, padding: '0.625rem 0.875rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--cream)', fontSize: '0.875rem', lineHeight: 1.5, resize: 'none', outline: 'none', fontFamily: '"DM Sans", sans-serif', transition: 'border-color 0.2s ease' }}
                                   onFocus={(e) => (e.target.style.borderColor = 'rgba(201,168,76,0.5)')}
                                   onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+                                  aria-label="Write a message"
                                 />
                                 <button
                                   type="button"
                                   onClick={sendConsultMsg}
-                                  disabled={!consultMsgDraft.trim() || consultMsgSending}
+                                  disabled={!consultMsgHasContent || consultMsgSending}
                                   className="btn-primary"
-                                  style={{ padding: '0.625rem 1.125rem', flexShrink: 0, opacity: (!consultMsgDraft.trim() || consultMsgSending) ? 0.5 : 1, cursor: (!consultMsgDraft.trim() || consultMsgSending) ? 'default' : 'pointer' }}
+                                  aria-label="Send message"
+                                  style={{ padding: '0.625rem 1.125rem', flexShrink: 0, opacity: (!consultMsgHasContent || consultMsgSending) ? 0.5 : 1, cursor: (!consultMsgHasContent || consultMsgSending) ? 'default' : 'pointer' }}
                                 >
                                   {consultMsgSending ? '…' : '→'}
                                 </button>
@@ -2535,7 +2547,7 @@ export default function ArtistDashboard() {
                       <div style={{ borderTop: '1px solid var(--border)' }}>
                         <button
                           type="button"
-                          onClick={() => { setOpenBookingChatId(isOpen ? null : b.id); setBookingChatDraft(''); setBookingChatError(''); }}
+                          onClick={() => { setOpenBookingChatId(isOpen ? null : b.id); if (bookingChatDraftRef.current) bookingChatDraftRef.current.value = ''; setBookingChatHasContent(false); setBookingChatError(''); }}
                           style={{ width: '100%', padding: '0.875rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', color: isOpen ? 'var(--gold)' : 'var(--text-mid)', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', transition: 'color 0.2s ease' }}
                         >
                           <span>{isOpen ? 'Close chat' : 'Message client'}</span>
@@ -2584,21 +2596,24 @@ export default function ArtistDashboard() {
                               {bookingChatError && <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', color: '#f87171' }}>{bookingChatError}</p>}
                               <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'flex-end' }}>
                                 <textarea
-                                  value={bookingChatDraft}
-                                  onChange={(e) => setBookingChatDraft(e.target.value)}
+                                  ref={bookingChatDraftRef}
+                                  defaultValue=""
+                                  onInput={(e) => setBookingChatHasContent((e.target as HTMLTextAreaElement).value.trim().length > 0)}
                                   onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBookingChatMsg(); } }}
                                   placeholder="Write a message… (Enter to send)"
                                   rows={2}
                                   style={{ flex: 1, padding: '0.625rem 0.875rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--cream)', fontSize: '0.875rem', lineHeight: 1.5, resize: 'none', outline: 'none', fontFamily: '"DM Sans", sans-serif', transition: 'border-color 0.2s ease' }}
                                   onFocus={(e) => (e.target.style.borderColor = 'rgba(201,168,76,0.5)')}
                                   onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+                                  aria-label="Write a message"
                                 />
                                 <button
                                   type="button"
                                   onClick={sendBookingChatMsg}
-                                  disabled={!bookingChatDraft.trim() || bookingChatSending}
+                                  disabled={!bookingChatHasContent || bookingChatSending}
                                   className="btn-primary"
-                                  style={{ padding: '0.625rem 1.125rem', flexShrink: 0, opacity: (!bookingChatDraft.trim() || bookingChatSending) ? 0.5 : 1, cursor: (!bookingChatDraft.trim() || bookingChatSending) ? 'default' : 'pointer' }}
+                                  aria-label="Send message"
+                                  style={{ padding: '0.625rem 1.125rem', flexShrink: 0, opacity: (!bookingChatHasContent || bookingChatSending) ? 0.5 : 1, cursor: (!bookingChatHasContent || bookingChatSending) ? 'default' : 'pointer' }}
                                 >
                                   {bookingChatSending ? '…' : '→'}
                                 </button>
@@ -2646,7 +2661,7 @@ export default function ArtistDashboard() {
                             <div style={{ borderTop: '1px solid var(--border)' }}>
                               <button
                                 type="button"
-                                onClick={() => { setOpenBookingChatId(isOpen ? null : b.id); setBookingChatDraft(''); setBookingChatError(''); }}
+                                onClick={() => { setOpenBookingChatId(isOpen ? null : b.id); if (bookingChatDraftRef.current) bookingChatDraftRef.current.value = ''; setBookingChatHasContent(false); setBookingChatError(''); }}
                                 style={{ width: '100%', padding: '0.875rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', color: isOpen ? 'var(--gold)' : 'var(--text-mid)', fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', transition: 'color 0.2s ease' }}
                               >
                                 <span>{isOpen ? 'Close chat' : 'Message client'}</span>
@@ -2689,21 +2704,24 @@ export default function ArtistDashboard() {
                                     {bookingChatError && <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', color: '#f87171' }}>{bookingChatError}</p>}
                                     <div style={{ display: 'flex', gap: '0.625rem', alignItems: 'flex-end' }}>
                                       <textarea
-                                        value={bookingChatDraft}
-                                        onChange={(e) => setBookingChatDraft(e.target.value)}
+                                        ref={bookingChatDraftRef}
+                                        defaultValue=""
+                                        onInput={(e) => setBookingChatHasContent((e.target as HTMLTextAreaElement).value.trim().length > 0)}
                                         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBookingChatMsg(); } }}
                                         placeholder="Write a message… (Enter to send)"
                                         rows={2}
                                         style={{ flex: 1, padding: '0.625rem 0.875rem', background: 'rgba(14,12,9,0.5)', border: '1px solid var(--border)', borderRadius: '0.5rem', color: 'var(--cream)', fontSize: '0.875rem', lineHeight: 1.5, resize: 'none', outline: 'none', fontFamily: '"DM Sans", sans-serif', transition: 'border-color 0.2s ease' }}
                                         onFocus={(e) => (e.target.style.borderColor = 'rgba(201,168,76,0.5)')}
                                         onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+                                        aria-label="Write a message"
                                       />
                                       <button
                                         type="button"
                                         onClick={sendBookingChatMsg}
-                                        disabled={!bookingChatDraft.trim() || bookingChatSending}
+                                        disabled={!bookingChatHasContent || bookingChatSending}
                                         className="btn-primary"
-                                        style={{ padding: '0.625rem 1.125rem', flexShrink: 0, opacity: (!bookingChatDraft.trim() || bookingChatSending) ? 0.5 : 1, cursor: (!bookingChatDraft.trim() || bookingChatSending) ? 'default' : 'pointer' }}
+                                        aria-label="Send message"
+                                        style={{ padding: '0.625rem 1.125rem', flexShrink: 0, opacity: (!bookingChatHasContent || bookingChatSending) ? 0.5 : 1, cursor: (!bookingChatHasContent || bookingChatSending) ? 'default' : 'pointer' }}
                                       >
                                         {bookingChatSending ? '…' : '→'}
                                       </button>

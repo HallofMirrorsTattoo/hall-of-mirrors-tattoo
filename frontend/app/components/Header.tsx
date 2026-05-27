@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 const navLinks = [
   { href: '/',            label: 'Home' },
   { href: '/artists',     label: 'Artists' },
+  { href: '/services',    label: 'Services' },
   { href: '/about',       label: 'Studio' },
 ];
 

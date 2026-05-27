@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -94,7 +95,10 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 
 export default function BookingPage() {
   const { user, accessToken, activate } = useClientAuth();
-  const [formMode, setFormMode] = useState<'booking' | 'consultation'>('booking');
+  const searchParams = useSearchParams();
+  const initialMode = searchParams?.get('mode') === 'consultation' ? 'consultation' : 'booking';
+  const prefilledArtistId = searchParams?.get('artist') || '';
+  const [formMode, setFormMode] = useState<'booking' | 'consultation'>(initialMode);
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting]   = useState(false);
   const [submitStatus, setSubmitStatus]   = useState<'idle' | 'success' | 'error'>('idle');
@@ -109,7 +113,7 @@ export default function BookingPage() {
   const [confirmedArtist, setConfirmedArtist]     = useState('');
 
   // Post-booking account activation (only available when email is captured in-flow)
-  const [capturedEmail]                             = useState('');
+  const [capturedEmail, setCapturedEmail]           = useState('');
   const [activationPw, setActivationPw]             = useState('');
   const [activationState, setActivationState]       = useState<'idle' | 'submitting' | 'done' | 'dismissed'>('idle');
   const [activationError, setActivationError]       = useState('');
@@ -162,7 +166,12 @@ export default function BookingPage() {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/artist`);
         if (res.ok) {
           const data = await res.json();
-          setArtists(data.artists || []);
+          const list: Artist[] = data.artists || [];
+          setArtists(list);
+          // Honour ?artist=<id> from deep links (e.g. artist profile page CTA)
+          if (prefilledArtistId && list.some(a => a.id === prefilledArtistId)) {
+            setValue('artistId', prefilledArtistId);
+          }
         }
       } catch {
         // non-critical
@@ -171,7 +180,8 @@ export default function BookingPage() {
       }
     };
     fetchArtists();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefilledArtistId]);
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/studio-settings`)
@@ -284,6 +294,8 @@ export default function BookingPage() {
         setConfirmedDate(selectedDate);
         setConfirmedSlot(selectedSlot);
         setConfirmedArtist(artists.find((a) => a.id === data.artistId)?.full_name ?? '');
+        // Only show the activation panel for guests — logged-in users already have an account
+        if (!user) setCapturedEmail(data.clientEmail);
         setSubmitStatus('success');
         reset();
         setSelectedDate(null);

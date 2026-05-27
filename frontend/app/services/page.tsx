@@ -3,14 +3,14 @@ import AnimatedSection from '../components/AnimatedSection';
 
 export const metadata = {
   title: 'Services & Pricing | Hall of Mirrors Tattoo Studio Liverpool',
-  description: 'Custom tattoos, cover-ups, and free consultations at Hall of Mirrors Tattoo Studio, Suite 3, 34 Castle Street, Liverpool. Neo-traditional specialists from £150. Walk-ins welcome.',
+  description: 'Custom tattoos, cover-ups, and free consultations at Hall of Mirrors Tattoo Studio, Suite 3, 34 Castle Street, Liverpool. Bespoke neo-traditional tattooing from £150. Bookings recommended.',
   alternates: {
-    canonical: 'https://hallofmirrorstattoo.com/about',
+    canonical: 'https://hallofmirrorstattoo.com/services',
   },
   openGraph: {
     title: 'Services & Pricing | Hall of Mirrors Tattoo Studio Liverpool',
-    description: 'Custom tattoos, cover-ups, and free consultations in Liverpool city centre. Bespoke neo-traditional tattooing from £150. No walk-ins — appointment only.',
-    url: 'https://hallofmirrorstattoo.com/about',
+    description: 'Custom tattoos, cover-ups, and free consultations in Liverpool city centre. Bespoke neo-traditional tattooing from £150. Bookings recommended.',
+    url: 'https://hallofmirrorstattoo.com/services',
     siteName: 'Hall of Mirrors Tattoo Studio',
     locale: 'en_GB',
     type: 'website' as const,

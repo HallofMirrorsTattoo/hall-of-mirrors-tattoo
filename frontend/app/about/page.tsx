@@ -393,7 +393,7 @@ export default async function About() {
               {
                 q: 'How much does a tattoo cost?',
                 a: [
-                  'Pricing depends on size and complexity. Prices start at £50 and can go up to £450 (day session price).',
+                  'Pricing depends on size and complexity. Small pieces start from £150, and day sessions go up to £450. See our services page for a full price guide.',
                   'The price of pre-drawn flash varies, sometimes artists run flash days where all pieces are a set price.',
                   'Artists also advertise flash sheets of pre-drawn designs with the set prices attached.',
                 ],
