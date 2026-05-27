@@ -38,6 +38,9 @@
 html {
   scroll-behavior: smooth;
   font-size: 16px;
+  overflow-x: clip;
+  /* Block horizontal pan gestures; keep vertical scroll and pinch zoom for a11y */
+  touch-action: pan-y pinch-zoom;
 }
 
 /* ─── Body ──────────────────────────────────────────────────────────────────── */
@@ -46,7 +49,8 @@ body {
   background-color: var(--bg);
   color: var(--text);
   position: relative;
-  overflow-x: hidden;
+  overflow-x: clip;
+  max-width: 100vw;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -315,6 +319,14 @@ input, textarea, select {
   font-size: 0.9375rem;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
   width: 100%;
+  max-width: 100%;
+}
+
+/* Prevent iOS Safari from auto-zooming on focus when field font-size < 16px */
+@media (max-width: 767px) {
+  input, textarea, select {
+    font-size: 16px;
+  }
 }
 
 input::placeholder, textarea::placeholder {

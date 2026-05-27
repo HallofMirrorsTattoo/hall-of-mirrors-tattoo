@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -27,6 +27,12 @@ export const metadata: Metadata = {
     title: 'Hall of Mirrors Tattoo Studio — Liverpool',
     description: 'Bespoke tattoo artistry in Liverpool. Neo-traditional specialist. Every design custom.',
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
