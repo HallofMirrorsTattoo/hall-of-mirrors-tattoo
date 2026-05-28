@@ -62,6 +62,13 @@ const ARTIST_TABS = [
   { id: 'studio-settings',  label: 'Studio',          icon: '⌂' },
 ] as const;
 
+// Only the studio owner sees + can use the studio-wide settings (Google Drive
+// archive, future shared integrations). Compared case-insensitively; trim
+// guards against stray whitespace in the auth payload.
+const STUDIO_OWNER_EMAIL = 'robyn@hallofmirrorstattoo.com';
+const isStudioOwner = (email: string | undefined | null) =>
+  !!email && email.trim().toLowerCase() === STUDIO_OWNER_EMAIL;
+
 interface Booking {
   id: string;
   booking_reference: string;
@@ -2058,7 +2065,9 @@ export default function ArtistDashboard() {
       <div style={{ height: '1px', background: 'rgba(201,168,76,0.1)', marginBottom: '1.25rem' }} />
       <nav style={{ flex: 1 }}>
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-          {ARTIST_TABS.map(({ id, label, icon }) => {
+          {ARTIST_TABS
+            .filter(({ id }) => id !== 'studio-settings' || isStudioOwner(artist?.email))
+            .map(({ id, label, icon }) => {
             const isActive = tab === id;
             const badge = id === 'bookings' ? pendingCounterOffers : id === 'consultations' ? pendingConsultations : 0;
             return (
@@ -3878,7 +3887,7 @@ export default function ArtistDashboard() {
         })()}
 
         {/* ── Studio Settings tab ─────────────────────────────────────────── */}
-        {tab === 'studio-settings' && (
+        {tab === 'studio-settings' && isStudioOwner(artist?.email) && (
           <div style={{ maxWidth: '640px' }}>
             <p className="eyebrow" style={{ marginBottom: '0.75rem' }}>Studio settings</p>
             <h2 style={{

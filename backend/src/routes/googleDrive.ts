@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { authMiddleware } from '../middleware/auth.js';
 import {
@@ -15,6 +15,17 @@ import {
 
 const router = Router();
 
+// Only the studio owner is allowed to touch the studio-wide Drive settings.
+// Defaults to Robyn's email but overridable via env var if the owner ever changes.
+const STUDIO_OWNER_EMAIL = (process.env.STUDIO_OWNER_EMAIL ?? 'robyn@hallofmirrorstattoo.com').trim().toLowerCase();
+const requireStudioOwner = (req: Request, res: Response, next: NextFunction) => {
+  const email = ((req as any).artist?.email ?? '').toString().trim().toLowerCase();
+  if (email !== STUDIO_OWNER_EMAIL) {
+    return res.status(403).json({ error: 'Only the studio owner can manage these settings.' });
+  }
+  next();
+};
+
 if (!process.env.JWT_SECRET) {
   throw new Error('FATAL: JWT_SECRET must be set in the environment.');
 }
@@ -23,7 +34,7 @@ const FRONTEND_URL =
   process.env.FRONTEND_URL ?? 'https://hall-of-mirrors-tattoo.vercel.app';
 
 // POST /api/studio/drive/connect — returns the OAuth URL for the frontend to redirect to.
-router.post('/connect', authMiddleware, (req: Request, res: Response) => {
+router.post('/connect', authMiddleware, requireStudioOwner, (req: Request, res: Response) => {
   const artistId = (req as any).artist?.id;
   if (!artistId) return res.status(401).json({ error: 'Unauthorized' });
 
@@ -89,14 +100,14 @@ router.get('/callback', async (req: Request, res: Response) => {
 });
 
 // GET /api/studio/drive/status — small payload used by the dashboard UI.
-router.get('/status', authMiddleware, async (_req: Request, res: Response) => {
+router.get('/status', authMiddleware, requireStudioOwner, async (_req: Request, res: Response) => {
   const status = await getDriveStatus(DEFAULT_STUDIO_ID);
   if (!status) return res.json({ connected: false });
   res.json(status);
 });
 
 // DELETE /api/studio/drive/disconnect — revoke + delete the stored tokens.
-router.delete('/disconnect', authMiddleware, async (_req: Request, res: Response) => {
+router.delete('/disconnect', authMiddleware, requireStudioOwner, async (_req: Request, res: Response) => {
   try {
     const tokens = await getDriveTokens(DEFAULT_STUDIO_ID);
     if (tokens?.refresh_token) {
@@ -116,7 +127,7 @@ router.delete('/disconnect', authMiddleware, async (_req: Request, res: Response
 
 // PATCH /api/studio/drive/folder — point Drive uploads at a different folder.
 // Accepts either { folder_id } or { folder_id: '' } / no body to reset to default.
-router.patch('/folder', authMiddleware, async (req: Request, res: Response) => {
+router.patch('/folder', authMiddleware, requireStudioOwner, async (req: Request, res: Response) => {
   const { folder_id } = req.body ?? {};
 
   if (!folder_id || String(folder_id).trim() === '') {
