@@ -133,15 +133,22 @@ export async function createBooking(req: Request, res: Response) {
     const [firstName, ...lastNameParts] = validatedData.clientName.split(' ');
     const lastName = lastNameParts.join(' ') || 'Guest';
 
-    // Check if user exists
+    // Check if user exists. We also surface back to the client whether the
+    // email already has a live account so the booking page can prompt them to
+    // sign in instead of offering to create a new one. A stub row (created
+    // from a previous guest booking) has password_hash = '' and is still
+    // eligible for the existing "activate your account" path.
     const userResult = await client.query(
-      `SELECT id, first_name, last_name, email, phone FROM "User" WHERE email = $1`,
+      `SELECT id, first_name, last_name, email, phone, password_hash, account_status FROM "User" WHERE email = $1`,
       [validatedData.clientEmail]
     );
 
     let userId: string;
+    let existingAccount = false;
     if (userResult.rows.length > 0) {
-      userId = userResult.rows[0].id;
+      const existing = userResult.rows[0];
+      userId = existing.id;
+      existingAccount = existing.password_hash !== '' && existing.account_status !== 'deleted';
     } else {
       userId = randomUUID();
       await client.query(
@@ -233,6 +240,7 @@ export async function createBooking(req: Request, res: Response) {
       success: true,
       message: 'Booking created successfully. You will receive a confirmation email shortly.',
       booking,
+      existingAccount,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

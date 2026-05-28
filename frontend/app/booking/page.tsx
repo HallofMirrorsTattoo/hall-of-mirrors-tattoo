@@ -130,6 +130,9 @@ function BookingPageContent() {
   const [activationPw, setActivationPw]             = useState('');
   const [activationState, setActivationState]       = useState<'idle' | 'submitting' | 'done' | 'dismissed'>('idle');
   const [activationError, setActivationError]       = useState('');
+  // True when the booking's email already has an active account — we show a
+  // "sign in" prompt rather than the "create account" activation card.
+  const [existingAccount, setExistingAccount]       = useState(false);
 
   const [policyAccepted, setPolicyAccepted]        = useState(false);
   const [studioSettings, setStudioSettings]        = useState<StudioSettings | null>(null);
@@ -311,7 +314,10 @@ function BookingPageContent() {
         setConfirmedSlot(selectedSlot);
         setConfirmedArtist(artists.find((a) => a.id === data.artistId)?.full_name ?? '');
         // Only show the activation panel for guests — logged-in users already have an account
-        if (!user) setCapturedEmail(data.clientEmail);
+        if (!user) {
+          setCapturedEmail(data.clientEmail);
+          setExistingAccount(Boolean(json.existingAccount));
+        }
         setSubmitStatus('success');
         reset();
         setSelectedDate(null);
@@ -439,8 +445,63 @@ function BookingPageContent() {
         </section>
       )}
 
-      {/* Account activation panel (only shown when capturedEmail is set — not available in Stripe redirect flow) */}
-      {submitStatus === 'success' && !user && formMode === 'booking' && capturedEmail && activationState !== 'done' && activationState !== 'dismissed' && (
+      {/* Existing-account panel — when the email is already registered, send them to sign in rather than asking them to create another account */}
+      {submitStatus === 'success' && !user && formMode === 'booking' && capturedEmail && existingAccount && activationState !== 'dismissed' && (
+        <section style={{ padding: '0 1.5rem 5rem' }}>
+          <div style={{ maxWidth: '40rem', margin: '0 auto' }}>
+            <div style={{ background: 'var(--surface)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '0.75rem', padding: '2rem 2rem 1.75rem' }}>
+              <p style={{ ...mono, fontSize: '0.68rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.6)', margin: '0 0 0.75rem' }}>
+                Welcome back
+              </p>
+              <h3 style={{ ...serif, fontStyle: 'italic', fontWeight: 300, fontSize: '1.75rem', color: 'var(--cream)', lineHeight: 1.1, margin: '0 0 0.75rem' }}>
+                You already have an account
+              </h3>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-mid)', lineHeight: 1.7, margin: '0 0 1.5rem', maxWidth: '46ch' }}>
+                We&apos;ve linked this booking to your existing client account ({capturedEmail}). Sign in to track it, message your artist, and sign your consent form online.
+              </p>
+
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <Link
+                  href={`/client/login?email=${encodeURIComponent(capturedEmail)}`}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    background: 'var(--gold)',
+                    color: 'var(--bg)',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    ...mono,
+                    fontSize: '0.72rem',
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    textDecoration: 'none',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.25s ease',
+                  }}
+                >
+                  Sign in →
+                </Link>
+                <Link
+                  href="/client/forgot-password"
+                  style={{ ...mono, fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-mid)', textDecoration: 'none' }}
+                >
+                  Forgot password?
+                </Link>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setActivationState('dismissed')}
+                style={{ marginTop: '1rem', background: 'none', border: 'none', padding: 0, ...mono, fontSize: '0.68rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-low)', cursor: 'pointer', display: 'block' }}
+              >
+                Not now
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Account activation panel — for guests whose email is NOT yet registered. Only shown when capturedEmail is set (not in Stripe redirect flow) */}
+      {submitStatus === 'success' && !user && formMode === 'booking' && capturedEmail && !existingAccount && activationState !== 'done' && activationState !== 'dismissed' && (
         <section style={{ padding: '0 1.5rem 5rem' }}>
           <div style={{ maxWidth: '40rem', margin: '0 auto' }}>
             <div style={{ background: 'var(--surface)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: '0.75rem', padding: '2rem 2rem 1.75rem' }}>
