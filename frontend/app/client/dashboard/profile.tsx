@@ -540,9 +540,6 @@ export default function ProfileTab() {
       {/* ── Danger zone: close account ───────────────────────────────────── */}
       <section style={{ marginTop: '3.5rem' }}>
         <p style={{ ...sectionHeadStyle, color: '#f87171', borderBottomColor: 'rgba(239,68,68,0.25)' }}>Close account</p>
-        <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-mid)', lineHeight: 1.65, marginBottom: '0.75rem' }}>
-          Closing your account will end your access to the client portal, stop all future emails from us, and revoke your ability to book through this site.
-        </p>
         <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-low)', lineHeight: 1.65, marginBottom: '1.5rem' }}>
           For your safety and ours, your booking history, signed consent forms, messages, deposits paid or forfeited, and any cancellation records are retained in accordance with Liverpool City Council tattoo studio licensing requirements. They are kept securely and used only if needed for aftercare follow-up or a regulatory enquiry.
         </p>

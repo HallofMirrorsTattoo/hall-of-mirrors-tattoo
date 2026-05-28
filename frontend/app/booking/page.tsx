@@ -788,7 +788,22 @@ function BookingPageContent() {
 
                             <div>
                               <label htmlFor="referralSource">How did you find us? <span style={{ color: 'var(--text-low)', fontWeight: 400 }}>(Optional)</span></label>
-                              <input {...register('referralSource')} type="text" id="referralSource" placeholder="Instagram, Google, referral…" />
+                              <select {...register('referralSource')} id="referralSource" defaultValue="">
+                                <option value="" disabled>Choose one…</option>
+                                <option value="Instagram">Instagram</option>
+                                <option value="TikTok">TikTok</option>
+                                <option value="Facebook">Facebook</option>
+                                <option value="Google search">Google search</option>
+                                <option value="Word of mouth / friend">Word of mouth / friend</option>
+                                <option value="Walked past the studio">Walked past the studio</option>
+                                <option value="Artist's social media">Artist&apos;s social media</option>
+                                <option value="Pinterest">Pinterest</option>
+                                <option value="YouTube">YouTube</option>
+                                <option value="Tattoo magazine or blog">Tattoo magazine or blog</option>
+                                <option value="Convention or event">Convention or event</option>
+                                <option value="Returning client">Returning client</option>
+                                <option value="Other">Other</option>
+                              </select>
                             </div>
 
                             <div>

@@ -45,17 +45,39 @@ function buildIcsBase64(dateStr: string, startHour: string, endHour: string, boo
   return Buffer.from(ics).toString('base64');
 }
 
+// Brand palette + typography stacks reused across every template. Email clients
+// vary wildly in font support — Apple Mail / iOS Mail honour the Google Fonts
+// <link>, Gmail/Outlook ignore it and fall back to the next entry in the stack.
+// Pairing Cormorant Garamond → Georgia and DM Sans → Helvetica keeps the look
+// consistent enough across all major clients.
+const SERIF_STACK = `'Cormorant Garamond', 'Crimson Text', Georgia, 'Times New Roman', serif`;
+const SANS_STACK  = `'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif`;
+const MONO_STACK  = `'DM Mono', 'Roboto Mono', 'Courier New', Courier, monospace`;
+
+const COLORS = {
+  bg:        '#0E0C09',
+  surface:   '#1A1714',
+  surfaceAlt:'#15110D',
+  border:    '#2A2520',
+  borderGold:'rgba(201,168,76,0.22)',
+  gold:      '#C9A84C',
+  goldDim:   'rgba(201,168,76,0.55)',
+  goldDimmer:'rgba(201,168,76,0.35)',
+  cream:     '#F2EDE0',
+  textHi:    '#EDE8D8',
+  textMid:   '#9A9082',
+  textLow:   '#635C52',
+};
+
 function calendarBlock(googleUrl: string): string {
   return `
-    <div style="margin:24px 0;padding:16px 20px;border:1px solid #2A2520;border-radius:4px;display:flex;align-items:center;gap:16px;">
-      <div>
-        <p style="margin:0 0 4px;font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(201,168,76,0.5);">Add to calendar</p>
-        <a href="${googleUrl}" target="_blank" rel="noopener noreferrer"
-          style="display:inline-block;padding:8px 20px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);color:#C9A84C;font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;border-radius:2px;">
-          Google Calendar ↗
-        </a>
-        <p style="margin:6px 0 0;font-size:11px;color:#635C52;">Or open the attached .ics file to add to Apple Calendar or Outlook.</p>
-      </div>
+    <div style="margin:28px 0;padding:18px 22px;border:1px solid ${COLORS.border};border-radius:6px;background:${COLORS.surfaceAlt};">
+      <p style="margin:0 0 6px;font-family:${MONO_STACK};font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:${COLORS.goldDim};">Add to calendar</p>
+      <a href="${googleUrl}" target="_blank" rel="noopener noreferrer"
+        style="display:inline-block;padding:9px 22px;background:rgba(201,168,76,0.08);border:1px solid ${COLORS.borderGold};color:${COLORS.gold};font-family:${MONO_STACK};font-size:11px;letter-spacing:0.14em;text-transform:uppercase;text-decoration:none;border-radius:3px;">
+        Google Calendar &nbsp;↗
+      </a>
+      <p style="margin:8px 0 0;font-family:${SANS_STACK};font-size:12px;color:${COLORS.textLow};line-height:1.5;">Or open the attached .ics file to add to Apple Calendar or Outlook.</p>
     </div>`;
 }
 
@@ -76,34 +98,47 @@ async function send(msg: sgMail.MailDataRequired): Promise<void> {
 }
 
 function baseTemplate(content: string): string {
+  const logoUrl = `${FRONTEND_URL}/email-logo.png`;
   return `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#0E0C09;font-family:Georgia,'Times New Roman',serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0E0C09;padding:40px 20px;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="supported-color-schemes" content="dark">
+  <!-- Google Fonts: honoured by Apple Mail/iOS; ignored elsewhere (graceful fallback to system stacks) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background:${COLORS.bg};font-family:${SANS_STACK};-webkit-font-smoothing:antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${COLORS.bg};padding:40px 16px;">
     <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
-        <!-- Logo bar -->
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:${COLORS.bg};">
+        <!-- Header / logo -->
         <tr>
-          <td style="padding:0 0 32px 0;text-align:center;border-bottom:1px solid #2A2520;">
-            <p style="margin:0;font-family:Georgia,serif;font-style:italic;font-size:22px;font-weight:400;color:#C9A84C;letter-spacing:0.05em;">
-              Hall of Mirrors
-            </p>
-            <p style="margin:4px 0 0;font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.25em;text-transform:uppercase;color:rgba(201,168,76,0.45);">
-              Tattoo Studio · Liverpool
-            </p>
+          <td style="padding:8px 32px 32px;text-align:center;">
+            <img src="${logoUrl}" alt="Hall of Mirrors" width="72" height="72" style="display:inline-block;width:72px;height:72px;border:0;outline:none;margin:0 auto 18px;">
+            <p style="margin:0;font-family:${SERIF_STACK};font-style:italic;font-weight:300;font-size:26px;color:${COLORS.cream};letter-spacing:-0.005em;line-height:1.1;">Hall of Mirrors</p>
+            <p style="margin:6px 0 0;font-family:${MONO_STACK};font-size:10px;font-weight:500;letter-spacing:0.28em;text-transform:uppercase;color:${COLORS.goldDim};">Tattoo Studio &middot; Liverpool</p>
+            <div style="margin:24px auto 0;width:48px;height:1px;background:${COLORS.borderGold};"></div>
           </td>
         </tr>
-        <!-- Content -->
-        <tr><td style="padding:40px 0;">${content}</td></tr>
+        <!-- Content card -->
+        <tr><td style="padding:8px 32px 32px;">${content}</td></tr>
         <!-- Footer -->
         <tr>
-          <td style="padding:32px 0 0;border-top:1px solid #2A2520;text-align:center;">
-            <p style="margin:0;font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(201,168,76,0.35);">
-              Suite 3 · 34 Castle Street · Liverpool L2 0NR
+          <td style="padding:24px 32px 8px;border-top:1px solid ${COLORS.border};text-align:center;">
+            <p style="margin:0;font-family:${MONO_STACK};font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:${COLORS.goldDimmer};">
+              Suite 3 &middot; 34 Castle Street &middot; Liverpool L2 0NR
             </p>
-            <p style="margin:8px 0 0;font-size:11px;color:#635C52;">
-              studio@hallofmirrorstattoo.com
+            <p style="margin:10px 0 0;font-family:${SANS_STACK};font-size:12px;color:${COLORS.textLow};">
+              <a href="mailto:studio@hallofmirrorstattoo.com" style="color:${COLORS.textMid};text-decoration:none;">studio@hallofmirrorstattoo.com</a>
+              &nbsp;&middot;&nbsp;
+              <a href="${FRONTEND_URL}" style="color:${COLORS.textMid};text-decoration:none;">hallofmirrorstattoo.com</a>
+            </p>
+            <p style="margin:10px 0 0;font-family:${MONO_STACK};font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:${COLORS.textLow};">
+              Fully licensed by Liverpool City Council
             </p>
           </td>
         </tr>
@@ -115,22 +150,24 @@ function baseTemplate(content: string): string {
 }
 
 function heading(text: string): string {
-  return `<h1 style="margin:0 0 16px;font-family:Georgia,serif;font-style:italic;font-size:32px;font-weight:400;color:#F2EDE0;line-height:1.2;">${text}</h1>`;
+  return `<h1 style="margin:0 0 18px;font-family:${SERIF_STACK};font-style:italic;font-size:30px;font-weight:300;color:${COLORS.cream};line-height:1.15;letter-spacing:-0.01em;">${text}</h1>`;
 }
 
 function body(text: string): string {
-  return `<p style="margin:0 0 16px;font-size:15px;line-height:1.75;color:#9A9082;">${text}</p>`;
+  return `<p style="margin:0 0 18px;font-family:${SANS_STACK};font-size:15px;line-height:1.7;color:${COLORS.textMid};">${text}</p>`;
 }
 
 function detail(label: string, value: string): string {
   return `<tr>
-    <td style="padding:10px 0;border-bottom:1px solid #2A2520;font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(201,168,76,0.5);width:140px;vertical-align:top;">${label}</td>
-    <td style="padding:10px 0 10px 20px;border-bottom:1px solid #2A2520;font-size:14px;color:#EDE8D8;vertical-align:top;">${value}</td>
+    <td style="padding:12px 0;border-bottom:1px solid ${COLORS.border};font-family:${MONO_STACK};font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:${COLORS.goldDim};width:140px;vertical-align:top;">${label}</td>
+    <td style="padding:12px 0 12px 20px;border-bottom:1px solid ${COLORS.border};font-family:${SANS_STACK};font-size:14px;color:${COLORS.textHi};vertical-align:top;line-height:1.5;">${value}</td>
   </tr>`;
 }
 
 function ctaButton(href: string, label: string): string {
-  return `<a href="${href}" style="display:inline-block;margin-top:28px;padding:14px 32px;background:#C9A84C;color:#0E0C09;font-family:'Courier New',monospace;font-size:12px;letter-spacing:0.15em;text-transform:uppercase;text-decoration:none;border-radius:2px;">${label}</a>`;
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0 4px;"><tr><td style="border-radius:4px;background:${COLORS.gold};">
+    <a href="${href}" style="display:inline-block;padding:14px 30px;background:${COLORS.gold};color:${COLORS.bg};font-family:${MONO_STACK};font-size:11px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;text-decoration:none;border-radius:4px;">${label}</a>
+  </td></tr></table>`;
 }
 
 export async function sendBookingConfirmationToClient(data: {
