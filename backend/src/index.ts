@@ -17,6 +17,7 @@ import { clientMessagesRouter, artistMessagesRouter, clientConsultationMessagesR
 import { publicFlashRouter, artistFlashRouter } from './routes/flash.js';
 import { studioSettingsRouter, publicStudioSettingsRouter } from './routes/studioSettings.js';
 import googleCalendarRouter from './routes/googleCalendar.js';
+import googleDriveRouter from './routes/googleDrive.js';
 import paymentsRouter from './routes/payments.js';
 import { setupDatabase } from './setupDb.js';
 import { startReminderJob } from './jobs/reminderJob.js';
@@ -104,6 +105,7 @@ app.use('/api/artist/flash', artistFlashRouter);
 app.use('/api/artist/studio-settings', studioSettingsRouter);
 app.use('/api/studio-settings', publicStudioSettingsRouter);
 app.use('/api/artist/google-calendar', googleCalendarRouter);
+app.use('/api/studio/drive', googleDriveRouter);
 app.use('/api/payments', paymentsRouter);
 
 // Error handler middleware

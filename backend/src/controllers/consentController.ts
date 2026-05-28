@@ -5,6 +5,7 @@ import { generateConsentFormPDF } from '../services/pdfService.js';
 import { sendConsentFormToClient, sendConsentFormToStudio } from '../services/emailService.js';
 import { allocateBookingReference } from '../utils/bookingReference.js';
 import { uploadToSupabase } from '../utils/storage.js';
+import { uploadPDFToDrive, DEFAULT_STUDIO_ID } from '../services/googleDriveService.js';
 
 const { Client } = pkg;
 
@@ -279,6 +280,11 @@ export async function submitConsentForm(req: Request, res: Response) {
         // signed forms in their own inbox, not just the studio archive.
         artistEmail: booking.artist_email ?? undefined,
       }).catch((e) => console.error('[email] consent studio email failed:', e));
+
+      // Archive a copy to the studio's Google Drive folder. Fire-and-forget;
+      // a Drive outage must never block a successful consent submission.
+      uploadPDFToDrive(DEFAULT_STUDIO_ID, `${booking.booking_reference}.pdf`, pdfBuffer)
+        .catch((e) => console.error('[drive] consent upload failed:', e));
     } catch (pdfErr) {
       console.error('[pdf] generation failed (non-fatal):', pdfErr);
     }
@@ -609,6 +615,11 @@ export async function submitWalkInConsentForm(req: Request, res: Response) {
         formReference: formRef,
         pdfBase64,
       }).catch((e) => console.error('[email] walk-in consent studio email failed:', e));
+
+      // Archive to the studio's Google Drive folder. Walk-in PDFs get a
+      // WI- filename prefix so they sort together at the top of the folder.
+      uploadPDFToDrive(DEFAULT_STUDIO_ID, `WI-${bookingReference}.pdf`, pdfBuffer)
+        .catch((e) => console.error('[drive] walk-in consent upload failed:', e));
     } catch (pdfErr) {
       console.error('[pdf] walk-in generation failed (non-fatal):', pdfErr);
     }

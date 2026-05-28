@@ -54,11 +54,12 @@ const MONTHS = [
 const DAYS_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 const ARTIST_TABS = [
-  { id: 'bookings',      label: 'Bookings',      icon: '◈' },
-  { id: 'consultations', label: 'Consultations',  icon: '◇' },
-  { id: 'availability',  label: 'Availability',   icon: '◻' },
-  { id: 'stats',         label: 'Stats',          icon: '◉' },
-  { id: 'profile',       label: 'Profile',        icon: '○' },
+  { id: 'bookings',         label: 'Bookings',        icon: '◈' },
+  { id: 'consultations',    label: 'Consultations',   icon: '◇' },
+  { id: 'availability',     label: 'Availability',    icon: '◻' },
+  { id: 'stats',            label: 'Stats',           icon: '◉' },
+  { id: 'profile',          label: 'Profile',         icon: '○' },
+  { id: 'studio-settings',  label: 'Studio',          icon: '⌂' },
 ] as const;
 
 interface Booking {
@@ -146,7 +147,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function ArtistDashboard() {
   const router = useRouter();
   const { artist, accessToken, logout, isLoading: authLoading } = useAuth();
-  const [tab, setTab] = useState<'bookings' | 'consultations' | 'availability' | 'stats' | 'profile'>('bookings');
+  const [tab, setTab] = useState<'bookings' | 'consultations' | 'availability' | 'stats' | 'profile' | 'studio-settings'>('bookings');
 
   // Bookings state
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -302,6 +303,97 @@ export default function ArtistDashboard() {
     }
   };
 
+  // ── Studio Google Drive state ──────────────────────────────────────────────
+  interface DriveStatus {
+    connected: boolean;
+    google_email?: string | null;
+    folder_id?: string | null;
+    folder_name?: string | null;
+  }
+  const [driveStatus, setDriveStatus] = useState<DriveStatus>({ connected: false });
+  const [driveLoading, setDriveLoading] = useState(false);
+  const [driveActing, setDriveActing] = useState(false);
+  const [driveError, setDriveError] = useState('');
+  const [driveBanner, setDriveBanner] = useState<'connected' | 'error' | null>(null);
+  const [folderIdInput, setFolderIdInput] = useState('');
+
+  const fetchDriveStatus = useCallback(async () => {
+    if (!accessToken) return;
+    setDriveLoading(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/studio/drive/status`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setDriveStatus(data);
+    } catch {
+      // non-critical
+    } finally {
+      setDriveLoading(false);
+    }
+  }, [accessToken]);
+
+  const connectDrive = async () => {
+    if (!accessToken) return;
+    setDriveActing(true);
+    setDriveError('');
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/studio/drive/connect`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) throw new Error(data.error || 'Failed to start Drive connect');
+      window.location.href = data.url;
+    } catch (err) {
+      setDriveError(err instanceof Error ? err.message : 'Failed to connect Google Drive.');
+      setDriveActing(false);
+    }
+  };
+
+  const disconnectDrive = async () => {
+    if (!accessToken) return;
+    setDriveActing(true);
+    setDriveError('');
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/studio/drive/disconnect`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to disconnect');
+      }
+      setDriveStatus({ connected: false });
+    } catch (err) {
+      setDriveError(err instanceof Error ? err.message : 'Failed to disconnect.');
+    } finally {
+      setDriveActing(false);
+    }
+  };
+
+  const moveDriveFolder = async () => {
+    if (!accessToken) return;
+    setDriveActing(true);
+    setDriveError('');
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/studio/drive/folder`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ folder_id: folderIdInput.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update folder');
+      setDriveStatus((prev) => ({ ...prev, connected: true, folder_id: data.folder_id, folder_name: data.folder_name }));
+      setFolderIdInput('');
+    } catch (err) {
+      setDriveError(err instanceof Error ? err.message : 'Failed to update folder.');
+    } finally {
+      setDriveActing(false);
+    }
+  };
+
   // ── Portfolio photos state ─────────────────────────────────────────────────
   interface PortfolioPhoto { id: string; public_url: string; display_order: number; created_at: string; }
   const [portfolioPhotos, setPortfolioPhotos] = useState<PortfolioPhoto[]>([]);
@@ -434,7 +526,28 @@ export default function ArtistDashboard() {
       url.searchParams.delete('calendar');
       window.history.replaceState({}, '', url.toString());
     }
+
+    // Drive OAuth redirect — surface the result on the Studio Settings tab.
+    const driveParam = params.get('drive');
+    const requestedTab = params.get('tab');
+    if (driveParam === 'connected' || driveParam === 'error' || requestedTab === 'studio-settings') {
+      setTab('studio-settings');
+      if (driveParam === 'connected' || driveParam === 'error') {
+        setDriveBanner(driveParam as 'connected' | 'error');
+      }
+      const url = new URL(window.location.href);
+      url.searchParams.delete('drive');
+      url.searchParams.delete('tab');
+      window.history.replaceState({}, '', url.toString());
+    }
   }, []);
+
+  // Refresh Drive status whenever the studio-settings tab is opened.
+  useEffect(() => {
+    if (tab === 'studio-settings' && accessToken) {
+      fetchDriveStatus();
+    }
+  }, [tab, accessToken, fetchDriveStatus]);
 
   const fetchCalendarStatus = async () => {
     if (!accessToken) return;
@@ -3763,6 +3876,127 @@ export default function ArtistDashboard() {
             </div>
           );
         })()}
+
+        {/* ── Studio Settings tab ─────────────────────────────────────────── */}
+        {tab === 'studio-settings' && (
+          <div style={{ maxWidth: '640px' }}>
+            <p className="eyebrow" style={{ marginBottom: '0.75rem' }}>Studio settings</p>
+            <h2 style={{
+              fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontWeight: 300,
+              fontSize: 'clamp(2rem, 4vw, 2.75rem)', color: 'var(--cream)',
+              lineHeight: 1.05, letterSpacing: '-0.02em', margin: '0 0 0.75rem',
+            }}>
+              Studio
+            </h2>
+            <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9375rem', color: 'var(--text-mid)', lineHeight: 1.65, marginBottom: '2.5rem', maxWidth: '52ch' }}>
+              Studio-wide integrations. Settings here apply to every artist at Hall of Mirrors, not just your account.
+            </p>
+
+            {/* Google Drive card */}
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '0.875rem', padding: '1.75rem 2rem 1.5rem', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <h3 style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: '1.5rem', fontWeight: 300, color: 'var(--gold)', margin: 0, letterSpacing: '-0.01em' }}>
+                  Google Drive
+                </h3>
+                {driveStatus.connected && (
+                  <span style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(34,197,94,0.9)', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)' }}>
+                    Connected
+                  </span>
+                )}
+              </div>
+
+              <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.875rem', color: 'var(--text-mid)', lineHeight: 1.65, margin: '0.5rem 0 1.5rem' }}>
+                When connected, every signed consent form is archived as a PDF to a folder in this Google account. Sign in once with the studio account; you can share that folder with whoever you want from Drive itself.
+              </p>
+
+              {driveBanner === 'connected' && (
+                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: 'var(--gold)', letterSpacing: '0.08em', marginBottom: '0.875rem' }}>
+                  ✓ Google Drive connected — consent PDFs will start landing in the folder below.
+                </p>
+              )}
+              {driveBanner === 'error' && (
+                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: '#e57373', letterSpacing: '0.05em', marginBottom: '0.875rem' }}>
+                  Google Drive connect failed. Please try again.
+                </p>
+              )}
+              {driveError && (
+                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: '#e57373', letterSpacing: '0.05em', marginBottom: '0.875rem' }}>{driveError}</p>
+              )}
+
+              {driveLoading ? (
+                <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.72rem', color: 'var(--text-low)', letterSpacing: '0.06em' }}>Loading…</p>
+              ) : !driveStatus.connected ? (
+                <button
+                  type="button"
+                  onClick={connectDrive}
+                  disabled={driveActing}
+                  className="btn-primary"
+                  style={{ padding: '0.75rem 1.5rem', opacity: driveActing ? 0.6 : 1, cursor: driveActing ? 'default' : 'pointer' }}
+                >
+                  <span>{driveActing ? 'Redirecting…' : 'Connect Google Drive'}</span>
+                  {!driveActing && <span className="btn-icon" aria-hidden="true">↗</span>}
+                </button>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  {/* Connected account + folder summary */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+                    <div>
+                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.55)', margin: '0 0 0.35rem' }}>Google account</p>
+                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: 'var(--cream)', margin: 0, wordBreak: 'break-all' }}>{driveStatus.google_email ?? '—'}</p>
+                    </div>
+                    <div>
+                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.55)', margin: '0 0 0.35rem' }}>Folder</p>
+                      <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.9rem', color: 'var(--cream)', margin: '0 0 0.2rem' }}>{driveStatus.folder_name ?? 'Not set'}</p>
+                      <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', color: 'var(--text-low)', margin: 0, wordBreak: 'break-all' }}>{driveStatus.folder_id ?? '—'}</p>
+                    </div>
+                  </div>
+
+                  {/* Override folder */}
+                  <div style={{ borderTop: '1px solid rgba(201,168,76,0.1)', paddingTop: '1.25rem' }}>
+                    <p style={{ fontFamily: '"DM Mono", monospace', fontSize: '0.62rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(201,168,76,0.55)', margin: '0 0 0.5rem' }}>Change folder</p>
+                    <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-mid)', lineHeight: 1.6, margin: '0 0 0.75rem', maxWidth: '52ch' }}>
+                      Paste a Drive folder ID to route new consent PDFs there instead. Leave blank and submit to reset back to the default folder.
+                    </p>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <input
+                        type="text"
+                        value={folderIdInput}
+                        onChange={(e) => setFolderIdInput(e.target.value)}
+                        placeholder="e.g. 1AbCdEfGhIjKlMnOpQrStUvWxYz"
+                        disabled={driveActing}
+                        style={{ flex: 1, minWidth: '220px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '0.5rem', padding: '0.625rem 0.875rem', fontFamily: '"DM Mono", monospace', fontSize: '0.8125rem', color: 'var(--cream)', outline: 'none' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={moveDriveFolder}
+                        disabled={driveActing}
+                        className="btn-secondary"
+                        style={{ fontSize: '0.8125rem', padding: '0.625rem 1.25rem', opacity: driveActing ? 0.6 : 1, cursor: driveActing ? 'default' : 'pointer' }}
+                      >
+                        {driveActing ? 'Saving…' : 'Move'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Disconnect */}
+                  <div style={{ borderTop: '1px solid rgba(239,68,68,0.18)', paddingTop: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+                    <p style={{ fontFamily: '"DM Sans", sans-serif', fontSize: '0.8125rem', color: 'var(--text-mid)', margin: 0, maxWidth: '38ch' }}>
+                      Disconnecting stops future uploads. Existing files in Drive aren&apos;t touched.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={disconnectDrive}
+                      disabled={driveActing}
+                      style={{ background: 'none', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '0.375rem', padding: '0.5rem 1rem', cursor: driveActing ? 'default' : 'pointer', fontFamily: '"DM Mono", monospace', fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(239,68,68,0.85)', opacity: driveActing ? 0.5 : 1 }}
+                    >
+                      {driveActing ? 'Disconnecting…' : 'Disconnect'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         </div>{/* end tab-content */}
       </div>{/* end maxWidth 860px wrapper */}
