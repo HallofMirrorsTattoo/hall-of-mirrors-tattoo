@@ -16,6 +16,7 @@ import {
 } from '../services/emailService.js';
 import { logBookingActivity } from '../utils/logBookingActivity.js';
 import { pushCalendarEvent, deleteCalendarEvent } from '../services/googleCalendarService.js';
+import { allocateBookingReference } from '../utils/bookingReference.js';
 
 const { Client } = pkg;
 
@@ -170,66 +171,34 @@ export async function createBooking(req: Request, res: Response) {
       }
     }
 
-    // Create booking. The reference is HOM-YYMMDD-NNN where NNN is a 3-digit
-    // sequence number for that day. Under concurrent bookings two requests
-    // could pick the same N; the UNIQUE constraint on booking_reference
-    // catches that and we retry with the next number.
     const bookingId = randomUUID();
-    const now = new Date();
-    const yy = String(now.getFullYear() % 100).padStart(2, '0');
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    const datePrefix = `HOM-${yy}${mm}${dd}`;
-
-    const countResult = await client.query(
-      `SELECT COUNT(*)::int AS n FROM "Booking" WHERE booking_reference LIKE $1`,
-      [`${datePrefix}-%`]
-    );
-    let nextSeq = (countResult.rows[0]?.n ?? 0) + 1;
-    let bookingReference = `${datePrefix}-${String(nextSeq).padStart(3, '0')}`;
-
-    let insertedRef: string | null = null;
-    const MAX_RETRIES = 6;
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      try {
-        await client.query(
-          `INSERT INTO "Booking" (
-            id, studio_id, user_id, artist_id, appointment_date_time, appointment_time,
-            appointment_status, tattoo_description, placement, estimated_size, artist_notes,
-            deposit_amount, balance_due, booking_reference, client_budget, payment_method, created_at, updated_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())`,
-      [
-        bookingId,
-        'default-studio',
-        userId,
-        validatedData.artistId || null,
-        appointmentDateTime,
-        appointmentTime,
-        'pending_review',
-        validatedData.tattooDesignDescription,
-        validatedData.estimatedPlacement,
-        validatedData.estimatedSize,
-        validatedData.notes || null,
-        '0',
-        '0',
-        bookingReference,
-        validatedData.clientBudget ?? null,
-        validatedData.payment_method ?? 'not_set',
-      ]
-        );
-        insertedRef = bookingReference;
-        break;
-      } catch (err: unknown) {
-        // 23505 = unique_violation. Bump sequence and retry; anything else: rethrow.
-        const code = (err && typeof err === 'object' && 'code' in err) ? (err as { code?: string }).code : undefined;
-        if (code !== '23505') throw err;
-        nextSeq += 1;
-        bookingReference = `${datePrefix}-${String(nextSeq).padStart(3, '0')}`;
-      }
-    }
-    if (!insertedRef) {
-      throw new Error('Could not allocate a booking reference after multiple attempts. Please try again.');
-    }
+    const bookingReference = await allocateBookingReference(client, false, async (ref) => {
+      await client.query(
+        `INSERT INTO "Booking" (
+          id, studio_id, user_id, artist_id, appointment_date_time, appointment_time,
+          appointment_status, tattoo_description, placement, estimated_size, artist_notes,
+          deposit_amount, balance_due, booking_reference, client_budget, payment_method, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW())`,
+        [
+          bookingId,
+          'default-studio',
+          userId,
+          validatedData.artistId || null,
+          appointmentDateTime,
+          appointmentTime,
+          'pending_review',
+          validatedData.tattooDesignDescription,
+          validatedData.estimatedPlacement,
+          validatedData.estimatedSize,
+          validatedData.notes || null,
+          '0',
+          '0',
+          ref,
+          validatedData.clientBudget ?? null,
+          validatedData.payment_method ?? 'not_set',
+        ]
+      );
+    });
 
     // Fetch the created booking with related data
     const bookingResult = await client.query(

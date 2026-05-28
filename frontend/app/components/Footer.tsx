@@ -124,6 +124,7 @@ export default async function Footer() {
               {[
                 { href: '/artists',   label: 'Artists' },
                 { href: '/about',     label: 'Studio' },
+                { href: '/consent',   label: 'Walk-in consent' },
               ].map(({ href, label }) => (
                 <li key={href}>
                   <Link href={href} className="footer-link">{label}</Link>

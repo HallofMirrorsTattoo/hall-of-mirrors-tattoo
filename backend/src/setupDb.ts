@@ -221,6 +221,10 @@ ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS deposit_payment_method TEXT;
 ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS deposit_amount DECIMAL(10,2) NOT NULL DEFAULT 0;
 ALTER TABLE "Booking" ADD COLUMN IF NOT EXISTS balance_due DECIMAL(10,2) NOT NULL DEFAULT 0;
 
+-- Walk-in consent additions
+ALTER TABLE "ConsentForm" ADD COLUMN IF NOT EXISTS id_proof_url TEXT;
+ALTER TABLE "ConsentForm" ADD COLUMN IF NOT EXISTS is_walk_in BOOLEAN NOT NULL DEFAULT false;
+
 -- Bump existing studio rows from the old 24-hour default to the canonical 48-hour policy.
 -- Safe to re-run: only updates rows still on the old default.
 UPDATE "Studio" SET cancellation_policy_hours = 48 WHERE cancellation_policy_hours = 24;
