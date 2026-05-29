@@ -44,7 +44,6 @@ const FONT = {
 
 const INK = '#000000';
 const HAIRLINE = '#000000';
-const SUBTLE = '#3A3A3A';
 
 const A4_W = 595.28;
 const A4_H = 841.89;
@@ -96,15 +95,12 @@ doc.save().strokeColor(HAIRLINE).lineWidth(0.7)
 y += 28;
 
 // ── Title block ──────────────────────────────────────────────────────────────
-doc.fillColor(INK).font('mono').fontSize(9.5)
-  .text('FOR WALK-INS', MARGIN, y, { width: contentW, align: 'center', characterSpacing: 3.2 });
-y = doc.y + 8;
 doc.fillColor(INK).font('serifItalic').fontSize(52)
   .text('Consent form', MARGIN, y, { width: contentW, align: 'center' });
 y = doc.y + 14;
 
-doc.fillColor(SUBTLE).font('sans').fontSize(12)
-  .text('Scan the code to fill in your consent form online.  Takes about three minutes.',
+doc.fillColor(INK).font('sans').fontSize(12)
+  .text('Scan the code to fill in your consent form online.',
     MARGIN, y, { width: contentW, align: 'center', lineGap: 4 });
 y = doc.y + 24;
 
@@ -139,7 +135,7 @@ doc.y = footerY + 9;
 doc.fillColor(INK).font('mono').fontSize(7.5)
   .text('SUITE 3  ·  34 CASTLE STREET  ·  LIVERPOOL L2 0NR',
     MARGIN, footerY + 9, { width: contentW, align: 'center', characterSpacing: 2.0, lineBreak: false });
-doc.fillColor(SUBTLE).font('sans').fontSize(8)
+doc.fillColor(INK).font('sans').fontSize(8)
   .text('Fully licensed by Liverpool City Council.',
     MARGIN, footerY + 21, { width: contentW, align: 'center', lineBreak: false });
 
